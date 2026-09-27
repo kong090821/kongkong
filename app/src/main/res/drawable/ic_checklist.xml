@@ -1,0 +1,35 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- 체크리스트 클립보드 배경 -->
+    <path
+        android:fillColor="#E3F2FD"
+        android:pathData="M12,8 C12,5.8 13.8,4 16,4 L32,4 C34.2,4 36,5.8 36,8 L36,40 C36,42.2 34.2,44 32,44 L16,44 C13.8,44 12,42.2 12,40 Z" />
+    <!-- 상단 클립 -->
+    <path
+        android:fillColor="#1E88E5"
+        android:pathData="M18,2 C18,1 19,0 20,0 L28,0 C29,0 30,1 30,2 L30,6 L18,6 Z" />
+    <!-- 체크 아이템 1 -->
+    <path
+        android:fillColor="#43A047"
+        android:pathData="M17,16 L20,19 L25,13 L27,15 L20,22 L15,18 Z" />
+    <path
+        android:fillColor="#90CAF9"
+        android:pathData="M29,17 L33,17 C33.6,17 34,17.4 34,18 C34,18.6 33.6,19 33,19 L29,19 Z" />
+    <!-- 체크 아이템 2 -->
+    <path
+        android:fillColor="#43A047"
+        android:pathData="M17,25 L20,28 L25,22 L27,24 L20,31 L15,27 Z" />
+    <path
+        android:fillColor="#90CAF9"
+        android:pathData="M29,26 L33,26 C33.6,26 34,26.4 34,27 C34,27.6 33.6,28 33,28 L29,28 Z" />
+    <!-- 체크 아이템 3 -->
+    <path
+        android:fillColor="#43A047"
+        android:pathData="M17,34 L20,37 L25,31 L27,33 L20,40 L15,36 Z" />
+    <path
+        android:fillColor="#90CAF9"
+        android:pathData="M29,35 L33,35 C33.6,35 34,35.4 34,36 C34,36.6 33.6,37 33,37 L29,37 Z" />
+</vector>

@@ -1,0 +1,27 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- 선물 상자 몸통 -->
+    <path
+        android:fillColor="#FFF8E1"
+        android:pathData="M11,20 L37,20 C38,20 39,21 39,22 L37,42 C37,43 36,44 35,44 L13,44 C12,44 11,43 11,42 L9,22 C9,21 10,20 11,20 Z" />
+    <!-- 선물 상자 뚜껑 -->
+    <path
+        android:fillColor="#FFD54F"
+        android:pathData="M8,15 L40,15 C41,15 42,16 42,17 L42,20 C42,21 41,22 40,22 L8,22 C7,22 6,21 6,20 L6,17 C6,16 7,15 8,15 Z" />
+    <!-- 리본 세로 줄 -->
+    <path
+        android:fillColor="#FF7043"
+        android:pathData="M22,15 L26,15 L26,44 L22,44 Z" />
+    <!-- 상단 리본 매듭 좌/우 -->
+    <path
+        android:fillColor="#FF7043"
+        android:pathData="M24,15 C20,15 15,10 18,6 C21,2 24,12 24,15 Z
+                          M24,15 C28,15 33,10 30,6 C27,2 24,12 24,15 Z" />
+    <!-- 반짝이는 별 효과 -->
+    <path
+        android:fillColor="#FFA000"
+        android:pathData="M10,8 L11,11 L14,12 L11,13 L10,16 L9,13 L6,12 L9,11 Z" />
+</vector>

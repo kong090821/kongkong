@@ -1,0 +1,32 @@
+<resources>
+    <string name="app_name">꽁꽁 출산가방</string>
+    <string name="app_subtitle">설레는 아기와의 만남, 꽁꽁 싸매어 완벽 준비해요</string>
+    <string name="login_title">로그인</string>
+    <string name="login_id_hint">아이디 또는 이메일</string>
+    <string name="login_password_hint">비밀번호</string>
+    <string name="login_button">로그인</string>
+    <string name="login_guest_hint">아이디 없이 [로그인]을 누르면 바로 시작할 수 있어요</string>
+    <string name="dashboard_title">출산 준비 홈</string>
+    <string name="dashboard_subtitle">필요한 체크리스트를 선택해 보세요</string>
+    <string name="menu_bag_title">1. 출산가방 체크리스트</string>
+    <string name="menu_bag_desc">분만 병원과 산후조리원 필수 준비물</string>
+    <string name="menu_items_title">2. 육아용품 체크리스트</string>
+    <string name="menu_items_desc">수유, 수면, 목욕 등 신생아 필수템</string>
+    <string name="menu_todo_title">3. 시기별 할일 체크리스트</string>
+    <string name="menu_todo_desc">임신 주수별 검사와 출산 후 필수 절차</string>
+    <string name="menu_benefit_title">4. 출산 혜택 정리</string>
+    <string name="menu_benefit_desc">첫만남이용권, 부모급여 등 정부·지자체 지원</string>
+    <string name="btn_my_bag">내 가방 확인하기</string>
+    <string name="btn_my_bag_desc">내가 담은 준비물 &amp; 혜택 모아보기</string>
+    <string name="my_bag_title">내 가방</string>
+    <string name="my_bag_header_title">내가 담은 출산 준비물 &amp; 혜택 👜</string>
+    <string name="my_bag_header_desc">기능별로 저장해둔 나만의 리스트를 한눈에 확인해요</string>
+    <string name="my_bag_item1_title">1. 저장한 출산가방 준비물</string>
+    <string name="my_bag_item1_desc">병원/조리원에 가져갈 나만의 필수 준비물 목록</string>
+    <string name="my_bag_item2_title">2. 찜해둔 육아용품 리스트</string>
+    <string name="my_bag_item2_desc">내가 담아둔 신생아 맞이 육아용품 목록</string>
+    <string name="my_bag_item3_title">3. 나의 시기별 할일 체크</string>
+    <string name="my_bag_item3_desc">내가 체크하고 관리하는 주수별 할일 및 검사</string>
+    <string name="my_bag_item4_title">4. 내가 저장한 출산 혜택</string>
+    <string name="my_bag_item4_desc">내가 신청할 정부·지자체 지원 혜택 모음</string>
+</resources>

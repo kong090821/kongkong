@@ -1,0 +1,50 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+    <!-- 그림자 -->
+    <path
+        android:fillColor="#20000000"
+        android:pathData="M24,104 C40,110 80,110 96,104 C104,101 104,97 96,96 C80,94 40,94 24,96 C16,97 16,101 24,104 Z" />
+
+    <!-- 손잡이 뒤쪽 -->
+    <path
+        android:fillColor="#E0836B"
+        android:pathData="M44,38 L44,24 C44,15.2 51.2,8 60,8 C68.8,8 76,15.2 76,24 L76,38 L68,38 L68,24 C68,19.6 64.4,16 60,16 C55.6,16 52,19.6 52,24 L52,38 Z" />
+
+    <!-- 가방 본체 (부드러운 피치/코랄 톤의 둥근 토트백) -->
+    <path
+        android:fillColor="#FF8E72"
+        android:pathData="M24,40 C20,40 16,44 16,50 L16,92 C16,98 20,102 26,102 L94,102 C100,102 104,98 104,92 L104,50 C104,44 100,40 94,40 Z" />
+
+    <!-- 가방 앞면 주머니/패치 -->
+    <path
+        android:fillColor="#FFA58E"
+        android:pathData="M26,56 C26,52 30,48 34,48 L86,48 C90,48 94,52 94,56 L94,92 C94,96 90,98 86,98 L34,98 C30,98 26,96 26,92 Z" />
+
+    <!-- 가방 앞주머니 지퍼/스트라이프 라인 -->
+    <path
+        android:fillColor="#FFE3DC"
+        android:pathData="M32,60 L88,60 C90,60 90,64 88,64 L32,64 C30,64 30,60 32,60 Z" />
+
+    <!-- 하트 엠블럼 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M60,80 C60,80 53,74 53,69 C53,65 56,62 60,65 C64,62 67,65 67,69 C67,74 60,80 60,80 Z" />
+
+    <!-- 가방 상단 지퍼 덮개 -->
+    <path
+        android:fillColor="#D86B52"
+        android:pathData="M20,44 C20,41 22,39 25,39 L95,39 C98,39 100,41 100,44 L100,47 L20,47 Z" />
+
+    <!-- 금색 버클/스냅 디테일 -->
+    <path
+        android:fillColor="#FFD56B"
+        android:pathData="M38,44 A3,3 0 1,1 38,44.01 M82,44 A3,3 0 1,1 82,44.01" />
+
+    <!-- 가방 키링 참 -->
+    <path
+        android:fillColor="#FFD56B"
+        android:pathData="M78,46 L82,56 A5,5 0 1,0 86,52 L82,46 Z" />
+</vector>
