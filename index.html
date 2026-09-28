@@ -3531,7 +3531,7 @@
     }
 
     // 구글 스프레드시트 Apps Script 실시간 API
-    let GOOGLE_SHEET_API_URL = localStorage.getItem('maternity_google_sheet_api_url') || "";
+    let GOOGLE_SHEET_API_URL = localStorage.getItem('maternity_google_sheet_api_url') || "https://script.google.com/macros/s/AKfycbxS_OeFDgHX9br814DYXL1Sgc_yN3jiJKx3eD8ii6lJfcL2sZDyvRl5avqro6ct4ukx/exec";
 
     async function syncFromGoogleSheet(isManual = false) {
       if (!GOOGLE_SHEET_API_URL) {
@@ -3556,7 +3556,9 @@
           applyDataPayload(json.data);
           const syncTime = json.lastUpdated || new Date().toLocaleTimeString();
           localStorage.setItem('maternity_last_cloud_sync', syncTime);
-          showToast(`🎉 구글 시트 최신 데이터 반영 완료! (${syncTime})`);
+          if (isManual) {
+            showToast(`🎉 구글 시트 최신 데이터 반영 완료! (${syncTime})`);
+          }
           if (currentScreen === 'maternityBagChecklistScreen') renderMaternityBagList();
           else if (currentScreen === 'babyItemsChecklistScreen') renderBabyItemList();
           else if (currentScreen === 'todoChecklistScreen') renderTodoList();
@@ -3567,6 +3569,13 @@
         console.warn("구글 시트 연동 실패:", err);
         if (isManual) showToast("⚠️ 구글 시트 데이터를 가져오지 못했습니다.");
       }
+    }
+
+    // 초기 실행 시 구글 시트 최신 데이터 백그라운드 동기화
+    if (GOOGLE_SHEET_API_URL) {
+      setTimeout(() => {
+        syncFromGoogleSheet(false);
+      }, 800);
     }
 
     // 상태 변수

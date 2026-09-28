@@ -1,4 +1,4 @@
 {
-  "webAppUrl": "",
+  "webAppUrl": "https://script.google.com/macros/s/AKfycbxS_OeFDgHX9br814DYXL1Sgc_yN3jiJKx3eD8ii6lJfcL2sZDyvRl5avqro6ct4ukx/exec",
   "description": "구글 스프레드시트 Apps Script 배포 URL (예: https://script.google.com/macros/s/.../exec)을 입력하면 엑셀 없이 실시간 클라우드 동기화가 동작합니다."
 }
