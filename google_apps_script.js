@@ -34,8 +34,7 @@ function onOpen() {
     .addItem('💰 [시트별 반영] 4. 출산 혜택만 반영', 'syncBenefitsOnly')
     .addItem('🎯 [시트별 반영] 5. 맞춤 추천 가방 설정만 반영', 'syncRecommendationsOnly')
     .addSeparator()
-    .addItem('📊 [통계 분석] 사용자 활동 분석하여 추천 가방 갱신', 'analyzeAndUpdateRecommendationsManual')
-    .addItem('🎯 [시트 생성] 맞춤 추천 & 통계 시트 즉시 생성하기', 'initNewSheets')
+    .addItem('🎯 맞춤 추천 설정 갱신', 'updateRecommendationSettingsFromStats')
     .addSeparator()
     .addItem('✨ [자동 완성] 신규 품목 데이터 및 추천 상품 채우기', 'autoFillMissingRowData')
     .addItem('☕ [수동 실행] 맘카페 언급 1위 데이터 지금 수집', 'updateMomCafeWeeklyData')
@@ -46,16 +45,9 @@ function onOpen() {
     .addToUi();
 }
 
-// [시트 즉시 생성 전용 함수]
-function initNewSheets() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  getOrCreateRecommendationSheet(ss);
-  getOrCreateActivitySheet(ss);
-  SpreadsheetApp.getUi().alert(
-    '🎯 시트 생성 완료',
-    '하단에 [🎯 맞춤_추천_설정]과 [📊 사용자_활동_통계] 시트가 성공적으로 준비되었습니다!\n\n이제 맞춤 추천 설정을 수정하시거나 사용자 통계를 확인하실 수 있습니다.',
-    SpreadsheetApp.getUi().ButtonSet.OK
-  );
+// [사용자 활동 통계 기반 맞춤 추천 설정 갱신]
+function updateRecommendationSettingsFromStats() {
+  analyzeAndUpdateRecommendationsManual();
 }
 
 function getOrInitCachedData(ss) {
@@ -1133,7 +1125,7 @@ function showGuideDialog() {
     '• 쿠팡 최근 수집: ' + coupangLog + '\n\n' +
     '🛡️ 신기능 안내:\n' +
     '1. 📊 사용자_활동_통계: 앱 종료 시 산모들의 실제 가방 데이터가 실시간 자동 수집됩니다.\n' +
-    '2. 🎯 맞춤_추천_설정: 수집된 통계를 바탕으로 추천 가방 후보가 실시간 자동 갱신됩니다.\n' +
+    '2. 🎯 맞춤 추천 설정 갱신: 수집된 통계를 바탕으로 [맞춤_추천_설정] 시트가 최신 트렌드로 자동 갱신됩니다.\n' +
     '3. 🚀 시트별 반영: 원하는 시트만 골라서 어플에 개별 반영하거나 전체 반영할 수 있습니다.\n' +
     '4. 🛑 빨간색 셀: 자동 수집 시 절대 덮어쓰지 않고 영구 보존됩니다.',
     ui.ButtonSet.OK
@@ -1245,10 +1237,10 @@ function analyzeAndUpdateRecommendations(ss, isSilent) {
 
   if (!isSilent) {
     SpreadsheetApp.getUi().alert(
-      '📊 통계 분석 기반 추천 가방 갱신 완료',
+      '🎯 맞춤 추천 설정 갱신 완료',
       '총 ' + validLogs + '건의 산모 활동 데이터를 분석하여 [🎯 맞춤_추천_설정] 시트의 품목을 최신 트렌드로 자동 갱신했습니다!\n\n' +
       '※ 연보라색(#EDE7F6)으로 표시된 품목들을 검토하신 후,\n' +
-      '상단 메뉴에서 [🎯 5. 맞춤 추천 가방 설정만 반영] 또는 [🚀 전체 일괄 반영]을 누르시면 어플에 즉시 배포됩니다.',
+      '상단 메뉴에서 [🎯 5. 맞춤 추천 가방 설정만 반영]을 누르시면 어플에 즉시 배포됩니다.',
       SpreadsheetApp.getUi().ButtonSet.OK
     );
   }
