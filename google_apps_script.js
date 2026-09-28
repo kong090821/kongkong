@@ -26,7 +26,15 @@
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
   ui.createMenu('🍼 꽁꽁 출산가방 관리')
-    .addItem('🚀 [최종 반영] 최신 데이터를 어플에 즉시 반영하기', 'syncToApp')
+    .addItem('🚀 [전체 일괄 반영] 모든 시트 어플에 즉시 반영', 'syncToApp')
+    .addSeparator()
+    .addItem('🎒 [시트별 반영] 1. 출산가방 체크리스트만 반영', 'syncMaternityBagOnly')
+    .addItem('🍼 [시트별 반영] 2. 육아용품 체크리스트만 반영', 'syncBabySuppliesOnly')
+    .addItem('⏰ [시트별 반영] 3. 시기별 할일만 반영', 'syncTodosOnly')
+    .addItem('💰 [시트별 반영] 4. 출산 혜택만 반영', 'syncBenefitsOnly')
+    .addItem('🎯 [시트별 반영] 5. 맞춤 추천 가방 설정만 반영', 'syncRecommendationsOnly')
+    .addSeparator()
+    .addItem('📊 [통계 분석] 사용자 활동 분석하여 추천 가방 갱신', 'analyzeAndUpdateRecommendationsManual')
     .addItem('🎯 [시트 생성] 맞춤 추천 & 통계 시트 즉시 생성하기', 'initNewSheets')
     .addSeparator()
     .addItem('✨ [자동 완성] 신규 품목 데이터 및 추천 상품 채우기', 'autoFillMissingRowData')
@@ -50,46 +58,182 @@ function initNewSheets() {
   );
 }
 
+function getOrInitCachedData(ss) {
+  const cached = PropertiesService.getScriptProperties().getProperty('APP_DATA_CACHE');
+  if (cached) {
+    try {
+      return JSON.parse(cached);
+    } catch(e) {}
+  }
+  return getAllSheetsData(ss);
+}
+
 // ------------------------------------------------------------------------------
-// 2. [어플 실시간 반영] '갱신' 클릭 시 어플용 최신 데이터 확정 및 배포
+// 2. [어플 실시간 반영] (1) 전체 일괄 반영
 // ------------------------------------------------------------------------------
 function syncToApp() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const ui = SpreadsheetApp.getUi();
 
   try {
-    // 0. 맞춤 추천 설정 및 사용자 활동 통계 시트 자동 확인 및 생성
     getOrCreateRecommendationSheet(ss);
     getOrCreateActivitySheet(ss);
 
-    // 1. 새로 추가된 행의 ID 누락 보정 및 빈 데이터 자동 완성
     const autoFilled = ensureRowIntegrity(ss);
-
-    // 2. 전체 4개 시트 최신 데이터 추출
     const data = getAllSheetsData(ss);
+    const recRules = getRecommendationRules(ss);
     const now = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm:ss");
     
-    // 3. 구글 클라우드 캐시 저장 (어플 및 웹 프리뷰가 즉시 읽어감)
     PropertiesService.getScriptProperties().setProperty('LAST_UPDATED', now);
     PropertiesService.getScriptProperties().setProperty('APP_DATA_CACHE', JSON.stringify(data));
+    PropertiesService.getScriptProperties().setProperty('RECOMMENDATION_CACHE', JSON.stringify(recRules));
 
-    // 4. 자동 수집 하이라이트 배경색 정리 (※ 빨간색 보호 셀은 100% 안전하게 유지!)
     clearPendingHighlights(ss);
 
     let msg = '• 갱신 일시: ' + now + '\n' +
               '• 출산가방 품목: ' + data.maternityBag.length + '개\n' +
               '• 육아용품 품목: ' + data.babySupplies.length + '개\n' +
               '• 시기별 할일: ' + data.todos.length + '개\n' +
-              '• 출산 혜택: ' + data.benefits.length + '개\n';
+              '• 출산 혜택: ' + data.benefits.length + '개\n' +
+              '• 맞춤 추천 가방: 제왕/자연/조리원 규칙 동시 배포 완료\n';
     
     if (autoFilled > 0) {
       msg += '• 신규 추가 행: ' + autoFilled + '개 품목 ID 및 데이터 자동 생성\n';
     }
-    msg += '\n✅ 수정하신 모든 내용과 신규 품목이 어플에 즉시 반영되었습니다!';
+    msg += '\n✅ 전체 시트의 모든 수정 내용이 어플에 즉시 반영되었습니다!';
 
-    ui.alert('🎉 어플 데이터 갱신 완료!', msg, ui.ButtonSet.OK);
+    ui.alert('🎉 전체 어플 데이터 갱신 완료!', msg, ui.ButtonSet.OK);
   } catch (err) {
     ui.alert('❌ 갱신 중 오류가 발생했습니다: ' + err.toString());
+  }
+}
+
+// ------------------------------------------------------------------------------
+// [각 시트별 개별 반영 함수들]
+// ------------------------------------------------------------------------------
+
+// (1) 🎒 출산가방 체크리스트만 반영
+function syncMaternityBagOnly() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  try {
+    ensureRowIntegrity(ss);
+    const bagData = parseSheetToObjects(ss.getSheetByName('출산가방 체크리스트'), [
+      'id', 'tabCategory', 'section', 'title', 'recommendedQty', 'locationTags', 'note', 'momcafe1st', 'top1', 'top2', 'top3'
+    ]);
+    const fullData = getOrInitCachedData(ss);
+    fullData.maternityBag = bagData;
+    const now = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm:ss");
+
+    PropertiesService.getScriptProperties().setProperty('LAST_UPDATED', now);
+    PropertiesService.getScriptProperties().setProperty('APP_DATA_CACHE', JSON.stringify(fullData));
+    clearPendingHighlights(ss, '출산가방 체크리스트');
+
+    ui.alert('🎒 출산가방 체크리스트 반영 완료',
+      '• 갱신 일시: ' + now + '\n• 반영 품목 수: ' + bagData.length + '개\n\n✅ 출산가방 체크리스트만 어플에 실시간 반영되었습니다!',
+      ui.ButtonSet.OK
+    );
+  } catch(err) {
+    ui.alert('❌ 출산가방 반영 중 오류 발생: ' + err.toString());
+  }
+}
+
+// (2) 🍼 육아용품 체크리스트만 반영
+function syncBabySuppliesOnly() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  try {
+    ensureRowIntegrity(ss);
+    const babyData = parseSheetToObjects(ss.getSheetByName('육아용품 체크리스트'), [
+      'id', 'category', 'section', 'title', 'period', 'purchaseTag', 'description', 'momcafe1st', 'top1', 'top2', 'top3'
+    ]);
+    const fullData = getOrInitCachedData(ss);
+    fullData.babySupplies = babyData;
+    const now = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm:ss");
+
+    PropertiesService.getScriptProperties().setProperty('LAST_UPDATED', now);
+    PropertiesService.getScriptProperties().setProperty('APP_DATA_CACHE', JSON.stringify(fullData));
+    clearPendingHighlights(ss, '육아용품 체크리스트');
+
+    ui.alert('🍼 육아용품 체크리스트 반영 완료',
+      '• 갱신 일시: ' + now + '\n• 반영 품목 수: ' + babyData.length + '개\n\n✅ 육아용품 체크리스트만 어플에 실시간 반영되었습니다!',
+      ui.ButtonSet.OK
+    );
+  } catch(err) {
+    ui.alert('❌ 육아용품 반영 중 오류 발생: ' + err.toString());
+  }
+}
+
+// (3) ⏰ 시기별 할일만 반영
+function syncTodosOnly() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  try {
+    const todosData = parseSheetToObjects(ss.getSheetByName('시기별할일'), [
+      'id', 'category', 'role', 'title', 'tip'
+    ]);
+    const fullData = getOrInitCachedData(ss);
+    fullData.todos = todosData;
+    const now = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm:ss");
+
+    PropertiesService.getScriptProperties().setProperty('LAST_UPDATED', now);
+    PropertiesService.getScriptProperties().setProperty('APP_DATA_CACHE', JSON.stringify(fullData));
+
+    ui.alert('⏰ 시기별 할일 반영 완료',
+      '• 갱신 일시: ' + now + '\n• 반영 항목 수: ' + todosData.length + '개\n\n✅ 시기별 할일만 어플에 실시간 반영되었습니다!',
+      ui.ButtonSet.OK
+    );
+  } catch(err) {
+    ui.alert('❌ 시기별 할일 반영 중 오류 발생: ' + err.toString());
+  }
+}
+
+// (4) 💰 출산 혜택만 반영
+function syncBenefitsOnly() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  try {
+    const benefitsData = parseSheetToObjects(ss.getSheetByName('출산혜택정리'), [
+      'id', 'region', 'title', 'type', 'amount', 'eligibility', 'timing', 'place'
+    ]);
+    const fullData = getOrInitCachedData(ss);
+    fullData.benefits = benefitsData;
+    const now = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm:ss");
+
+    PropertiesService.getScriptProperties().setProperty('LAST_UPDATED', now);
+    PropertiesService.getScriptProperties().setProperty('APP_DATA_CACHE', JSON.stringify(fullData));
+
+    ui.alert('💰 출산 혜택 반영 완료',
+      '• 갱신 일시: ' + now + '\n• 반영 혜택 수: ' + benefitsData.length + '개\n\n✅ 출산 혜택만 어플에 실시간 반영되었습니다!',
+      ui.ButtonSet.OK
+    );
+  } catch(err) {
+    ui.alert('❌ 출산 혜택 반영 중 오류 발생: ' + err.toString());
+  }
+}
+
+// (5) 🎯 맞춤 추천 가방 설정만 반영
+function syncRecommendationsOnly() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  try {
+    const rules = getRecommendationRules(ss);
+    const now = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm:ss");
+
+    PropertiesService.getScriptProperties().setProperty('RECOMMENDATION_CACHE', JSON.stringify(rules));
+    PropertiesService.getScriptProperties().setProperty('LAST_UPDATED', now);
+
+    ui.alert('🎯 맞춤 추천 가방 설정 반영 완료',
+      '• 갱신 일시: ' + now + '\n' +
+      '• 제왕절개 추천: ' + rules.cesarean.length + '개 품목\n' +
+      '• 자연분만 추천: ' + rules.natural.length + '개 품목\n' +
+      '• 조리원 이용 추천: ' + rules.careCenter.length + '개 품목\n' +
+      '• 자택 조리 추천: ' + rules.homeCare.length + '개 품목\n\n' +
+      '✅ 수집 통계 기반 맞춤 추천 가방 규칙이 어플에 실시간 배포되었습니다!',
+      ui.ButtonSet.OK
+    );
+  } catch(err) {
+    ui.alert('❌ 맞춤 추천 반영 중 오류 발생: ' + err.toString());
   }
 }
 
@@ -694,8 +838,8 @@ function fetchCoupangTop3(keyword, blacklist) {
 // ------------------------------------------------------------------------------
 // 9. 하이라이트 배경색 초기화 (※ 빨간색 셀은 100% 영구 보존!)
 // ------------------------------------------------------------------------------
-function clearPendingHighlights(ss) {
-  const sheetNames = ['출산가방 체크리스트', '육아용품 체크리스트'];
+function clearPendingHighlights(ss, targetSheetName) {
+  const sheetNames = targetSheetName ? [targetSheetName] : ['출산가방 체크리스트', '육아용품 체크리스트'];
   sheetNames.forEach(function(name) {
     const s = ss.getSheetByName(name);
     if (!s || s.getLastRow() < 2) return;
@@ -708,9 +852,9 @@ function clearPendingHighlights(ss) {
     for (let r = 0; r < backgrounds.length; r++) {
       for (let c = 0; c < backgrounds[r].length; c++) {
         const bg = String(backgrounds[r][c] || '').toLowerCase();
-        // 연노랑(#FFFDE7), 연초록(#E8F5E9), 연하늘(#E1F5FE)만 흰색으로 복구
+        // 연노랑(#FFFDE7), 연초록(#E8F5E9), 연하늘(#E1F5FE), 연보라(#EDE7F6)만 흰색으로 복구
         // 빨간색(isRedColor)은 절대 건드리지 않고 그대로 보존!
-        if (bg === '#fffde7' || bg === '#e8f5e9' || bg === '#e1f5fe') {
+        if (bg === '#fffde7' || bg === '#e8f5e9' || bg === '#e1f5fe' || bg === '#ede7f6') {
           backgrounds[r][c] = '#ffffff';
           modified = true;
         }
@@ -779,11 +923,24 @@ function doGet(e) {
     responseData = getAllSheetsData(ss);
   }
 
+  // 관리자가 반영한 최신 맞춤 추천 캐시 확인 (없으면 시트에서 직접 추출)
+  const recCached = PropertiesService.getScriptProperties().getProperty('RECOMMENDATION_CACHE');
+  let recommendations;
+  if (recCached) {
+    try {
+      recommendations = JSON.parse(recCached);
+    } catch(err) {
+      recommendations = getRecommendationRules(ss);
+    }
+  } else {
+    recommendations = getRecommendationRules(ss);
+  }
+
   const result = {
     status: "success",
     lastUpdated: lastUpdated,
     data: responseData,
-    recommendations: getRecommendationRules(ss) // 클라우드 동적 추천 가방 규칙 전달
+    recommendations: recommendations
   };
 
   return ContentService.createTextOutput(JSON.stringify(result))
@@ -791,7 +948,7 @@ function doGet(e) {
 }
 
 // ------------------------------------------------------------------------------
-// 12. [POST 엔드포인트] 사용자 활동 데이터 수집 (설문, 담은 품목 목록 등)
+// 12. [POST 엔드포인트] 사용자 활동 데이터 수집 (설문, 앱 종료 시 담은 품목 실시간 수집)
 // ------------------------------------------------------------------------------
 function doPost(e) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -807,6 +964,12 @@ function doPost(e) {
 
     if (postData) {
       logUserActivity(ss, postData);
+
+      // 산모들이 어플 종료 시 또는 가방 변경 시, 수집된 데이터를 바탕으로 🎯 맞춤_추천_설정 시트의 후보 품목 자동 갱신!
+      try {
+        analyzeAndUpdateRecommendations(ss, true);
+      } catch (err) {}
+
       result = { status: "success", message: "User activity recorded" };
     }
   } catch (err) {
@@ -969,9 +1132,126 @@ function showGuideDialog() {
     '• 맘카페 최근 수집: ' + momLog + '\n' +
     '• 쿠팡 최근 수집: ' + coupangLog + '\n\n' +
     '🛡️ 신기능 안내:\n' +
-    '1. 📊 사용자_활동_통계: 앱 사용자들이 설문하고 가방에 담은 데이터가 실시간 집계됩니다.\n' +
-    '2. 🎯 맞춤_추천_설정: 이 시트의 추천 품목을 수정하시면 첫 시작 맞춤 가방이 실시간으로 변경됩니다.\n' +
-    '3. 빨간색 셀: 자동 수집 시 절대 덮어쓰지 않고 영구 보존됩니다.',
+    '1. 📊 사용자_활동_통계: 앱 종료 시 산모들의 실제 가방 데이터가 실시간 자동 수집됩니다.\n' +
+    '2. 🎯 맞춤_추천_설정: 수집된 통계를 바탕으로 추천 가방 후보가 실시간 자동 갱신됩니다.\n' +
+    '3. 🚀 시트별 반영: 원하는 시트만 골라서 어플에 개별 반영하거나 전체 반영할 수 있습니다.\n' +
+    '4. 🛑 빨간색 셀: 자동 수집 시 절대 덮어쓰지 않고 영구 보존됩니다.',
     ui.ButtonSet.OK
   );
+}
+
+// ------------------------------------------------------------------------------
+// 15. [통계 분석 엔진] 사용자 활동 통계 기반 추천 가방 자동 계산 & 갱신
+// ------------------------------------------------------------------------------
+function analyzeAndUpdateRecommendationsManual() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  analyzeAndUpdateRecommendations(ss, false);
+}
+
+function analyzeAndUpdateRecommendations(ss, isSilent) {
+  if (!ss) ss = SpreadsheetApp.getActiveSpreadsheet();
+  const actSheet = ss.getSheetByName('📊 사용자_활동_통계');
+  if (!actSheet || actSheet.getLastRow() < 2) {
+    if (!isSilent) {
+      SpreadsheetApp.getUi().alert(
+        '📊 활동 데이터 부족',
+        '아직 [📊 사용자_활동_통계]에 기록된 산모님들의 활동 데이터가 없습니다.\n산모들이 어플을 사용하고 종료할 때 자동으로 데이터가 수집됩니다.',
+        SpreadsheetApp.getUi().ButtonSet.OK
+      );
+    }
+    return 0;
+  }
+
+  const lastRow = actSheet.getLastRow();
+  const values = actSheet.getRange(2, 1, lastRow - 1, 12).getValues();
+
+  const cesareanCounts = {};
+  const naturalCounts = {};
+  const careCenterCounts = {};
+  const homeCareCounts = {};
+  const commonCounts = {};
+
+  let validLogs = 0;
+
+  for (let i = 0; i < values.length; i++) {
+    const birthType = String(values[i][3] || '').trim();
+    const careCenter = String(values[i][4] || '').trim();
+    const bagIdsStr = String(values[i][9] || '').trim();
+    if (!bagIdsStr) continue;
+
+    validLogs++;
+    const ids = bagIdsStr.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+
+    ids.forEach(function(id) {
+      commonCounts[id] = (commonCounts[id] || 0) + 1;
+      if (birthType.indexOf('제왕절개') !== -1) {
+        cesareanCounts[id] = (cesareanCounts[id] || 0) + 1;
+      } else if (birthType.indexOf('자연분만') !== -1) {
+        naturalCounts[id] = (naturalCounts[id] || 0) + 1;
+      }
+
+      if (careCenter.indexOf('이용함') !== -1) {
+        careCenterCounts[id] = (careCenterCounts[id] || 0) + 1;
+      } else if (careCenter.indexOf('안') !== -1) {
+        homeCareCounts[id] = (homeCareCounts[id] || 0) + 1;
+      }
+    });
+  }
+
+  function getTopIds(counts, limit, fallback) {
+    const sorted = Object.keys(counts).sort(function(a, b) { return counts[b] - counts[a]; });
+    if (sorted.length >= 3) {
+      return sorted.slice(0, limit);
+    }
+    const combined = [];
+    sorted.forEach(function(x) { if (combined.indexOf(x) === -1) combined.push(x); });
+    fallback.forEach(function(x) { if (combined.indexOf(x) === -1) combined.push(x); });
+    return combined.slice(0, limit);
+  }
+
+  const defaultRules = {
+    cesarean: ['m_cloth_7', 'm_hyg_7', 'm_hyg_1', 'm_cloth_5', 'g_life_1'],
+    natural: ['m_hyg_8', 'm_hyg_3', 'm_hyg_2'],
+    careCenter: ['m_feed_1', 'm_feed_2', 'm_feed_4', 'm_feed_6', 'm_feed_7', 'm_cloth_6', 'b_care_3', 'b_care_4'],
+    homeCare: ['m_feed_1', 'm_feed_4', 'b_care_3'],
+    commonMaternity: ['m_cloth_1', 'm_cloth_2', 'm_cloth_3', 'm_cloth_4', 'm_cloth_8', 'm_sk_1', 'm_sk_2', 'm_sk_3'],
+    commonBaby: ['b_cloth_1', 'b_cloth_2', 'b_cloth_3', 'b_care_1', 'b_safe_1'],
+    commonGuardian: ['g_doc_1', 'g_doc_2', 'g_life_4']
+  };
+
+  const newRules = {
+    '제왕절개': getTopIds(cesareanCounts, 5, defaultRules.cesarean),
+    '자연분만': getTopIds(naturalCounts, 4, defaultRules.natural),
+    '조리원이용': getTopIds(careCenterCounts, 8, defaultRules.careCenter),
+    '자택조리': getTopIds(homeCareCounts, 4, defaultRules.homeCare),
+    '공통산모': getTopIds(commonCounts, 8, defaultRules.commonMaternity),
+    '공통신생아': defaultRules.commonBaby,
+    '공통보호자': defaultRules.commonGuardian
+  };
+
+  const recSheet = getOrCreateRecommendationSheet(ss);
+  const recValues = recSheet.getDataRange().getValues();
+
+  for (let r = 1; r < recValues.length; r++) {
+    const cat = String(recValues[r][0] || '').trim();
+    if (newRules[cat] && newRules[cat].length > 0) {
+      const cell = recSheet.getRange(r + 1, 2);
+      if (!isRedColor(cell.getBackground())) {
+        cell.setValue(newRules[cat].join(', '));
+        cell.setBackground('#EDE7F6'); // 연보라색 (통계 기반 자동 갱신 표시)
+      }
+    }
+  }
+
+  if (!isSilent) {
+    SpreadsheetApp.getUi().alert(
+      '📊 통계 분석 기반 추천 가방 갱신 완료',
+      '총 ' + validLogs + '건의 산모 활동 데이터를 분석하여 [🎯 맞춤_추천_설정] 시트의 품목을 최신 트렌드로 자동 갱신했습니다!\n\n' +
+      '※ 연보라색(#EDE7F6)으로 표시된 품목들을 검토하신 후,\n' +
+      '상단 메뉴에서 [🎯 5. 맞춤 추천 가방 설정만 반영] 또는 [🚀 전체 일괄 반영]을 누르시면 어플에 즉시 배포됩니다.',
+      SpreadsheetApp.getUi().ButtonSet.OK
+    );
+  }
+
+  return validLogs;
 }

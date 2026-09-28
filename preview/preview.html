@@ -150,6 +150,9 @@
     <button class="tool-btn" onclick="testSyncGoogleSheet()">
       ☁️ 구글 시트 실시간 동기화
     </button>
+    <button class="tool-btn" onclick="testExitDataCollection()">
+      📲 [테스트] 어플 종료 시 데이터 자동 수집
+    </button>
     <button class="tool-btn" onclick="refreshApp()">
       🔄 새로고침
     </button>
@@ -220,6 +223,21 @@
         const w = frame.contentWindow;
         if (w.syncFromGoogleSheet) {
           w.syncFromGoogleSheet(true);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // 어플 종료 시 자동 데이터 수집 테스트
+    function testExitDataCollection() {
+      try {
+        const w = frame.contentWindow;
+        if (w.sendUserExitAnalytics) {
+          w.sendUserExitAnalytics();
+          alert('📲 [테스트 전송 완료]\n\n어플 종료 이벤트(app_exit_sync)가 발생하여, 현재 가방에 담긴 품목들과 산모 설문 정보가 구글 스프레드시트로 전송되었습니다!\n\n구글 시트의 [📊 사용자_활동_통계] 탭을 확인해보세요.');
+        } else {
+          alert('어플 로딩 중입니다.');
         }
       } catch (e) {
         console.error(e);

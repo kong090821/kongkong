@@ -3610,6 +3610,52 @@
       }, 1000);
     }
 
+    // 어플 종료 및 백그라운드 전환 시 가방 데이터 실시간 자동 수집
+    let lastSentExitHash = "";
+    function sendUserExitAnalytics() {
+      if (!GOOGLE_SHEET_API_URL) return;
+      try {
+        const bagArray = Array.from(savedBagItemIds);
+        const babyArray = Array.from(savedBabySuppliesIds);
+        const curHash = `${bagArray.length}_${bagArray.join(',')}_${babyArray.length}`;
+        if (curHash === lastSentExitHash) return;
+        lastSentExitHash = curHash;
+
+        const payload = {
+          action: 'app_exit_sync',
+          userType: currentUser ? currentUser.type : (isGuest ? 'guest' : 'unknown'),
+          profile: userProfile,
+          savedBagItemIds: bagArray,
+          savedBabyItemIds: babyArray,
+          savedTodoIds: Array.from(savedTodoIds),
+          savedBenefitIds: Array.from(savedBenefitIds),
+          exitTime: new Date().toISOString()
+        };
+        const bodyStr = JSON.stringify(payload);
+
+        if (navigator.sendBeacon) {
+          const blob = new Blob([bodyStr], { type: 'text/plain;charset=utf-8' });
+          navigator.sendBeacon(GOOGLE_SHEET_API_URL, blob);
+        } else {
+          fetch(GOOGLE_SHEET_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: bodyStr,
+            keepalive: true
+          }).catch(() => {});
+        }
+      } catch (e) {}
+    }
+
+    // 모바일/웹 앱 종료 및 백그라운드 전환 이벤트 감지
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        sendUserExitAnalytics();
+      }
+    });
+    window.addEventListener('pagehide', sendUserExitAnalytics);
+    window.addEventListener('beforeunload', sendUserExitAnalytics);
+
     // 초기 실행 시 구글 시트 최신 데이터 백그라운드 동기화
     if (GOOGLE_SHEET_API_URL) {
       setTimeout(() => {

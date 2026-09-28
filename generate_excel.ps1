@@ -125,6 +125,46 @@ foreach ($item in $data.benefits) {
 }
 $sheet4.Columns.AutoFit()
 
+# 5. Sheet 5: Custom Recommendation Rules (🎯 맞춤_추천_설정)
+Write-Host "Creating Sheet 5: 맞춤_추천_설정..."
+$sheet5 = $workbook.Sheets.Add([System.Reflection.Missing]::Value, $sheet4)
+$sheet5.Name = "🎯 맞춤_추천_설정"
+$headers5 = @("구분", "추천 품목 ID 목록 (쉼표 구분)", "설명 및 포함 품목 안내")
+for ($c = 0; $c -lt $headers5.Length; $c++) {
+    $sheet5.Cells.Item(1, $c + 1) = $headers5[$c]
+}
+Format-HeaderRow $sheet5 $headers5.Length
+
+$recommendationRules = @(
+    @("제왕절개", "m_cloth_7, m_hyg_7, m_hyg_1, m_cloth_5, g_life_1", "산후복대, 흉터시트, 맘스안심팬티, 압박스타킹, 꺾인빨대 텀블러"),
+    @("자연분만", "m_hyg_8, m_hyg_3, m_hyg_2", "회음부방석, 마이비데, 오버나이트 생리대 세트"),
+    @("조리원이용", "m_feed_1, m_feed_2, m_feed_4, m_feed_6, m_feed_7, m_cloth_6, b_care_3, b_care_4", "수유패드, 저장팩, 유두크림, 유축깔때기, 손목보호대, 아기로션/영양제"),
+    @("자택조리", "m_feed_1, m_feed_4, b_care_3", "기본 수유패드, 유두보호크림, 아기로션"),
+    @("공통산모", "m_cloth_1, m_cloth_2, m_cloth_3, m_cloth_4, m_cloth_8, m_sk_1, m_sk_2, m_sk_3", "수유브라, 산모팬티, 무압박양말, 슬리퍼, 세면/화장품 세트"),
+    @("공통신생아", "b_cloth_1, b_cloth_2, b_cloth_3, b_care_1, b_safe_1", "배냇저고리, 속싸개, 겉싸개, 손수건, 카시트"),
+    @("공통보호자", "g_doc_1, g_doc_2, g_life_4", "산모수첩/신분증, 결제수단, 충전기/멀티탭")
+)
+
+$r = 2
+foreach ($rule in $recommendationRules) {
+    $sheet5.Cells.Item($r, 1) = [string]$rule[0]
+    $sheet5.Cells.Item($r, 2) = [string]$rule[1]
+    $sheet5.Cells.Item($r, 3) = [string]$rule[2]
+    $r++
+}
+$sheet5.Columns.AutoFit()
+
+# 6. Sheet 6: User Activity Statistics (📊 사용자_활동_통계)
+Write-Host "Creating Sheet 6: 사용자_활동_통계..."
+$sheet6 = $workbook.Sheets.Add([System.Reflection.Missing]::Value, $sheet5)
+$sheet6.Name = "📊 사용자_활동_통계"
+$headers6 = @("기록일시", "사용자구분", "이벤트", "분만법", "조리원여부", "아기성별", "지역", "출산예정일", "담은_출산가방수", "담은_출산가방_품목ID", "담은_육아용품수", "담은_육아용품_품목ID")
+for ($c = 0; $c -lt $headers6.Length; $c++) {
+    $sheet6.Cells.Item(1, $c + 1) = $headers6[$c]
+}
+Format-HeaderRow $sheet6 $headers6.Length
+$sheet6.Columns.AutoFit()
+
 # Save
 $outputFile = Join-Path $PSScriptRoot "출산준비물_통합데이터.xlsx"
 if (Test-Path $outputFile) {
