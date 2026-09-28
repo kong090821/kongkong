@@ -1,0 +1,57 @@
+
+Š
+9
+android*http://schemas.android.com/apk/res/androidmanifest"$packagecom.kongkong.maternitybag"K
+*http://schemas.android.com/apk/res/androidversionCode1"(›„„2:0"E
+*http://schemas.android.com/apk/res/androidversionName1.0.0(œ„„"R
+*http://schemas.android.com/apk/res/androidcompileSdkVersion37"(òŠ„2:0%"(platformBuildVersionCode37"2:0%"P
+*http://schemas.android.com/apk/res/androidcompileSdkVersionCodename17(óŠ„"(platformBuildVersionName17"2:0*
+
+     *o
+guses-permission"T
+*http://schemas.android.com/apk/res/androidnameandroid.permission.INTERNET(ƒ€„*
+    B*{
+suses-permission"`
+*http://schemas.android.com/apk/res/androidname'android.permission.ACCESS_NETWORK_STATE(ƒ€„*
+
+    N*å
+Üapplication"N
+*http://schemas.android.com/apk/res/androidallowBackuptrue"
+(€…„2:@"p
+*http://schemas.android.com/apk/res/androidicon@mipmap/ic_launcher"
+(‚€„2
+€€ˆømipmap/ic_launcher0"k
+*http://schemas.android.com/apk/res/androidlabel@string/app_name"
+(€„2
+€€Œøstring/app_name0"u
+*http://schemas.android.com/apk/res/android	roundIcon@mipmap/ic_launcher"
+(¬Š„2
+€€ˆømipmap/ic_launcher0"N
+*http://schemas.android.com/apk/res/androidsupportsRtltrue"
+(¯‡„2:@"u
+*http://schemas.android.com/apk/res/androidtheme@style/Theme.KongKong"
+(€€„2 
+€€østyle/Theme.KongKong0"W
+*http://schemas.android.com/apk/res/androidusesCleartextTraffictrue"
+(ì‰„2:@*	
+        ,*ä
+Ûactivity"r
+*http://schemas.android.com/apk/res/androidconfigChanges%orientation|screenSize|keyboardHidden"(Ÿ€„2:8 	"K
+*http://schemas.android.com/apk/res/androidexportedtrue"(€„2:@"F
+*http://schemas.android.com/apk/res/androidname.MainActivity(ƒ€„"^
+*http://schemas.android.com/apk/res/androidwindowSoftInputModeadjustResize"(«„„2:8*
+            7*»
+²intent-filter*
+                *e
+]action"S
+*http://schemas.android.com/apk/res/androidnameandroid.intent.action.MAIN(ƒ€„*
+                D*m
+ecategory"Y
+*http://schemas.android.com/apk/res/androidname android.intent.category.LAUNCHER(ƒ€„*
+            L*	
+        *
+    
+*
+
+
+

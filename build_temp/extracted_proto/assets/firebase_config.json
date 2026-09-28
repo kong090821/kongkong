@@ -1,0 +1,12 @@
+{
+  "apiKey": "AIzaSy_MOCK_KEY_FOR_LOCAL_AND_DEMO_TESTING",
+  "authDomain": "kongkong-babybag.firebaseapp.com",
+  "projectId": "kongkong-babybag",
+  "storageBucket": "kongkong-babybag.appspot.com",
+  "messagingSenderId": "109823487123",
+  "appId": "1:109823487123:web:78fa9c8213bfa76c123abc",
+  "firestoreBaseUrl": "https://firestore.googleapis.com/v1/projects/kongkong-babybag/databases/(default)/documents",
+  "enableOfflineLocalFallback": true,
+  "coupleSyncCollection": "couples",
+  "userSyncCollection": "users"
+}

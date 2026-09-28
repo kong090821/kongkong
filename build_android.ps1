@@ -93,9 +93,9 @@ Push-Location $aabDir
 & $jarTool -c -M -f $fullAabOut base
 Pop-Location
 
-Write-Host "Signing AAB with release keystore..."
+Write-Host "Signing AAB with release keystore (SHA256withRSA)..."
 $jarsigner = "$jbr\bin\jarsigner.exe"
-& $jarsigner -keystore "release-keystore.jks" -storepass "kongkong1234!" -keypass "kongkong1234!" $aabOut "kongkong"
+& $jarsigner -sigalg SHA256withRSA -digestalg SHA-256 -keystore "release-keystore.jks" -storepass "kongkong1234!" -keypass "kongkong1234!" $aabOut "kongkong"
 
 Write-Host "SUCCESS! Both signed APK and AAB have been generated in dist/:"
 Get-ChildItem "dist" | Select-Object Name, Length, LastWriteTime
