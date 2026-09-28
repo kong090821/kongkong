@@ -27,6 +27,7 @@ function onOpen() {
   const ui = SpreadsheetApp.getUi();
   ui.createMenu('🍼 꽁꽁 출산가방 관리')
     .addItem('🚀 [최종 반영] 최신 데이터를 어플에 즉시 반영하기', 'syncToApp')
+    .addItem('🎯 [시트 생성] 맞춤 추천 & 통계 시트 즉시 생성하기', 'initNewSheets')
     .addSeparator()
     .addItem('✨ [자동 완성] 신규 품목 데이터 및 추천 상품 채우기', 'autoFillMissingRowData')
     .addItem('☕ [수동 실행] 맘카페 언급 1위 데이터 지금 수집', 'updateMomCafeWeeklyData')
@@ -37,6 +38,18 @@ function onOpen() {
     .addToUi();
 }
 
+// [시트 즉시 생성 전용 함수]
+function initNewSheets() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  getOrCreateRecommendationSheet(ss);
+  getOrCreateActivitySheet(ss);
+  SpreadsheetApp.getUi().alert(
+    '🎯 시트 생성 완료',
+    '하단에 [🎯 맞춤_추천_설정]과 [📊 사용자_활동_통계] 시트가 성공적으로 준비되었습니다!\n\n이제 맞춤 추천 설정을 수정하시거나 사용자 통계를 확인하실 수 있습니다.',
+    SpreadsheetApp.getUi().ButtonSet.OK
+  );
+}
+
 // ------------------------------------------------------------------------------
 // 2. [어플 실시간 반영] '갱신' 클릭 시 어플용 최신 데이터 확정 및 배포
 // ------------------------------------------------------------------------------
@@ -45,6 +58,10 @@ function syncToApp() {
   const ui = SpreadsheetApp.getUi();
 
   try {
+    // 0. 맞춤 추천 설정 및 사용자 활동 통계 시트 자동 확인 및 생성
+    getOrCreateRecommendationSheet(ss);
+    getOrCreateActivitySheet(ss);
+
     // 1. 새로 추가된 행의 ID 누락 보정 및 빈 데이터 자동 완성
     const autoFilled = ensureRowIntegrity(ss);
 
@@ -800,8 +817,7 @@ function doPost(e) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-// 사용자 통계 시트(📊 사용자_활동_통계)에 실시간 행 추가
-function logUserActivity(ss, data) {
+function getOrCreateActivitySheet(ss) {
   let sheet = ss.getSheetByName('📊 사용자_활동_통계');
   if (!sheet) {
     sheet = ss.insertSheet('📊 사용자_활동_통계');
@@ -812,6 +828,12 @@ function logUserActivity(ss, data) {
     sheet.getRange(1, 1, 1, 12).setBackground('#FFE0B2').setFontWeight('bold');
     sheet.setFrozenRows(1);
   }
+  return sheet;
+}
+
+// 사용자 통계 시트(📊 사용자_활동_통계)에 실시간 행 추가
+function logUserActivity(ss, data) {
+  const sheet = getOrCreateActivitySheet(ss);
 
   const now = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm:ss");
   const prof = data.profile || {};
