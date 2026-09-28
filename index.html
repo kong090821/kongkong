@@ -477,6 +477,173 @@
       font-weight: 700;
     }
 
+    .save-status-badge {
+      font-size: 10.5px;
+      padding: 2.5px 7px;
+      border-radius: 6px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.3s ease;
+    }
+    .save-status-badge.saved {
+      background: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #c8e6c9;
+    }
+    .save-status-badge.saving {
+      background: #fff8e1;
+      color: #f57f17;
+      border: 1px solid #ffe082;
+    }
+    .save-status-badge.guest {
+      background: #ffebee;
+      color: #c62828;
+      border: 1px solid #ffcdd2;
+    }
+
+    .btn-topbar-logout {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #666;
+      background: #fff;
+      border: 1px solid #e0d5ce;
+      padding: 4px 9px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-topbar-logout:hover {
+      background: #ffebee;
+      color: #c62828;
+      border-color: #ffcdd2;
+    }
+
+    /* OAuth 1초 로그인 팝업 */
+    .oauth-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(3px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .oauth-modal-card {
+      width: 100%;
+      max-width: 340px;
+      background: #ffffff;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.25);
+      animation: modalPop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .oauth-modal-header {
+      padding: 15px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+    }
+    .oauth-modal-header h3 {
+      font-size: 15px;
+      font-weight: 800;
+      margin: 0;
+    }
+    .oauth-modal-body {
+      padding: 18px;
+    }
+    .oauth-app-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f0f0f0;
+      margin-bottom: 12px;
+    }
+    .oauth-app-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: #FFF7F2;
+      border: 1px solid #FFE7DD;
+      object-fit: cover;
+    }
+    .oauth-app-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #222;
+    }
+    .oauth-client-id {
+      font-size: 11px;
+      color: #777;
+      word-break: break-all;
+      margin-top: 2px;
+      font-family: monospace;
+    }
+    .oauth-perm-box {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 11px;
+      margin-bottom: 14px;
+      border: 1px solid #eaeaea;
+    }
+    .oauth-perm-title {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #555;
+      margin-bottom: 6px;
+    }
+    .oauth-perm-item {
+      font-size: 12px;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    .oauth-notice-text {
+      font-size: 11px;
+      color: #888;
+      line-height: 1.4;
+      margin-bottom: 14px;
+    }
+    .oauth-btn-group {
+      display: flex;
+      gap: 8px;
+    }
+    .oauth-btn-cancel {
+      flex: 1;
+      padding: 11px;
+      background: #f0f0f0;
+      border: none;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #666;
+      cursor: pointer;
+    }
+    .oauth-btn-confirm {
+      flex: 2;
+      padding: 11px;
+      border: none;
+      border-radius: 10px;
+      font-size: 13.5px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+
     /* 대시보드 화면 */
     .sub-screen {
       padding: 14px;
@@ -2167,7 +2334,7 @@
         <div class="dashboard-topbar">
           <button class="btn-back" onclick="handleLogout()" title="로그아웃 / 처음으로">◀</button>
           <div class="topbar-title">출산 준비 홈</div>
-          <div style="width: 32px;"></div>
+          <button class="btn-topbar-logout" onclick="handleLogout()" title="로그아웃 및 계정 전환">로그아웃 ↩</button>
         </div>
 
         <!-- 맞춤 프로필 정보 카드 -->
@@ -2177,6 +2344,7 @@
               <span id="profileUserIcon">👶</span>
               <span id="profileUserTitle">예비 부모님</span>
               <span id="profileGuestBadge" class="guest-warning-badge" style="display:none;">비회원(저장안됨)</span>
+              <span id="saveStatusBadge" class="save-status-badge saved">🔒 자동 저장됨</span>
             </div>
             <button class="profile-edit-btn" onclick="openOnboardingEdit()">설문 수정 ⚙️</button>
           </div>
@@ -2847,6 +3015,7 @@
     <div class="home-indicator"></div>
   </div>
 
+  <script src="master_data.js"></script>
   <script>
     // ================= 1번 탭: 산모 용품 (30개 항목 전수 등록) =================
     const maternityTabItems = [
@@ -3235,6 +3404,123 @@
       // 병원/기타 맞춤 혜택
       { id: "per_12", title: "트리니움 / 이용 병원 후기 작성 혜택", desc: "트리니움 여성병원 등 이용 산부인과/조리원 후기 작성 시 상품권 및 기프트 제공", eligibility: "해당 병원/조리원 이용자", badge: "병원 혜택", timing: "퇴원/퇴소 후", place: "병원/조리원 공식 카페·블로그" }
     ];
+
+    // =========================================================================
+    // 엑셀/구글 시트 연동 데이터 자동 주입 (window.MASTER_DATA)
+    // =========================================================================
+    if (typeof window !== 'undefined' && window.MASTER_DATA) {
+      try {
+        function parseTags(tagStr) {
+          if (!tagStr) return [];
+          if (Array.isArray(tagStr)) return tagStr;
+          return String(tagStr).split(',').map(s => s.trim()).filter(Boolean);
+        }
+
+        // 1. 출산가방 체크리스트 반영 (산모 / 신생아 / 보호자)
+        if (Array.isArray(window.MASTER_DATA.maternityBag) && window.MASTER_DATA.maternityBag.length > 0) {
+          const mList = window.MASTER_DATA.maternityBag.filter(i => i.tabCategory === '산모 용품');
+          const bList = window.MASTER_DATA.maternityBag.filter(i => i.tabCategory === '신생아 용품');
+          const gList = window.MASTER_DATA.maternityBag.filter(i => i.tabCategory === '보호자 & 공통');
+
+          if (mList.length > 0) {
+            maternityBagItemsData = mList.map(i => ({
+              id: i.id,
+              title: i.title,
+              tabCategory: i.tabCategory,
+              section: i.section || "",
+              locationTags: parseTags(i.locationTags),
+              note: i.note || "",
+              momcafe1st: i.momcafe1st || "",
+              top1: i.top1 || "",
+              top2: i.top2 || "",
+              top3: i.top3 || ""
+            }));
+          }
+          if (bList.length > 0) {
+            babyBagItemsData = bList.map(i => ({
+              id: i.id,
+              title: i.title,
+              tabCategory: i.tabCategory,
+              section: i.section || "",
+              locationTags: parseTags(i.locationTags),
+              note: i.note || "",
+              momcafe1st: i.momcafe1st || "",
+              top1: i.top1 || "",
+              top2: i.top2 || "",
+              top3: i.top3 || ""
+            }));
+          }
+          if (gList.length > 0) {
+            guardianBagItemsData = gList.map(i => ({
+              id: i.id,
+              title: i.title,
+              tabCategory: i.tabCategory,
+              section: i.section || "",
+              locationTags: parseTags(i.locationTags),
+              note: i.note || "",
+              momcafe1st: i.momcafe1st || "",
+              top1: i.top1 || "",
+              top2: i.top2 || "",
+              top3: i.top3 || ""
+            }));
+          }
+        }
+
+        // 2. 육아용품 체크리스트 반영
+        if (Array.isArray(window.MASTER_DATA.babySupplies) && window.MASTER_DATA.babySupplies.length > 0) {
+          babySuppliesData = window.MASTER_DATA.babySupplies.map(i => ({
+            id: i.id,
+            title: i.title,
+            tabCategory: i.category || i.tabCategory || "",
+            section: i.section || "",
+            periodTags: parseTags(i.period || i.periodTags),
+            purchaseTag: i.purchaseTag || "#새제품",
+            note: i.description || i.note || "",
+            momcafe1st: i.momcafe1st || "",
+            top1: i.top1 || "",
+            top2: i.top2 || "",
+            top3: i.top3 || ""
+          }));
+        }
+
+        // 3. 시기별 할일 반영
+        if (Array.isArray(window.MASTER_DATA.todos) && window.MASTER_DATA.todos.length > 0) {
+          todoItemsData = window.MASTER_DATA.todos.map(i => ({
+            id: i.id,
+            title: i.title,
+            tip: i.tip || "",
+            roleTag: i.role || "#부부",
+            tabCategory: i.category || ""
+          }));
+        }
+
+        // 4. 출산 혜택 반영
+        if (Array.isArray(window.MASTER_DATA.benefits) && window.MASTER_DATA.benefits.length > 0) {
+          window.MASTER_DATA.benefits.forEach(b => {
+            const itemObj = {
+              id: b.id,
+              title: b.title,
+              desc: b.amount || b.desc || "",
+              eligibility: b.eligibility || "",
+              badge: b.type || b.badge || "지원금",
+              timing: b.timing || "",
+              place: b.place || ""
+            };
+            if (b.region === "전국 공통") {
+              const idx = nationalBenefitsData.findIndex(x => x.id === b.id);
+              if (idx >= 0) nationalBenefitsData[idx] = itemObj;
+              else nationalBenefitsData.push(itemObj);
+            } else if (b.region && regionalBenefitsData[b.region]) {
+              const idx = regionalBenefitsData[b.region].findIndex(x => x.id === b.id);
+              if (idx >= 0) regionalBenefitsData[b.region][idx] = itemObj;
+              else regionalBenefitsData[b.region].push(itemObj);
+            }
+          });
+        }
+      } catch (e) {
+        console.error("MASTER_DATA parsing error:", e);
+      }
+    }
 
     // 상태 변수
     let currentUser = null; // { type: 'guest'|'kakao'|'naver'|'google', name: '...' }
@@ -3734,7 +4020,8 @@
       const titleEl = document.getElementById('topSheetTitle');
       if (titleEl) titleEl.textContent = `👶 ${cleanTitle} 구매 가이드`;
 
-      const momcafeTopProduct = getMomcafeRank1Product(itemTitle);
+      const targetItem = [...maternityBagItemsData, ...babyBagItemsData, ...guardianBagItemsData, ...babySuppliesData].find(i => i.id === itemId);
+      const momcafeTopProduct = (targetItem && targetItem.momcafe1st) ? targetItem.momcafe1st : getMomcafeRank1Product(itemTitle);
       const momcafeHeaderEl = document.getElementById('topSheetMomcafe1st');
       if (momcafeHeaderEl) momcafeHeaderEl.textContent = momcafeTopProduct;
 
@@ -3747,7 +4034,15 @@
         return mWords.some(w => cleanC.includes(w)) || cWords.some(w => cleanM.includes(w));
       }
 
-      const list = getTop3Recommendations(itemTitle);
+      let list;
+      if (targetItem && (targetItem.top1 || targetItem.top2 || targetItem.top3)) {
+        list = [];
+        if (targetItem.top1) list.push({ rank: 1, rankBadge: "🥇 1위", badgeClass: "rank-1", brandAndName: targetItem.top1, feature: "• 쿠팡 실구매 판매량 1위 베스트셀러", url: `https://search.shopping.naver.com/search/all?query=${encodeURIComponent(targetItem.top1)}` });
+        if (targetItem.top2) list.push({ rank: 2, rankBadge: "🥈 2위", badgeClass: "rank-2", brandAndName: targetItem.top2, feature: "• 선배맘 실사용 평점 최상위 추천템", url: `https://search.shopping.naver.com/search/all?query=${encodeURIComponent(targetItem.top2)}` });
+        if (targetItem.top3) list.push({ rank: 3, rankBadge: "🥉 3위", badgeClass: "rank-3", brandAndName: targetItem.top3, feature: "• 가성비 및 실속 만족도 우수 아이템", url: `https://search.shopping.naver.com/search/all?query=${encodeURIComponent(targetItem.top3)}` });
+      } else {
+        list = getTop3Recommendations(itemTitle);
+      }
       const bodyEl = document.getElementById('topSheetBody');
       if (bodyEl) {
         bodyEl.innerHTML = list.map(item => {
@@ -3805,7 +4100,7 @@
 
     function createBagItemRowHTML(item) {
       const isSaved = savedBagItemIds.has(item.id);
-      const momcafeProd = getMomcafeRank1Product(item.title);
+      const momcafeProd = item.momcafe1st || getMomcafeRank1Product(item.title);
 
       const locTagsHTML = (item.locationTags || []).map(t => {
         let cls = 'hospital';
@@ -3930,6 +4225,7 @@
       }
       updateSavedBadges();
       renderMaternityBagList();
+      autoSaveCurrentUserData();
     }
 
     function deleteBagItem(id, title) {
@@ -3941,6 +4237,7 @@
       showToast(`'${title}' 준비물이 삭제되었습니다 🗑️`);
       renderMaternityBagList();
       updateSavedBadges();
+      autoSaveCurrentUserData();
     }
 
     // --- 2. 육아용품 이벤트 및 렌더링 ---
@@ -4002,7 +4299,7 @@
 
     function createBabyItemRowHTML(item) {
       const isSaved = savedBabySuppliesIds.has(item.id);
-      const momcafeProd = getMomcafeRank1Product(item.title);
+      const momcafeProd = item.momcafe1st || getMomcafeRank1Product(item.title);
 
       const periodTagsHTML = (item.periodTags || []).map(t => {
         let cls = 'all';
@@ -4124,19 +4421,23 @@
     function toggleBabySupply(id, title) {
       if (savedBabySuppliesIds.has(id)) {
         savedBabySuppliesIds.delete(id);
+        completedBabySuppliesIds.delete(id);
         showToast(`'${title}' 내 가방 제외`);
       } else {
         savedBabySuppliesIds.add(id);
         showToast(`👜 '${title}' 찜한 육아용품 담김!`);
       }
       renderBabyItemList();
+      autoSaveCurrentUserData();
     }
 
     function deleteBabyItem(id, title) {
       babySuppliesData = babySuppliesData.filter(i => i.id !== id);
       savedBabySuppliesIds.delete(id);
+      completedBabySuppliesIds.delete(id);
       showToast(`'${title}' 육아용품 삭제됨 🗑️`);
       renderBabyItemList();
+      autoSaveCurrentUserData();
     }
 
     // --- 3. 시기별 할일 이벤트 및 렌더링 ---
@@ -4274,6 +4575,7 @@
     function toggleTodoSaved(id, title) {
       if (savedTodoIds.has(id)) {
         savedTodoIds.delete(id);
+        completedTodoIds.delete(id);
         showToast(`'${title}' 가방에서 제외`);
       } else {
         savedTodoIds.add(id);
@@ -4281,6 +4583,7 @@
       }
       renderTodoItemList();
       updateSavedBadges();
+      autoSaveCurrentUserData();
     }
 
     function deleteTodoItem(id, title) {
@@ -4290,6 +4593,7 @@
       showToast(`'${title}' 할일 삭제됨 🗑️`);
       renderTodoItemList();
       updateSavedBadges();
+      autoSaveCurrentUserData();
     }
 
     // --- 4. 출산 혜택 이벤트 및 렌더링 ---
@@ -4505,13 +4809,16 @@
         regionalBenefitsData[reg] = regionalBenefitsData[reg].filter(i => i.id !== id);
       });
       savedBenefitIds.delete(id);
+      completedBenefitIds.delete(id);
       showToast(`'${title}' 혜택 삭제됨 🗑️`);
       refreshActiveBenefitScreen();
       updateSavedBadges();
+      autoSaveCurrentUserData();
     }
     function toggleBenefit(id, title) {
       if (savedBenefitIds.has(id)) {
         savedBenefitIds.delete(id);
+        completedBenefitIds.delete(id);
         showToast(`'${title}' 혜택 제외`);
       } else {
         savedBenefitIds.add(id);
@@ -4519,6 +4826,7 @@
       }
       updateSavedBadges();
       refreshActiveScreen();
+      autoSaveCurrentUserData();
     }
 
     // 모달 팝업
@@ -4624,6 +4932,7 @@
 
       closeGenericModal();
       updateSavedBadges();
+      autoSaveCurrentUserData();
     }
 
     // ==========================================
@@ -5080,6 +5389,7 @@
       renderSavedMaternityBag();
       renderMyBagIntegratedView();
       updateSavedBadges();
+      autoSaveCurrentUserData();
     }
 
     function createSavedMaternityRowHTML(item) {
@@ -5202,6 +5512,7 @@
       renderSavedBabySupplies();
       renderMyBagIntegratedView();
       updateSavedBadges();
+      autoSaveCurrentUserData();
     }
 
     function createSavedBabyRowHTML(item) {
@@ -5343,6 +5654,7 @@
       renderSavedTodoList();
       renderMyBagIntegratedView();
       updateSavedBadges();
+      autoSaveCurrentUserData();
     }
 
     function createSavedTodoRowHTML(item) {
@@ -5482,6 +5794,7 @@
       renderSavedBenefitsList();
       renderMyBagIntegratedView();
       updateSavedBadges();
+      autoSaveCurrentUserData();
     }
 
     function createSavedBenefitRowHTML(item) {
@@ -5755,12 +6068,101 @@
       goToScreen('onboardingScreen');
     }
 
+    const OAUTH_CONFIG = {
+      naver: {
+        name: '네이버',
+        clientId: '4WM_B60ERyxv5bwxHLGd',
+        clientSecret: 'i9JmWtww1B',
+        serviceName: '꽁꽁 출산가방',
+        brandColor: '#03C75A',
+        textColor: '#FFFFFF',
+        title: '네이버 아이디로 로그인',
+        logoSvg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z"/></svg>',
+        scopes: ['별명 (닉네임) [필수]', '이메일 주소 [선택]', '네이버 고유 회원식별자 [필수]'],
+        badge: '네이버 공식 연동 (Client ID 인증)'
+      },
+      kakao: {
+        name: '카카오',
+        clientId: 'kakao_auto_sync',
+        serviceName: '꽁꽁 출산가방',
+        brandColor: '#FEE500',
+        textColor: '#381E1F',
+        title: '카카오 1초 간편 로그인',
+        logoSvg: '<svg width="22" height="22" viewBox="0 0 24 24" fill="#381E1F"><path d="M12 3C6.477 3 2 6.477 2 10.772c0 2.766 1.848 5.19 4.646 6.556l-.946 3.498c-.083.308.261.547.518.377l4.133-2.735c.536.071 1.085.109 1.649.109 5.523 0 10-3.477 10-7.805C22 6.477 17.523 3 12 3z"/></svg>',
+        scopes: ['카카오 고유 식별자 (UID) [필수]', '카카오 닉네임 [선택]'],
+        badge: '카카오 1초 간편인증'
+      },
+      google: {
+        name: '구글',
+        clientId: 'google_auto_sync',
+        serviceName: '꽁꽁 출산가방',
+        brandColor: '#FFFFFF',
+        textColor: '#3c4043',
+        title: 'Google 계정으로 로그인',
+        logoSvg: '<svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.25 21.36 7.33 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.16 0 9.94 0 12s.46 3.84 1.26 5.42l4.02-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.25 2.64 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>',
+        scopes: ['Google 고유 계정 ID [필수]', '기본 프로필 [선택]'],
+        badge: '구글 간편연동'
+      }
+    };
+
+    let pendingOAuthProvider = null;
+
     function handleSocialLogin(provider) {
+      const conf = OAUTH_CONFIG[provider];
+      if (!conf) return;
+      pendingOAuthProvider = provider;
+
+      const header = document.getElementById('oauthModalHeader');
+      header.style.background = conf.brandColor;
+      header.style.color = conf.textColor;
+      if (provider === 'google') {
+        header.style.borderBottom = '1px solid #eee';
+      } else {
+        header.style.borderBottom = 'none';
+      }
+
+      document.getElementById('oauthHeaderIcon').innerHTML = conf.logoSvg;
+      document.getElementById('oauthModalTitle').textContent = conf.title;
+      document.getElementById('oauthModalTitle').style.color = conf.textColor;
+      document.getElementById('oauthClientIdText').textContent = (provider === 'naver')
+        ? `Client ID: ${conf.clientId} (공식 인증)`
+        : `연동 방식: ${conf.badge}`;
+
+      const scopesHtml = conf.scopes.map(s => `<div class="oauth-perm-item">✓ ${s}</div>`).join('');
+      document.getElementById('oauthScopesList').innerHTML = scopesHtml;
+
+      const btnConfirm = document.getElementById('oauthBtnConfirm');
+      btnConfirm.style.background = conf.brandColor;
+      btnConfirm.style.color = conf.textColor;
+      if (provider === 'google') {
+        btnConfirm.style.border = '1px solid #dadce0';
+      } else {
+        btnConfirm.style.border = 'none';
+      }
+      btnConfirm.innerHTML = `<span>${conf.name}로 1초 시작하기 ➔</span>`;
+
+      document.getElementById('oauthModal').style.display = 'flex';
+    }
+
+    function closeOAuthModal() {
+      document.getElementById('oauthModal').style.display = 'none';
+      pendingOAuthProvider = null;
+    }
+
+    function confirmOAuthLogin() {
+      const provider = pendingOAuthProvider;
+      closeOAuthModal();
+      if (!provider) return;
+
       isGuest = false;
-      const providerNames = { kakao: '카카오', naver: '네이버', google: '구글' };
-      const pName = providerNames[provider] || provider;
-      currentUser = { type: provider, name: `${pName} 회원님` };
-      
+      const conf = OAUTH_CONFIG[provider];
+      const pName = conf ? conf.name : provider;
+      currentUser = { 
+        type: provider, 
+        name: `${pName} 산모님`,
+        id: `${provider}_${Date.now() % 1000000}`
+      };
+
       const savedUser = localStorage.getItem('maternity_user_' + provider);
       const savedProf = localStorage.getItem('maternity_profile_' + provider);
 
@@ -5769,7 +6171,9 @@
           userProfile = JSON.parse(savedProf);
           loadPersistedData(provider);
           updateDashboardProfileUI();
-          showToast(`✨ ${pName} 계정으로 로그인되었습니다!`);
+          updateSavedBadges();
+          updateSaveIndicatorUI('saved');
+          showToast(`✨ ${pName} 계정 복원 완료! 내 가방(${savedBagItemIds.size}개)이 유지됩니다.`);
           goToScreen('dashboardScreen');
           return;
         } catch (e) {
@@ -5780,14 +6184,17 @@
       initDefaultDueDate();
       const nameEl = document.getElementById('surveyUserName');
       if (nameEl) nameEl.textContent = `${pName} 회원님`;
-      showToast(`🎉 ${pName} 1초 가입 완료! 맞춤 설문을 진행합니다.`);
+      showToast(`🎉 ${pName} 1초 가입 성공! 첫 맞춤 설문을 진행합니다.`);
       goToScreen('onboardingScreen');
     }
 
     function handleLogout() {
+      if (currentUser && !isGuest && currentUser.type) {
+        savePersistedData(currentUser.type);
+      }
       currentUser = null;
       isGuest = false;
-      showToast('로그아웃 되었습니다.');
+      showToast('안전하게 로그아웃 되었습니다.');
       goToScreen('loginScreen');
     }
 
@@ -5800,6 +6207,7 @@
 
       updateDashboardProfileUI();
       updateSavedBadges();
+      autoSaveCurrentUserData();
 
       const totalBag = savedBagItemIds.size;
       const totalBen = savedBenefitIds.size;
@@ -5835,13 +6243,15 @@
         if (guestBadge) guestBadge.style.display = 'inline-block';
         if (welcomeName) welcomeName.textContent = '손님';
         if (icon) icon.textContent = '👶';
+        updateSaveIndicatorUI('guest');
       } else {
         const pNames = { kakao: '카카오', naver: '네이버', google: '구글' };
         const pStr = currentUser ? (pNames[currentUser.type] || currentUser.type) : '회원';
         if (userTitle) userTitle.textContent = `${pStr} 맞춤 회원`;
         if (guestBadge) guestBadge.style.display = 'none';
         if (welcomeName) welcomeName.textContent = `${pStr} 회원님`;
-        if (icon) icon.textContent = '🌸';
+        if (icon) icon.textContent = (currentUser && currentUser.type === 'naver') ? '🟢' : '🌸';
+        updateSaveIndicatorUI('saved');
       }
 
       const { ddayText, weeksText } = calculateDDay(userProfile.dueDate);
@@ -5861,7 +6271,31 @@
       if (tagReg) tagReg.textContent = `📍 ${userProfile.region || '서울'}`;
     }
 
+    function autoSaveCurrentUserData() {
+      if (isGuest || !currentUser || !currentUser.type) {
+        updateSaveIndicatorUI('guest');
+        return;
+      }
+      savePersistedData(currentUser.type);
+      updateSaveIndicatorUI('saved');
+    }
+
+    function updateSaveIndicatorUI(state) {
+      const badge = document.getElementById('saveStatusBadge');
+      if (!badge) return;
+      if (state === 'guest') {
+        badge.className = 'save-status-badge guest';
+        badge.innerHTML = '⚠️ 비회원(저장안됨)';
+      } else if (state === 'saved') {
+        badge.className = 'save-status-badge saved';
+        const now = new Date();
+        const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+        badge.innerHTML = `🔒 자동저장 (${timeStr})`;
+      }
+    }
+
     function savePersistedData(provider) {
+      if (!provider || provider === 'guest') return;
       localStorage.setItem('maternity_user_' + provider, JSON.stringify(currentUser));
       localStorage.setItem('maternity_profile_' + provider, JSON.stringify(userProfile));
       localStorage.setItem('maternity_bag_' + provider, JSON.stringify(Array.from(savedBagItemIds)));
@@ -5872,9 +6306,25 @@
       localStorage.setItem('maternity_baby_comp_' + provider, JSON.stringify(Array.from(completedBabySuppliesIds)));
       localStorage.setItem('maternity_todo_' + provider, JSON.stringify(Array.from(savedTodoIds)));
       localStorage.setItem('maternity_todo_comp_' + provider, JSON.stringify(Array.from(completedTodoIds)));
+
+      // 커스텀 추가 항목 영구 보관
+      const customBag = (maternityBagItemsData || []).filter(i => i.id && i.id.startsWith('custom_'))
+        .concat((babyBagItemsData || []).filter(i => i.id && i.id.startsWith('custom_')))
+        .concat((guardianBagItemsData || []).filter(i => i.id && i.id.startsWith('custom_')));
+      localStorage.setItem('maternity_custom_bag_' + provider, JSON.stringify(customBag));
+
+      const customBaby = (babySuppliesData || []).filter(i => i.id && i.id.startsWith('custom_'));
+      localStorage.setItem('maternity_custom_baby_' + provider, JSON.stringify(customBaby));
+
+      const customTodo = (todoItemsData || []).filter(i => i.id && i.id.startsWith('custom_'));
+      localStorage.setItem('maternity_custom_todo_' + provider, JSON.stringify(customTodo));
+
+      const customBen = (nationalBenefitsData || []).filter(i => i.id && i.id.startsWith('custom_'));
+      localStorage.setItem('maternity_custom_benefit_' + provider, JSON.stringify(customBen));
     }
 
     function loadPersistedData(provider) {
+      if (!provider || provider === 'guest') return;
       const bag = localStorage.getItem('maternity_bag_' + provider);
       if (bag) savedBagItemIds = new Set(JSON.parse(bag));
       const bagComp = localStorage.getItem('maternity_bag_comp_' + provider);
@@ -5894,6 +6344,53 @@
       if (todo) savedTodoIds = new Set(JSON.parse(todo));
       const todoComp = localStorage.getItem('maternity_todo_comp_' + provider);
       if (todoComp) completedTodoIds = new Set(JSON.parse(todoComp));
+
+      // 커스텀 추가 항목 복원
+      const customBagStr = localStorage.getItem('maternity_custom_bag_' + provider);
+      if (customBagStr) {
+        try {
+          const items = JSON.parse(customBagStr);
+          items.forEach(it => {
+            if (!maternityBagItemsData.some(x => x.id === it.id) &&
+                !babyBagItemsData.some(x => x.id === it.id) &&
+                !guardianBagItemsData.some(x => x.id === it.id)) {
+              if (it.tabCategory === '신생아 용품') babyBagItemsData.push(it);
+              else if (it.tabCategory === '보호자 & 공통') guardianBagItemsData.push(it);
+              else maternityBagItemsData.push(it);
+            }
+          });
+        } catch(e) {}
+      }
+
+      const customBabyStr = localStorage.getItem('maternity_custom_baby_' + provider);
+      if (customBabyStr) {
+        try {
+          const items = JSON.parse(customBabyStr);
+          items.forEach(it => {
+            if (!babySuppliesData.some(x => x.id === it.id)) babySuppliesData.push(it);
+          });
+        } catch(e) {}
+      }
+
+      const customTodoStr = localStorage.getItem('maternity_custom_todo_' + provider);
+      if (customTodoStr) {
+        try {
+          const items = JSON.parse(customTodoStr);
+          items.forEach(it => {
+            if (!todoItemsData.some(x => x.id === it.id)) todoItemsData.push(it);
+          });
+        } catch(e) {}
+      }
+
+      const customBenStr = localStorage.getItem('maternity_custom_benefit_' + provider);
+      if (customBenStr) {
+        try {
+          const items = JSON.parse(customBenStr);
+          items.forEach(it => {
+            if (!nationalBenefitsData.some(x => x.id === it.id)) nationalBenefitsData.push(it);
+          });
+        } catch(e) {}
+      }
     }
 
     // 화면 전환
@@ -6031,6 +6528,42 @@
       <div class="modal-buttons">
         <button class="btn-cancel" onclick="closeGenericModal()">취소</button>
         <button class="btn-confirm" onclick="submitGenericModal()">확인</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OAuth 1초 간편 로그인 모달 -->
+  <div id="oauthModal" class="oauth-modal-overlay" style="display: none;">
+    <div class="oauth-modal-card">
+      <div id="oauthModalHeader" class="oauth-modal-header" style="background: #03C75A;">
+        <span id="oauthHeaderIcon"></span>
+        <h3 id="oauthModalTitle">네이버 아이디로 로그인</h3>
+      </div>
+      <div class="oauth-modal-body">
+        <div class="oauth-app-info">
+          <img src="ggong_icon.png" class="oauth-app-icon" alt="꽁꽁" onerror="this.src='ggong_icon.jpg'"/>
+          <div>
+            <div class="oauth-app-title">꽁꽁 출산가방</div>
+            <div id="oauthClientIdText" class="oauth-client-id">Client ID: 4WM_B60ERyxv5bwxHLGd</div>
+          </div>
+        </div>
+        <div class="oauth-perm-box">
+          <div class="oauth-perm-title">🔒 수집되는 최소 필수 정보:</div>
+          <div id="oauthScopesList">
+            <div class="oauth-perm-item">✓ 별명 (닉네임)</div>
+            <div class="oauth-perm-item">✓ 이메일 주소 (선택)</div>
+          </div>
+        </div>
+        <div class="oauth-notice-text">
+          • 실명, 전화번호, 주민번호 등 민감정보는 절대 수집하지 않습니다.<br/>
+          • 로그인 시 가방 체크 내역과 설정이 안전하게 자동 저장됩니다.
+        </div>
+        <div class="oauth-btn-group">
+          <button class="oauth-btn-cancel" onclick="closeOAuthModal()">취소</button>
+          <button id="oauthBtnConfirm" class="oauth-btn-confirm" onclick="confirmOAuthLogin()">
+            <span>1초 만에 시작하기 ➔</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>

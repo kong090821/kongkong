@@ -5,10 +5,10 @@ plugins {
 }
 
 android {
-    namespace = "com.example.maternitybag"
+    namespace = "com.kongkong.babybag"
     compileSdk = 36
     defaultConfig {
-        applicationId = "com.example.maternitybag"
+        applicationId = "com.kongkong.babybag"
         minSdk = 24
         targetSdk = 36
         versionCode = 1

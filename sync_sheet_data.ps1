@@ -124,16 +124,37 @@ $masterData = @{
     benefits = $benefitList
 }
 
-# JSON 저장
+# 1. JSON 저장
 $jsonContent = $masterData | ConvertTo-Json -Depth 5
 [System.IO.File]::WriteAllText($jsonPath, $jsonContent, [System.Text.Encoding]::UTF8)
 
-Write-Host "[OK] data_export.json updated with latest sheet records!" -ForegroundColor Green
+# 2. 웹 프리뷰용 master_data.js 저장 (루트 및 preview)
+$jsContent = "window.MASTER_DATA = " + $jsonContent + ";"
+$jsPath = Join-Path $rootDir "master_data.js"
+[System.IO.File]::WriteAllText($jsPath, $jsContent, [System.Text.Encoding]::UTF8)
+
+$previewJsPath = Join-Path $rootDir "preview\master_data.js"
+if (Test-Path (Join-Path $rootDir "preview")) {
+    [System.IO.File]::WriteAllText($previewJsPath, $jsContent, [System.Text.Encoding]::UTF8)
+}
+
+# 3. 안드로이드 앱용 assets/data_export.json 저장
+$assetsDir = Join-Path $rootDir "app\src\main\assets"
+if (-not (Test-Path $assetsDir)) {
+    New-Item -ItemType Directory -Path $assetsDir -Force | Out-Null
+}
+$androidJsonPath = Join-Path $assetsDir "data_export.json"
+[System.IO.File]::WriteAllText($androidJsonPath, $jsonContent, [System.Text.Encoding]::UTF8)
+
+Write-Host "[OK] data_export.json & master_data.js updated!" -ForegroundColor Green
 Write-Host " - 출산가방: $($bagList.Count)개" -ForegroundColor Gray
 Write-Host " - 육아용품: $($babyList.Count)개" -ForegroundColor Gray
 Write-Host " - 시기별할일: $($todoList.Count)개" -ForegroundColor Gray
 Write-Host " - 출산혜택: $($benefitList.Count)개" -ForegroundColor Gray
+Write-Host " - 안드로이드 에셋: $androidJsonPath" -ForegroundColor Gray
+Write-Host " - 웹 프리뷰 데이터: $jsPath" -ForegroundColor Gray
 
 Write-Host "----------------------------------------------------------" -ForegroundColor DarkGray
-Write-Host "[SUCCESS] 시트 데이터가 프로젝트 데이터베이스에 동기화되었습니다!" -ForegroundColor Green
+Write-Host "[SUCCESS] 엑셀 데이터가 앱 및 프리뷰에 즉시 동기화되었습니다!" -ForegroundColor Green
+Write-Host "          (브라우저에서 새로고침 F5를 누르면 즉시 반영됩니다)" -ForegroundColor Cyan
 Write-Host "----------------------------------------------------------" -ForegroundColor DarkGray
