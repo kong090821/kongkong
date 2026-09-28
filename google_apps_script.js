@@ -744,7 +744,7 @@ function setupAllTriggers() {
 }
 
 // ------------------------------------------------------------------------------
-// 11. [REST API 엔드포인트] 앱 및 웹 프리뷰에서 최신 데이터 실시간 조회 (GET)
+// 11. [REST API 엔드포인트] 앱 및 웹 프리뷰에서 최신 데이터 & 맞춤 추천 실시간 조회 (GET)
 // ------------------------------------------------------------------------------
 function doGet(e) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -765,11 +765,136 @@ function doGet(e) {
   const result = {
     status: "success",
     lastUpdated: lastUpdated,
-    data: responseData
+    data: responseData,
+    recommendations: getRecommendationRules(ss) // 클라우드 동적 추천 가방 규칙 전달
   };
 
   return ContentService.createTextOutput(JSON.stringify(result))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ------------------------------------------------------------------------------
+// 12. [POST 엔드포인트] 사용자 활동 데이터 수집 (설문, 담은 품목 목록 등)
+// ------------------------------------------------------------------------------
+function doPost(e) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let result = { status: "error", message: "Invalid request" };
+
+  try {
+    let postData = null;
+    if (e && e.postData && e.postData.contents) {
+      postData = JSON.parse(e.postData.contents);
+    } else if (e && e.parameter) {
+      postData = e.parameter;
+    }
+
+    if (postData) {
+      logUserActivity(ss, postData);
+      result = { status: "success", message: "User activity recorded" };
+    }
+  } catch (err) {
+    result = { status: "error", message: err.toString() };
+  }
+
+  return ContentService.createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// 사용자 통계 시트(📊 사용자_활동_통계)에 실시간 행 추가
+function logUserActivity(ss, data) {
+  let sheet = ss.getSheetByName('📊 사용자_활동_통계');
+  if (!sheet) {
+    sheet = ss.insertSheet('📊 사용자_활동_통계');
+    sheet.appendRow([
+      '기록일시', '사용자구분', '이벤트', '분만법', '조리원여부', '아기성별', '지역', '출산예정일',
+      '담은_출산가방수', '담은_출산가방_품목ID', '담은_육아용품수', '담은_육아용품_품목ID'
+    ]);
+    sheet.getRange(1, 1, 1, 12).setBackground('#FFE0B2').setFontWeight('bold');
+    sheet.setFrozenRows(1);
+  }
+
+  const now = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm:ss");
+  const prof = data.profile || {};
+  const bagIds = Array.isArray(data.savedBagItemIds) ? data.savedBagItemIds.join(', ') : (data.savedBagItemIds || '');
+  const babyIds = Array.isArray(data.savedBabyItemIds) ? data.savedBabyItemIds.join(', ') : (data.savedBabyItemIds || '');
+  const bagCount = Array.isArray(data.savedBagItemIds) ? data.savedBagItemIds.length : 0;
+  const babyCount = Array.isArray(data.savedBabyItemIds) ? data.savedBabyItemIds.length : 0;
+
+  sheet.appendRow([
+    now,
+    data.userType || 'guest',
+    data.action || 'activity',
+    prof.birthType || '미지정',
+    prof.careCenter || '미지정',
+    prof.gender || '미지정',
+    prof.region || '미지정',
+    prof.dueDate || '',
+    bagCount,
+    bagIds,
+    babyCount,
+    babyIds
+  ]);
+}
+
+// ------------------------------------------------------------------------------
+// 13. [맞춤 추천 관리 엔진] 시트(🎯 맞춤_추천_설정) 기반 동적 가방 설정
+// ------------------------------------------------------------------------------
+function getOrCreateRecommendationSheet(ss) {
+  let sheet = ss.getSheetByName('🎯 맞춤_추천_설정');
+  if (!sheet) {
+    sheet = ss.insertSheet('🎯 맞춤_추천_설정');
+    sheet.appendRow(['구분', '추천 품목 ID 목록 (쉼표 구분)', '설명 및 안내']);
+    sheet.getRange(1, 1, 1, 3).setBackground('#E8EAF6').setFontWeight('bold');
+    sheet.setFrozenRows(1);
+
+    const defaultRules = [
+      ['제왕절개', 'm_cloth_7, m_hyg_7, m_hyg_1, m_cloth_5, g_life_1', '산후복대, 흉터시트, 맘스안심팬티, 압박스타킹, 꺾인빨대 텀블러'],
+      ['자연분만', 'm_hyg_8, m_hyg_3, m_hyg_2', '회음부방석, 마이비데, 오버나이트 생리대 세트'],
+      ['조리원이용', 'm_feed_1, m_feed_2, m_feed_4, m_feed_6, m_feed_7, m_cloth_6, b_care_3, b_care_4', '수유패드, 저장팩, 유두크림, 유축깔때기, 손목보호대, 아기로션/영양제'],
+      ['자택조리', 'm_feed_1, m_feed_4, b_care_3', '기본 수유패드, 유두보호크림, 아기로션'],
+      ['공통산모', 'm_cloth_1, m_cloth_2, m_cloth_3, m_cloth_4, m_cloth_8, m_sk_1, m_sk_2, m_sk_3', '수유브라, 산모팬티, 무압박양말, 슬리퍼, 세면/화장품 세트'],
+      ['공통신생아', 'b_cloth_1, b_cloth_2, b_cloth_3, b_care_1, b_safe_1', '배냇저고리, 속싸개, 겉싸개, 손수건, 카시트'],
+      ['공통보호자', 'g_doc_1, g_doc_2, g_life_4', '산모수첩/신분증, 결제수단, 충전기/멀티탭']
+    ];
+
+    defaultRules.forEach(function(r) {
+      sheet.appendRow(r);
+    });
+  }
+  return sheet;
+}
+
+function getRecommendationRules(ss) {
+  const sheet = getOrCreateRecommendationSheet(ss);
+  const values = sheet.getDataRange().getValues();
+  const rules = {
+    cesarean: [],
+    natural: [],
+    careCenter: [],
+    homeCare: [],
+    commonMaternity: [],
+    commonBaby: [],
+    commonGuardian: []
+  };
+
+  function parseIds(str) {
+    if (!str) return [];
+    return String(str).split(',').map(s => s.trim()).filter(Boolean);
+  }
+
+  for (let i = 1; i < values.length; i++) {
+    const type = String(values[i][0] || '').trim();
+    const ids = parseIds(values[i][1]);
+    if (type === '제왕절개') rules.cesarean = ids;
+    else if (type === '자연분만') rules.natural = ids;
+    else if (type === '조리원이용') rules.careCenter = ids;
+    else if (type === '자택조리') rules.homeCare = ids;
+    else if (type === '공통산모') rules.commonMaternity = ids;
+    else if (type === '공통신생아') rules.commonBaby = ids;
+    else if (type === '공통보호자') rules.commonGuardian = ids;
+  }
+
+  return rules;
 }
 
 // 4개 시트 전체 데이터 추출 (새 행 무결성 보정 포함)
@@ -808,7 +933,7 @@ function parseSheetToObjects(sheet, keys) {
 }
 
 // ------------------------------------------------------------------------------
-// 12. 가이드 대화상자 표시
+// 14. 가이드 대화상자 표시
 // ------------------------------------------------------------------------------
 function showGuideDialog() {
   const ui = SpreadsheetApp.getUi();
@@ -821,9 +946,10 @@ function showGuideDialog() {
     '• 마지막 어플 반영 시각: ' + lastUpdate + '\n\n' +
     '• 맘카페 최근 수집: ' + momLog + '\n' +
     '• 쿠팡 최근 수집: ' + coupangLog + '\n\n' +
-    '🛡️ 빨간색 셀 보호 기능 안내:\n' +
-    '셀 배경색을 빨간색으로 칠해두시면, 자동 수집 시 해당 셀의 값은 절대로 덮어쓰지 않고 영구 보존됩니다.\n' +
-    '또한 해당 상품명은 바이럴 광고 의심 품목으로 자동 등록되어 추천에서도 제외됩니다.',
+    '🛡️ 신기능 안내:\n' +
+    '1. 📊 사용자_활동_통계: 앱 사용자들이 설문하고 가방에 담은 데이터가 실시간 집계됩니다.\n' +
+    '2. 🎯 맞춤_추천_설정: 이 시트의 추천 품목을 수정하시면 첫 시작 맞춤 가방이 실시간으로 변경됩니다.\n' +
+    '3. 빨간색 셀: 자동 수집 시 절대 덮어쓰지 않고 영구 보존됩니다.',
     ui.ButtonSet.OK
   );
 }
