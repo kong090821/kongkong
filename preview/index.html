@@ -2346,7 +2346,10 @@
               <span id="profileGuestBadge" class="guest-warning-badge" style="display:none;">비회원(저장안됨)</span>
               <span id="saveStatusBadge" class="save-status-badge saved">🔒 자동 저장됨</span>
             </div>
-            <button class="profile-edit-btn" onclick="openOnboardingEdit()">설문 수정 ⚙️</button>
+            <div style="display: flex; gap: 4px;">
+              <button class="profile-edit-btn" onclick="syncFromGoogleSheet(true)" title="구글 스프레드시트 최신 데이터 실시간 동기화" style="background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; font-weight: 600;">☁️ 시트 갱신</button>
+              <button class="profile-edit-btn" onclick="openOnboardingEdit()">설문 수정 ⚙️</button>
+            </div>
           </div>
           <div class="profile-tags-row" id="profileTagsContainer">
             <span class="profile-tag" id="tagDueDate">D-Day</span>
@@ -3406,9 +3409,10 @@
     ];
 
     // =========================================================================
-    // 엑셀/구글 시트 연동 데이터 자동 주입 (window.MASTER_DATA)
+    // 엑셀 및 구글 스프레드시트 실시간 동기화 함수
     // =========================================================================
-    if (typeof window !== 'undefined' && window.MASTER_DATA) {
+    function applyDataPayload(data) {
+      if (!data) return;
       try {
         function parseTags(tagStr) {
           if (!tagStr) return [];
@@ -3417,10 +3421,10 @@
         }
 
         // 1. 출산가방 체크리스트 반영 (산모 / 신생아 / 보호자)
-        if (Array.isArray(window.MASTER_DATA.maternityBag) && window.MASTER_DATA.maternityBag.length > 0) {
-          const mList = window.MASTER_DATA.maternityBag.filter(i => i.tabCategory === '산모 용품');
-          const bList = window.MASTER_DATA.maternityBag.filter(i => i.tabCategory === '신생아 용품');
-          const gList = window.MASTER_DATA.maternityBag.filter(i => i.tabCategory === '보호자 & 공통');
+        if (Array.isArray(data.maternityBag) && data.maternityBag.length > 0) {
+          const mList = data.maternityBag.filter(i => i.tabCategory === '산모 용품');
+          const bList = data.maternityBag.filter(i => i.tabCategory === '신생아 용품');
+          const gList = data.maternityBag.filter(i => i.tabCategory === '보호자 & 공통');
 
           if (mList.length > 0) {
             maternityBagItemsData = mList.map(i => ({
@@ -3467,8 +3471,8 @@
         }
 
         // 2. 육아용품 체크리스트 반영
-        if (Array.isArray(window.MASTER_DATA.babySupplies) && window.MASTER_DATA.babySupplies.length > 0) {
-          babySuppliesData = window.MASTER_DATA.babySupplies.map(i => ({
+        if (Array.isArray(data.babySupplies) && data.babySupplies.length > 0) {
+          babySuppliesData = data.babySupplies.map(i => ({
             id: i.id,
             title: i.title,
             tabCategory: i.category || i.tabCategory || "",
@@ -3484,8 +3488,8 @@
         }
 
         // 3. 시기별 할일 반영
-        if (Array.isArray(window.MASTER_DATA.todos) && window.MASTER_DATA.todos.length > 0) {
-          todoItemsData = window.MASTER_DATA.todos.map(i => ({
+        if (Array.isArray(data.todos) && data.todos.length > 0) {
+          todoItemsData = data.todos.map(i => ({
             id: i.id,
             title: i.title,
             tip: i.tip || "",
@@ -3495,8 +3499,8 @@
         }
 
         // 4. 출산 혜택 반영
-        if (Array.isArray(window.MASTER_DATA.benefits) && window.MASTER_DATA.benefits.length > 0) {
-          window.MASTER_DATA.benefits.forEach(b => {
+        if (Array.isArray(data.benefits) && data.benefits.length > 0) {
+          data.benefits.forEach(b => {
             const itemObj = {
               id: b.id,
               title: b.title,
@@ -3518,7 +3522,50 @@
           });
         }
       } catch (e) {
-        console.error("MASTER_DATA parsing error:", e);
+        console.error("Data payload apply error:", e);
+      }
+    }
+
+    if (typeof window !== 'undefined' && window.MASTER_DATA) {
+      applyDataPayload(window.MASTER_DATA);
+    }
+
+    // 구글 스프레드시트 Apps Script 실시간 API
+    let GOOGLE_SHEET_API_URL = localStorage.getItem('maternity_google_sheet_api_url') || "";
+
+    async function syncFromGoogleSheet(isManual = false) {
+      if (!GOOGLE_SHEET_API_URL) {
+        if (isManual) {
+          const input = prompt("구글 스프레드시트 Apps Script [웹 앱 URL]을 입력해주세요:\n(예: https://script.google.com/macros/s/.../exec)", "");
+          if (input && input.trim().startsWith("https://script.google.com/")) {
+            GOOGLE_SHEET_API_URL = input.trim();
+            localStorage.setItem('maternity_google_sheet_api_url', GOOGLE_SHEET_API_URL);
+          } else {
+            return;
+          }
+        } else {
+          return;
+        }
+      }
+
+      try {
+        if (isManual) showToast("☁️ 구글 시트에서 최신 데이터 조회 중...");
+        const res = await fetch(GOOGLE_SHEET_API_URL);
+        const json = await res.json();
+        if (json && json.data) {
+          applyDataPayload(json.data);
+          const syncTime = json.lastUpdated || new Date().toLocaleTimeString();
+          localStorage.setItem('maternity_last_cloud_sync', syncTime);
+          showToast(`🎉 구글 시트 최신 데이터 반영 완료! (${syncTime})`);
+          if (currentScreen === 'maternityBagChecklistScreen') renderMaternityBagList();
+          else if (currentScreen === 'babyItemsChecklistScreen') renderBabyItemList();
+          else if (currentScreen === 'todoChecklistScreen') renderTodoList();
+          else if (currentScreen === 'benefitsChecklistScreen') renderNationalBenefitsList();
+          updateSavedBadges();
+        }
+      } catch (err) {
+        console.warn("구글 시트 연동 실패:", err);
+        if (isManual) showToast("⚠️ 구글 시트 데이터를 가져오지 못했습니다.");
       }
     }
 
