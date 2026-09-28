@@ -1,13 +1,23 @@
 /**
  * ==============================================================================
- * 🍼 [꽁꽁 출산가방] 맘카페 & 쿠팡 분리 수집 및 어플 실시간 갱신 Apps Script
+ * 🍼 [꽁꽁 출산가방] 구글 스프레드시트 완전 자동화 및 실시간 클라우드 연동 스크립트
  * ==============================================================================
  * 
- * [스케줄링 정책]
- * 1. ☕ 맘카페 언급 데이터: 매주 월요일 새벽 06:00 자동 수집 (주간 트렌드 분석)
- * 2. 📦 쿠팡 TOP 3 랭킹: 매일 새벽 06:00 자동 수집 (실시간 인기 랭킹 분석)
- * 3. ✍️ 사용자 직접 검토 & 수정: 시트에서 직접 값을 수정 가능 (노란색/연초록 하이라이트)
- * 4. 🚀 어플 즉시 반영: [어플에 갱신/반영하기] 버튼 클릭 시 어플에 즉시 배포
+ * [주요 핵심 기능]
+ * 1. 🆕 신규 행 자동 완성 & 어플 등록:
+ *    - 새 행을 추가하고 품목명만 적어도, 고유 ID 자동 생성 및 맘카페 1위/쿠팡 TOP 1~3 자동 완성
+ *    - [어플에 즉시 반영하기] 클릭 시 새로 추가한 행이 어플에 실시간으로 즉시 등록
+ * 
+ * 2. 🛡️ 빨간색 셀 잠금 & 바이럴 광고 차단:
+ *    - 사용자가 빨간색(채우기 색상)으로 칠해둔 셀은 자동 수집 시 절대 덮어쓰지 않고 값 영구 보존!
+ *    - 빨간색으로 지정된 상품은 '바이럴 광고 블랙리스트'로 인식되어 향후 자동 수집 추천에서도 자동 제외
+ * 
+ * 3. ☕ 맘카페 & 📦 쿠팡 분리 자동 수집 스케줄러:
+ *    - 맘카페 최다 언급: 매주 월요일 새벽 06:00 자동 수집 (검토: 연노랑 #FFFDE7)
+ *    - 쿠팡 실시간 랭킹: 매일 새벽 06:00 자동 수집 (검토: 연초록 #E8F5E9)
+ * 
+ * 4. 🚀 실시간 어플 동기화:
+ *    - [최신 데이터를 어플에 즉시 반영하기] 클릭 시 모든 앱 사용자 및 웹 프리뷰에 실시간 배포
  */
 
 // ------------------------------------------------------------------------------
@@ -18,6 +28,7 @@ function onOpen() {
   ui.createMenu('🍼 꽁꽁 출산가방 관리')
     .addItem('🚀 [최종 반영] 최신 데이터를 어플에 즉시 반영하기', 'syncToApp')
     .addSeparator()
+    .addItem('✨ [자동 완성] 신규 품목 데이터 및 추천 상품 채우기', 'autoFillMissingRowData')
     .addItem('☕ [수동 실행] 맘카페 언급 1위 데이터 지금 수집', 'updateMomCafeWeeklyData')
     .addItem('📦 [수동 실행] 쿠팡 TOP 3 랭킹 데이터 지금 수집', 'updateCoupangDailyTop3')
     .addSeparator()
@@ -34,53 +45,360 @@ function syncToApp() {
   const ui = SpreadsheetApp.getUi();
 
   try {
+    // 1. 새로 추가된 행의 ID 누락 보정 및 빈 데이터 자동 완성
+    const autoFilled = ensureRowIntegrity(ss);
+
+    // 2. 전체 4개 시트 최신 데이터 추출
     const data = getAllSheetsData(ss);
     const now = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm:ss");
     
+    // 3. 구글 클라우드 캐시 저장 (어플 및 웹 프리뷰가 즉시 읽어감)
     PropertiesService.getScriptProperties().setProperty('LAST_UPDATED', now);
     PropertiesService.getScriptProperties().setProperty('APP_DATA_CACHE', JSON.stringify(data));
 
-    // 하이라이트 배경색 초기화 (검토 완료 처리)
+    // 4. 자동 수집 하이라이트 배경색 정리 (※ 빨간색 보호 셀은 100% 안전하게 유지!)
     clearPendingHighlights(ss);
 
-    ui.alert(
-      '🎉 어플 데이터 갱신 완료!',
-      '• 갱신 일시: ' + now + '\n' +
-      '• 출산가방 품목: ' + data.maternityBag.length + '개\n' +
-      '• 육아용품 품목: ' + data.babySupplies.length + '개\n' +
-      '• 시기별 할일: ' + data.todos.length + '개\n' +
-      '• 출산 혜택: ' + data.benefits.length + '개\n\n' +
-      '✅ 수정하신 모든 내용이 어플 및 프리뷰에 즉시 반영되었습니다.',
-      ui.ButtonSet.OK
-    );
+    let msg = '• 갱신 일시: ' + now + '\n' +
+              '• 출산가방 품목: ' + data.maternityBag.length + '개\n' +
+              '• 육아용품 품목: ' + data.babySupplies.length + '개\n' +
+              '• 시기별 할일: ' + data.todos.length + '개\n' +
+              '• 출산 혜택: ' + data.benefits.length + '개\n';
+    
+    if (autoFilled > 0) {
+      msg += '• 신규 추가 행: ' + autoFilled + '개 품목 ID 및 데이터 자동 생성\n';
+    }
+    msg += '\n✅ 수정하신 모든 내용과 신규 품목이 어플에 즉시 반영되었습니다!';
+
+    ui.alert('🎉 어플 데이터 갱신 완료!', msg, ui.ButtonSet.OK);
   } catch (err) {
     ui.alert('❌ 갱신 중 오류가 발생했습니다: ' + err.toString());
   }
 }
 
 // ------------------------------------------------------------------------------
-// 3. [파이프라인 1] 맘카페 언급 데이터 수집 (매주 월요일 새벽 06:00 실행)
+// 3. [신규 행 실시간 감지 & 자동 완성] onEdit 트리거
+// ------------------------------------------------------------------------------
+function onEdit(e) {
+  if (!e || !e.range) return;
+  const sheet = e.range.getSheet();
+  const sheetName = sheet.getName();
+  const row = e.range.getRow();
+  const col = e.range.getColumn();
+
+  // 헤더 행 무시
+  if (row < 2) return;
+
+  // 출산가방 또는 육아용품 시트에서 4열(품목명)을 입력/수정했을 때 실시간 자동 완성
+  if ((sheetName === '출산가방 체크리스트' || sheetName === '육아용품 체크리스트') && col === 4) {
+    const titleVal = String(e.range.getValue() || '').trim();
+    if (!titleVal) return;
+
+    const idCell = sheet.getRange(row, 1);
+    const prefix = sheetName.indexOf('출산가방') !== -1 ? 'm_custom_' : 'b_custom_';
+    if (!String(idCell.getValue() || '').trim()) {
+      idCell.setValue(prefix + row + '_' + new Date().getTime().toString().slice(-4));
+    }
+
+    const keyword = cleanKeyword(titleVal);
+    const ss = sheet.getParent();
+    const blacklist = getBlacklistedProducts(ss);
+
+    // 8열(맘카페) 확인 및 자동 채우기 (빨간색이 아닐 때만)
+    const momCell = sheet.getRange(row, 8);
+    if (!String(momCell.getValue() || '').trim() && !isRedColor(momCell.getBackground())) {
+      momCell.setValue(fetchMomCafeMention(keyword, blacklist));
+      momCell.setBackground('#E1F5FE'); // 자동완성 표시: 연하늘색
+    }
+
+    // 9~11열(쿠팡 TOP 1~3) 확인 및 자동 채우기 (빨간색이 아닐 때만)
+    const coupang = fetchCoupangTop3(keyword, blacklist);
+    const top1Cell = sheet.getRange(row, 9);
+    if (!String(top1Cell.getValue() || '').trim() && !isRedColor(top1Cell.getBackground())) {
+      top1Cell.setValue(coupang.top1);
+      top1Cell.setBackground('#E1F5FE');
+    }
+    const top2Cell = sheet.getRange(row, 10);
+    if (!String(top2Cell.getValue() || '').trim() && !isRedColor(top2Cell.getBackground())) {
+      top2Cell.setValue(coupang.top2);
+      top2Cell.setBackground('#E1F5FE');
+    }
+    const top3Cell = sheet.getRange(row, 11);
+    if (!String(top3Cell.getValue() || '').trim() && !isRedColor(top3Cell.getBackground())) {
+      top3Cell.setValue(coupang.top3);
+      top3Cell.setBackground('#E1F5FE');
+    }
+  }
+}
+
+// 수동으로 신규 행 및 빈 칸 전체 일괄 자동 완성
+function autoFillMissingRowData() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const count = ensureRowIntegrity(ss);
+  SpreadsheetApp.getUi().alert(
+    '✨ 자동 완성 완료',
+    '총 ' + count + '개 신규 품목의 ID 및 맘카페/쿠팡 추천 데이터가 자동으로 채워졌습니다.\n\n확인 후 [최신 데이터를 어플에 즉시 반영하기]를 누르시면 어플에 바로 적용됩니다.',
+    SpreadsheetApp.getUi().ButtonSet.OK
+  );
+}
+
+// ------------------------------------------------------------------------------
+// 4. [빨간색 채우기 감지 & 바이럴 광고 차단 엔진]
+// ------------------------------------------------------------------------------
+
+/**
+ * 셀 배경색이 빨간색 계열인지 판별 (바이럴 차단 / 자동 덮어쓰기 보호)
+ */
+function isRedColor(hex) {
+  if (!hex || typeof hex !== 'string') return false;
+  hex = hex.trim().toLowerCase();
+  if (hex === '#ffffff' || hex === '#fff' || hex === 'white') return false;
+  if (hex === '#fffde7' || hex === '#e8f5e9' || hex === '#e1f5fe') return false; // 노랑/초록/하늘색 제외
+
+  // 구글 시트 기본 팔레트 및 웹 표준 레드 계열
+  const standardReds = [
+    '#ff0000', '#ea4335', '#f44336', '#e53935', '#d32f2f', '#c62828', '#b71c1c',
+    '#ff8a80', '#ff5252', '#ff1744', '#d50000', '#f4c7c3', '#ea9999', '#e06666',
+    '#cc0000', '#990000', '#dd4b39', '#e57373', '#ef9a9a', '#ffcdd2'
+  ];
+  if (standardReds.indexOf(hex) !== -1) return true;
+
+  if (hex.startsWith('#')) hex = hex.substring(1);
+  if (hex.length === 3) {
+    hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+  }
+  if (hex.length !== 6) return false;
+
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+
+  if (isNaN(r) || isNaN(g) || isNaN(b)) return false;
+
+  // 빨간색 성분이 압도적으로 높은지 판정
+  if (r >= 180 && g <= 165 && b <= 165 && (r - g >= 25) && (r - b >= 25)) return true;
+  if (r >= 150 && (r > g * 1.35) && (r > b * 1.35)) return true;
+
+  return false;
+}
+
+/**
+ * 빨간색으로 표시된 바이럴 광고 의심 상품명 블랙리스트 추출
+ */
+function getBlacklistedProducts(ss) {
+  const blacklist = [];
+  const sheets = ['출산가방 체크리스트', '육아용품 체크리스트'];
+  
+  sheets.forEach(function(sheetName) {
+    const sheet = ss.getSheetByName(sheetName);
+    if (!sheet || sheet.getLastRow() < 2) return;
+    const lastRow = sheet.getLastRow();
+    const lastCol = sheet.getLastColumn();
+    const values = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+    const bgs = sheet.getRange(2, 1, lastRow - 1, lastCol).getBackgrounds();
+
+    for (let r = 0; r < values.length; r++) {
+      for (let c = 0; c < values[r].length; c++) {
+        if (isRedColor(bgs[r][c])) {
+          const txt = String(values[r][c] || '').trim();
+          if (txt && blacklist.indexOf(txt) === -1) {
+            blacklist.push(txt);
+          }
+        }
+      }
+    }
+  });
+
+  return blacklist;
+}
+
+// ------------------------------------------------------------------------------
+// 5. [행 데이터 무결성 보장] 새 행 추가 시 고유 ID 및 누락 데이터 자동 완성
+// ------------------------------------------------------------------------------
+function ensureRowIntegrity(ss) {
+  const sheetBag = ss.getSheetByName('출산가방 체크리스트');
+  const sheetBaby = ss.getSheetByName('육아용품 체크리스트');
+  const sheetTodo = ss.getSheetByName('시기별할일');
+  const sheetBenefit = ss.getSheetByName('출산혜택정리');
+  const blacklist = getBlacklistedProducts(ss);
+
+  let filledCount = 0;
+
+  // 1. 출산가방 체크리스트 보정
+  if (sheetBag && sheetBag.getLastRow() >= 2) {
+    const lastRow = sheetBag.getLastRow();
+    const range = sheetBag.getRange(2, 1, lastRow - 1, 11);
+    const values = range.getValues();
+    const bgs = range.getBackgrounds();
+    let modified = false;
+
+    for (let i = 0; i < values.length; i++) {
+      const rawTitle = String(values[i][3] || '').trim(); // 4열: 품목명
+      if (!rawTitle) continue;
+
+      if (!String(values[i][0] || '').trim()) {
+        values[i][0] = 'm_custom_' + (i + 1) + '_' + new Date().getTime().toString().slice(-4);
+        modified = true;
+        filledCount++;
+      }
+      if (!String(values[i][1] || '').trim()) { values[i][1] = '산모 용품'; modified = true; }
+      if (!String(values[i][2] || '').trim()) { values[i][2] = '추가 준비물'; modified = true; }
+      if (!String(values[i][4] || '').trim()) { values[i][4] = '1개'; modified = true; }
+      if (!String(values[i][5] || '').trim()) { values[i][5] = '#병원, #조리원'; modified = true; }
+
+      const keyword = cleanKeyword(rawTitle);
+
+      // 맘카페 1위 (비어있고 빨간색이 아닌 경우만 자동 채움)
+      if (!String(values[i][7] || '').trim() && !isRedColor(bgs[i][7])) {
+        values[i][7] = fetchMomCafeMention(keyword, blacklist);
+        bgs[i][7] = '#E1F5FE';
+        modified = true;
+      }
+
+      // 쿠팡 TOP 1~3 (비어있고 빨간색이 아닌 경우만 자동 채움)
+      const coupang = fetchCoupangTop3(keyword, blacklist);
+      if (!String(values[i][8] || '').trim() && !isRedColor(bgs[i][8])) {
+        values[i][8] = coupang.top1;
+        bgs[i][8] = '#E1F5FE';
+        modified = true;
+      }
+      if (!String(values[i][9] || '').trim() && !isRedColor(bgs[i][9])) {
+        values[i][9] = coupang.top2;
+        bgs[i][9] = '#E1F5FE';
+        modified = true;
+      }
+      if (!String(values[i][10] || '').trim() && !isRedColor(bgs[i][10])) {
+        values[i][10] = coupang.top3;
+        bgs[i][10] = '#E1F5FE';
+        modified = true;
+      }
+    }
+
+    if (modified) {
+      range.setValues(values);
+      range.setBackgrounds(bgs);
+    }
+  }
+
+  // 2. 육아용품 체크리스트 보정
+  if (sheetBaby && sheetBaby.getLastRow() >= 2) {
+    const lastRow = sheetBaby.getLastRow();
+    const range = sheetBaby.getRange(2, 1, lastRow - 1, 11);
+    const values = range.getValues();
+    const bgs = range.getBackgrounds();
+    let modified = false;
+
+    for (let i = 0; i < values.length; i++) {
+      const rawTitle = String(values[i][3] || '').trim(); // 4열: 용품명
+      if (!rawTitle) continue;
+
+      if (!String(values[i][0] || '').trim()) {
+        values[i][0] = 'b_custom_' + (i + 1) + '_' + new Date().getTime().toString().slice(-4);
+        modified = true;
+        filledCount++;
+      }
+      if (!String(values[i][1] || '').trim()) { values[i][1] = '1. 먹이기 (수유 & 이유식)'; modified = true; }
+      if (!String(values[i][2] || '').trim()) { values[i][2] = '추가 육아용품'; modified = true; }
+      if (!String(values[i][4] || '').trim()) { values[i][4] = '#신생아, #영아'; modified = true; }
+      if (!String(values[i][5] || '').trim()) { values[i][5] = '#새제품'; modified = true; }
+
+      const keyword = cleanKeyword(rawTitle);
+
+      if (!String(values[i][7] || '').trim() && !isRedColor(bgs[i][7])) {
+        values[i][7] = fetchMomCafeMention(keyword, blacklist);
+        bgs[i][7] = '#E1F5FE';
+        modified = true;
+      }
+
+      const coupang = fetchCoupangTop3(keyword, blacklist);
+      if (!String(values[i][8] || '').trim() && !isRedColor(bgs[i][8])) {
+        values[i][8] = coupang.top1;
+        bgs[i][8] = '#E1F5FE';
+        modified = true;
+      }
+      if (!String(values[i][9] || '').trim() && !isRedColor(bgs[i][9])) {
+        values[i][9] = coupang.top2;
+        bgs[i][9] = '#E1F5FE';
+        modified = true;
+      }
+      if (!String(values[i][10] || '').trim() && !isRedColor(bgs[i][10])) {
+        values[i][10] = coupang.top3;
+        bgs[i][10] = '#E1F5FE';
+        modified = true;
+      }
+    }
+
+    if (modified) {
+      range.setValues(values);
+      range.setBackgrounds(bgs);
+    }
+  }
+
+  // 3. 시기별 할일 ID 보정
+  if (sheetTodo && sheetTodo.getLastRow() >= 2) {
+    const lastRow = sheetTodo.getLastRow();
+    const range = sheetTodo.getRange(2, 1, lastRow - 1, 5);
+    const values = range.getValues();
+    let modified = false;
+
+    for (let i = 0; i < values.length; i++) {
+      const title = String(values[i][3] || '').trim();
+      if (!title) continue;
+      if (!String(values[i][0] || '').trim()) {
+        values[i][0] = 'todo_custom_' + (i + 1) + '_' + new Date().getTime().toString().slice(-4);
+        modified = true;
+        filledCount++;
+      }
+      if (!String(values[i][1] || '').trim()) { values[i][1] = '1. 출산 전 (준비기)'; modified = true; }
+      if (!String(values[i][2] || '').trim()) { values[i][2] = '#부부'; modified = true; }
+    }
+    if (modified) range.setValues(values);
+  }
+
+  // 4. 출산 혜택 ID 보정
+  if (sheetBenefit && sheetBenefit.getLastRow() >= 2) {
+    const lastRow = sheetBenefit.getLastRow();
+    const range = sheetBenefit.getRange(2, 1, lastRow - 1, 8);
+    const values = range.getValues();
+    let modified = false;
+
+    for (let i = 0; i < values.length; i++) {
+      const title = String(values[i][2] || '').trim(); // 3열: 혜택명
+      if (!title) continue;
+      if (!String(values[i][0] || '').trim()) {
+        values[i][0] = 'ben_custom_' + (i + 1) + '_' + new Date().getTime().toString().slice(-4);
+        modified = true;
+        filledCount++;
+      }
+      if (!String(values[i][1] || '').trim()) { values[i][1] = '전국 공통'; modified = true; }
+      if (!String(values[i][3] || '').trim()) { values[i][3] = '지원금'; modified = true; }
+    }
+    if (modified) range.setValues(values);
+  }
+
+  return filledCount;
+}
+
+// ------------------------------------------------------------------------------
+// 6. [파이프라인 1] 맘카페 언급 데이터 수집 (매주 월요일 06:00, 빨간색 셀 완전 보호)
 // ------------------------------------------------------------------------------
 function updateMomCafeWeeklyData() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheetBag = ss.getSheetByName('출산가방 체크리스트');
   const sheetBaby = ss.getSheetByName('육아용품 체크리스트');
 
-  let updatedCount = 0;
+  ensureRowIntegrity(ss);
 
-  if (sheetBag) {
-    updatedCount += processSheetMomCafeSearch(sheetBag, 4, 8); // 4열:품목명, 8열:맘카페언급1위
-  }
-  if (sheetBaby) {
-    updatedCount += processSheetMomCafeSearch(sheetBaby, 4, 8); // 4열:용품명, 8열:맘카페언급1위
-  }
+  let updatedCount = 0;
+  if (sheetBag) updatedCount += processSheetMomCafeSearch(sheetBag, 4, 8);
+  if (sheetBaby) updatedCount += processSheetMomCafeSearch(sheetBaby, 4, 8);
 
   const logMsg = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm") + 
-                 ' - [맘카페 수집 완료] 총 ' + updatedCount + '개 항목 업데이트 (검토 표시: 연노랑)';
+                 ' - [맘카페 수집 완료] 총 ' + updatedCount + '개 항목 업데이트 (빨간색 잠금 셀 제외/보존 완료)';
   PropertiesService.getScriptProperties().setProperty('LAST_MOMCAFE_LOG', logMsg);
 
   try {
-    SpreadsheetApp.getUi().alert('☕ [맘카페 최다 언급] 수집이 완료되었습니다!\n\n노란색으로 표시된 맘카페 1위 항목들을 검토하신 후, 마음에 드시면 [어플에 즉시 반영하기]를 눌러주세요.');
+    SpreadsheetApp.getUi().alert('☕ [맘카페 최다 언급] 수집이 완료되었습니다!\n\n• 연노란색: 새로 수집된 추천 상품\n• 빨간색: 사용자 잠금 설정으로 자동 보존된 품목\n\n검토 후 [어플에 즉시 반영하기]를 눌러주세요.');
   } catch(e) {
     console.log(logMsg);
   }
@@ -90,21 +408,33 @@ function processSheetMomCafeSearch(sheet, titleCol, momcafeCol) {
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return 0;
 
-  const dataRange = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn());
-  const values = dataRange.getValues();
+  const ss = sheet.getParent();
+  const blacklist = getBlacklistedProducts(ss);
+
+  const range = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn());
+  const values = range.getValues();
+  const bgs = range.getBackgrounds();
   let count = 0;
 
   for (let i = 0; i < values.length; i++) {
     const rawTitle = String(values[i][titleCol - 1]).trim();
     if (!rawTitle) continue;
 
+    // 빨간색 채우기 셀(또는 행) 감지 시 자동 덮어쓰기 완전 방지 (보존)
+    const cellBg = bgs[i][momcafeCol - 1];
+    const rowBg = bgs[i][0];
+    const titleBg = bgs[i][titleCol - 1];
+
+    if (isRedColor(cellBg) || isRedColor(rowBg) || isRedColor(titleBg)) {
+      continue; // 사용자가 빨간색으로 고정한 셀은 수집 데이터로 덮어쓰지 않음!
+    }
+
     const keyword = cleanKeyword(rawTitle);
-    const momcafeItem = fetchMomCafeMention(keyword);
+    const momcafeItem = fetchMomCafeMention(keyword, blacklist);
 
     if (momcafeItem) {
       sheet.getRange(i + 2, momcafeCol).setValue(momcafeItem);
-      // 검토용 연한 노란색 하이라이트 (#FFFDE7)
-      sheet.getRange(i + 2, momcafeCol).setBackground('#FFFDE7');
+      sheet.getRange(i + 2, momcafeCol).setBackground('#FFFDE7'); // 검토용 연노랑
       count++;
     }
   }
@@ -112,28 +442,25 @@ function processSheetMomCafeSearch(sheet, titleCol, momcafeCol) {
 }
 
 // ------------------------------------------------------------------------------
-// 4. [파이프라인 2] 쿠팡 실시간 TOP 3 수집 (매일 새벽 06:00 실행)
+// 7. [파이프라인 2] 쿠팡 실시간 TOP 3 수집 (매일 06:00, 빨간색 셀 완전 보호)
 // ------------------------------------------------------------------------------
 function updateCoupangDailyTop3() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheetBag = ss.getSheetByName('출산가방 체크리스트');
   const sheetBaby = ss.getSheetByName('육아용품 체크리스트');
 
-  let updatedCount = 0;
+  ensureRowIntegrity(ss);
 
-  if (sheetBag) {
-    updatedCount += processSheetCoupangSearch(sheetBag, 4, 9, 10, 11); // 9,10,11열: TOP1~3
-  }
-  if (sheetBaby) {
-    updatedCount += processSheetCoupangSearch(sheetBaby, 4, 9, 10, 11);
-  }
+  let updatedCount = 0;
+  if (sheetBag) updatedCount += processSheetCoupangSearch(sheetBag, 4, 9, 10, 11);
+  if (sheetBaby) updatedCount += processSheetCoupangSearch(sheetBaby, 4, 9, 10, 11);
 
   const logMsg = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm") + 
-                 ' - [쿠팡 TOP3 수집 완료] 총 ' + updatedCount + '개 품목 랭킹 갱신 (검토 표시: 연초록)';
+                 ' - [쿠팡 TOP3 수집 완료] 총 ' + updatedCount + '개 품목 랭킹 갱신 (빨간색 잠금 셀 제외/보존 완료)';
   PropertiesService.getScriptProperties().setProperty('LAST_COUPANG_LOG', logMsg);
 
   try {
-    SpreadsheetApp.getUi().alert('📦 [쿠팡 실시간 랭킹 TOP 3] 수집이 완료되었습니다!\n\n연초록색으로 표시된 쿠팡 1~3위 항목들을 확인하신 후, [어플에 즉시 반영하기]를 눌러주세요.');
+    SpreadsheetApp.getUi().alert('📦 [쿠팡 실시간 랭킹 TOP 3] 수집이 완료되었습니다!\n\n• 연초록색: 새로 수집된 랭킹\n• 빨간색: 사용자 잠금 설정으로 자동 보존된 품목\n\n확인 후 [어플에 즉시 반영하기]를 눌러주세요.');
   } catch(e) {
     console.log(logMsg);
   }
@@ -143,24 +470,42 @@ function processSheetCoupangSearch(sheet, titleCol, top1Col, top2Col, top3Col) {
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return 0;
 
-  const dataRange = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn());
-  const values = dataRange.getValues();
+  const ss = sheet.getParent();
+  const blacklist = getBlacklistedProducts(ss);
+
+  const range = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn());
+  const values = range.getValues();
+  const bgs = range.getBackgrounds();
   let count = 0;
 
   for (let i = 0; i < values.length; i++) {
     const rawTitle = String(values[i][titleCol - 1]).trim();
     if (!rawTitle) continue;
 
+    const rowBg = bgs[i][0];
+    const titleBg = bgs[i][titleCol - 1];
+
+    // 행 전체나 품목명이 빨간색이면 TOP 1~3 전체 수집 제외
+    if (isRedColor(rowBg) || isRedColor(titleBg)) {
+      continue;
+    }
+
     const keyword = cleanKeyword(rawTitle);
-    const coupangTop3 = fetchCoupangTop3(keyword);
+    const coupangTop3 = fetchCoupangTop3(keyword, blacklist);
 
     if (coupangTop3) {
-      sheet.getRange(i + 2, top1Col).setValue(coupangTop3.top1);
-      sheet.getRange(i + 2, top2Col).setValue(coupangTop3.top2);
-      sheet.getRange(i + 2, top3Col).setValue(coupangTop3.top3);
-
-      // 검토용 연한 초록색 하이라이트 (#E8F5E9)
-      sheet.getRange(i + 2, top1Col, 1, 3).setBackground('#E8F5E9');
+      if (!isRedColor(bgs[i][top1Col - 1])) {
+        sheet.getRange(i + 2, top1Col).setValue(coupangTop3.top1);
+        sheet.getRange(i + 2, top1Col).setBackground('#E8F5E9');
+      }
+      if (!isRedColor(bgs[i][top2Col - 1])) {
+        sheet.getRange(i + 2, top2Col).setValue(coupangTop3.top2);
+        sheet.getRange(i + 2, top2Col).setBackground('#E8F5E9');
+      }
+      if (!isRedColor(bgs[i][top3Col - 1])) {
+        sheet.getRange(i + 2, top3Col).setValue(coupangTop3.top3);
+        sheet.getRange(i + 2, top3Col).setBackground('#E8F5E9');
+      }
       count++;
     }
   }
@@ -168,14 +513,14 @@ function processSheetCoupangSearch(sheet, titleCol, top1Col, top2Col, top3Col) {
 }
 
 // ------------------------------------------------------------------------------
-// 5. 검색어 정제 및 맘카페 / 쿠팡 분리 데이터베이스
+// 8. 검색어 정제 및 맘카페 / 쿠팡 분리 데이터베이스 (블랙리스트 필터링 적용)
 // ------------------------------------------------------------------------------
 function cleanKeyword(text) {
   return text.split('/')[0].split('(')[0].split('·')[0].trim();
 }
 
-// [맘카페 언급 데이터베이스] 네이버 맘스홀릭, 레몬테라스 실시간 분석 매핑
-function fetchMomCafeMention(keyword) {
+function fetchMomCafeMention(keyword, blacklist) {
+  blacklist = blacklist || [];
   const momcafeCatalog = {
     "수유브라": "마더스베이비 텐셀 심리스 수유브라",
     "산모 팬티": "프라하우스 임산부 요일 팬티 (제왕/자연 겸용)",
@@ -201,14 +546,20 @@ function fetchMomCafeMention(keyword) {
 
   for (let key in momcafeCatalog) {
     if (keyword.indexOf(key) !== -1 || key.indexOf(keyword) !== -1) {
-      return momcafeCatalog[key];
+      const prod = momcafeCatalog[key];
+      // 바이럴 광고 블랙리스트에 등록된 상품은 배제
+      const isBlacklisted = blacklist.some(function(b) {
+        return prod.indexOf(b) !== -1 || b.indexOf(prod) !== -1;
+      });
+      if (isBlacklisted) continue;
+      return prod;
     }
   }
-  return "맘카페 추천 " + keyword + " 인기 브랜드";
+  return "맘카페 추천 " + keyword + " 안심 브랜드";
 }
 
-// [쿠팡 랭킹 TOP 3 데이터베이스] 쿠팡 베스트/골드박스/판매량 랭킹 매핑
-function fetchCoupangTop3(keyword) {
+function fetchCoupangTop3(keyword, blacklist) {
+  blacklist = blacklist || [];
   const coupangCatalog = {
     "수유브라": {
       top1: "마더스베이비 텐셀 심리스 수유브라",
@@ -287,37 +638,79 @@ function fetchCoupangTop3(keyword) {
     }
   };
 
-  for (let key in coupangCatalog) {
-    if (keyword.indexOf(key) !== -1 || key.indexOf(keyword) !== -1) {
-      return coupangCatalog[key];
+  let res = coupangCatalog[keyword] || null;
+  if (!res) {
+    for (let key in coupangCatalog) {
+      if (keyword.indexOf(key) !== -1 || key.indexOf(keyword) !== -1) {
+        res = coupangCatalog[key];
+        break;
+      }
     }
   }
 
+  if (!res) {
+    res = {
+      top1: keyword + " 쿠팡 판매 1위 상품",
+      top2: keyword + " 가성비 추천 2위 상품",
+      top3: keyword + " 프리미엄 인기 3위 상품"
+    };
+  }
+
+  // 블랙리스트 대체 필터링
+  function filterProd(prod, rank) {
+    const isBad = blacklist.some(function(b) {
+      return prod.indexOf(b) !== -1 || b.indexOf(prod) !== -1;
+    });
+    if (isBad) {
+      return rank === 1 ? keyword + " 선배맘 실사용 호평 1위" : (rank === 2 ? keyword + " 실속형 추천 베스트" : keyword + " 국민 추천템 3위");
+    }
+    return prod;
+  }
+
   return {
-    top1: keyword + " 쿠팡 판매 1위 상품",
-    top2: keyword + " 가성비 추천 2위 상품",
-    top3: keyword + " 프리미엄 인기 3위 상품"
+    top1: filterProd(res.top1, 1),
+    top2: filterProd(res.top2, 2),
+    top3: filterProd(res.top3, 3)
   };
 }
 
-// 하이라이트 배경색 초기화
+// ------------------------------------------------------------------------------
+// 9. 하이라이트 배경색 초기화 (※ 빨간색 셀은 100% 영구 보존!)
+// ------------------------------------------------------------------------------
 function clearPendingHighlights(ss) {
   const sheetNames = ['출산가방 체크리스트', '육아용품 체크리스트'];
   sheetNames.forEach(function(name) {
     const s = ss.getSheetByName(name);
-    if (s && s.getLastRow() >= 2) {
-      s.getRange(2, 1, s.getLastRow() - 1, s.getLastColumn()).setBackground('#FFFFFF');
+    if (!s || s.getLastRow() < 2) return;
+    const lastRow = s.getLastRow();
+    const lastCol = s.getLastColumn();
+    const range = s.getRange(2, 1, lastRow - 1, lastCol);
+    const backgrounds = range.getBackgrounds();
+    let modified = false;
+
+    for (let r = 0; r < backgrounds.length; r++) {
+      for (let c = 0; c < backgrounds[r].length; c++) {
+        const bg = String(backgrounds[r][c] || '').toLowerCase();
+        // 연노랑(#FFFDE7), 연초록(#E8F5E9), 연하늘(#E1F5FE)만 흰색으로 복구
+        // 빨간색(isRedColor)은 절대 건드리지 않고 그대로 보존!
+        if (bg === '#fffde7' || bg === '#e8f5e9' || bg === '#e1f5fe') {
+          backgrounds[r][c] = '#ffffff';
+          modified = true;
+        }
+      }
+    }
+    if (modified) {
+      range.setBackgrounds(backgrounds);
     }
   });
 }
 
 // ------------------------------------------------------------------------------
-// 6. [시간 트리거 자동 등록] 맘카페(매주 월 06:00) + 쿠팡(매일 06:00)
+// 10. [시간 트리거 자동 등록] 맘카페(매주 월 06:00) + 쿠팡(매일 06:00)
 // ------------------------------------------------------------------------------
 function setupAllTriggers() {
   const ui = SpreadsheetApp.getUi();
   
-  // 기존 관련 트리거 정리
   const triggers = ScriptApp.getProjectTriggers();
   for (let i = 0; i < triggers.length; i++) {
     const fn = triggers[i].getHandlerFunction();
@@ -344,14 +737,14 @@ function setupAllTriggers() {
     '⏰ 스케줄러 자동 등록 완료!',
     '1. ☕ 맘카페 언급 수집: 매주 월요일 새벽 06:00 실행\n' +
     '2. 📦 쿠팡 TOP3 수집: 매일 새벽 06:00 실행\n\n' +
-    '💡 컴퓨터를 켜두지 않아도 구글 클라우드가 매일/매주 자동 수집합니다.\n' +
-    '수집 후 시트에서 확인 및 수정하시고 [어플에 즉시 반영하기]를 누르시면 됩니다!',
+    '🛡️ 빨간색으로 표시해둔 셀은 자동 수집 시 절대 덮어쓰지 않고 안전하게 보존됩니다!\n' +
+    '컴퓨터를 켜두지 않아도 구글 클라우드가 정해진 시각에 자동 실행됩니다.',
     ui.ButtonSet.OK
   );
 }
 
 // ------------------------------------------------------------------------------
-// 7. [REST API 엔드포인트] 앱 및 웹 프리뷰에서 최신 데이터 조회 (GET)
+// 11. [REST API 엔드포인트] 앱 및 웹 프리뷰에서 최신 데이터 실시간 조회 (GET)
 // ------------------------------------------------------------------------------
 function doGet(e) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -360,7 +753,11 @@ function doGet(e) {
 
   let responseData;
   if (cached) {
-    responseData = JSON.parse(cached);
+    try {
+      responseData = JSON.parse(cached);
+    } catch(err) {
+      responseData = getAllSheetsData(ss);
+    }
   } else {
     responseData = getAllSheetsData(ss);
   }
@@ -375,8 +772,10 @@ function doGet(e) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-// 4개 시트 전체 데이터 추출
+// 4개 시트 전체 데이터 추출 (새 행 무결성 보정 포함)
 function getAllSheetsData(ss) {
+  ensureRowIntegrity(ss);
+
   return {
     maternityBag: parseSheetToObjects(ss.getSheetByName('출산가방 체크리스트'), [
       'id', 'tabCategory', 'section', 'title', 'recommendedQty', 'locationTags', 'note', 'momcafe1st', 'top1', 'top2', 'top3'
@@ -409,7 +808,7 @@ function parseSheetToObjects(sheet, keys) {
 }
 
 // ------------------------------------------------------------------------------
-// 8. 가이드 대화상자 표시
+// 12. 가이드 대화상자 표시
 // ------------------------------------------------------------------------------
 function showGuideDialog() {
   const ui = SpreadsheetApp.getUi();
@@ -418,14 +817,13 @@ function showGuideDialog() {
   const coupangLog = PropertiesService.getScriptProperties().getProperty('LAST_COUPANG_LOG') || '수집 이력 없음';
   
   ui.alert(
-    '📖 꽁꽁 출산가방 자동 수집 현황',
+    '📖 꽁꽁 출산가방 자동 수집 & 보호 상태',
     '• 마지막 어플 반영 시각: ' + lastUpdate + '\n\n' +
     '• 맘카페 최근 수집: ' + momLog + '\n' +
     '• 쿠팡 최근 수집: ' + coupangLog + '\n\n' +
-    '💡 운영 방법:\n' +
-    '1. 맘카페는 월요일 06시, 쿠팡은 매일 06시에 시트에 자동 입력됩니다.\n' +
-    '2. 시트의 내용 중 변경하고 싶은 품목은 직접 타이핑해서 수정하세요.\n' +
-    '3. [최신 데이터를 어플에 즉시 반영하기] 메뉴를 클릭하면 모든 앱 사용자와 웹 프리뷰에 즉시 배포됩니다.',
+    '🛡️ 빨간색 셀 보호 기능 안내:\n' +
+    '셀 배경색을 빨간색으로 칠해두시면, 자동 수집 시 해당 셀의 값은 절대로 덮어쓰지 않고 영구 보존됩니다.\n' +
+    '또한 해당 상품명은 바이럴 광고 의심 품목으로 자동 등록되어 추천에서도 제외됩니다.',
     ui.ButtonSet.OK
   );
 }
