@@ -64,38 +64,46 @@ Write-Host "7. Signing APK with release keystore..."
 & $apksigner sign --ks "release-keystore.jks" --ks-pass "pass:kongkong1234!" --key-pass "pass:kongkong1234!" --out "dist/kongkong-release-signed.apk" "dist/kongkong-release.apk"
 
 Write-Host "8. Assembling Base Module for Android App Bundle (AAB)..."
-$aabDir = "$buildDir/aab_base"
-New-Item -ItemType Directory -Path "$aabDir/base/dex", "$aabDir/base/manifest", "$aabDir/base/res", "$aabDir/base/assets" -Force | Out-Null
+$baseModuleDir = "$buildDir/base_module"
+New-Item -ItemType Directory -Path "$baseModuleDir/dex", "$baseModuleDir/manifest", "$baseModuleDir/res", "$baseModuleDir/assets" -Force | Out-Null
 
-Copy-Item "$buildDir/dex/classes.dex" "$aabDir/base/dex/classes.dex"
-Copy-Item -Path "android/app/src/main/assets/*" -Destination "$aabDir/base/assets" -Recurse -Force
+Copy-Item "$buildDir/dex/classes.dex" "$baseModuleDir/dex/classes.dex"
+Copy-Item -Path "android/app/src/main/assets/*" -Destination "$baseModuleDir/assets" -Recurse -Force
 
 # Extract base proto package into AAB base structure
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 [System.IO.Compression.ZipFile]::ExtractToDirectory("$buildDir/base_proto.zip", "$buildDir/extracted_proto")
 if (Test-Path "$buildDir/extracted_proto/AndroidManifest.xml") {
-    Copy-Item "$buildDir/extracted_proto/AndroidManifest.xml" "$aabDir/base/manifest/AndroidManifest.xml"
+    Copy-Item "$buildDir/extracted_proto/AndroidManifest.xml" "$baseModuleDir/manifest/AndroidManifest.xml"
 }
 if (Test-Path "$buildDir/extracted_proto/resources.pb") {
-    Copy-Item "$buildDir/extracted_proto/resources.pb" "$aabDir/base/resources.pb"
+    Copy-Item "$buildDir/extracted_proto/resources.pb" "$baseModuleDir/resources.pb"
 }
 if (Test-Path "$buildDir/extracted_proto/res") {
-    Copy-Item "$buildDir/extracted_proto/res/*" "$aabDir/base/res" -Recurse -Force
+    Copy-Item "$buildDir/extracted_proto/res/*" "$baseModuleDir/res" -Recurse -Force
 }
 
-# Zip base module into Android App Bundle (.aab) with forward slashes
+Write-Host "9. Packaging base.zip module for bundletool..."
+$baseZip = "$buildDir/base.zip"
+if (Test-Path $baseZip) { Remove-Item $baseZip -Force }
+$fullBaseZip = (Resolve-Path $buildDir).Path + "\base.zip"
+$jarTool = "$jbr\bin\jar.exe"
+Push-Location $baseModuleDir
+& $jarTool -c -M -f $fullBaseZip manifest dex res assets resources.pb
+Pop-Location
+
+Write-Host "10. Building official Android App Bundle (.aab) with bundletool..."
 $aabOut = "dist/kongkong-release.aab"
 if (Test-Path $aabOut) { Remove-Item $aabOut -Force }
 
-$fullAabOut = (Resolve-Path "dist").Path + "\kongkong-release.aab"
-$jarTool = "$jbr\bin\jar.exe"
-Push-Location $aabDir
-& $jarTool -c -M -f $fullAabOut base
-Pop-Location
+& "$jbr\bin\java.exe" -jar "bundletool.jar" build-bundle --modules="$baseZip" --output="$aabOut"
 
-Write-Host "Signing AAB with release keystore (SHA256withRSA)..."
+Write-Host "11. Signing AAB with release keystore (SHA256withRSA)..."
 $jarsigner = "$jbr\bin\jarsigner.exe"
 & $jarsigner -sigalg SHA256withRSA -digestalg SHA-256 -keystore "release-keystore.jks" -storepass "kongkong1234!" -keypass "kongkong1234!" $aabOut "kongkong"
 
-Write-Host "SUCCESS! Both signed APK and AAB have been generated in dist/:"
+Write-Host "12. Validating App Bundle with Google bundletool..."
+& "$jbr\bin\java.exe" -jar "bundletool.jar" validate --bundle="$aabOut"
+
+Write-Host "SUCCESS! Both signed APK and official AAB have been generated in dist/:"
 Get-ChildItem "dist" | Select-Object Name, Length, LastWriteTime
