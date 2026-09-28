@@ -45,9 +45,21 @@
 
 ---
 
+## 🚀 구글 플레이스토어 출시 현황
+* **패키지명 (Application ID)**: `com.kongkong.babybag`
+* **버전**: `1.0.1` (버전 코드: `2`)
+* **타겟 SDK**: Android 16 (API 36) / **최소 SDK**: Android 7.0 (API 24)
+* **심사 상태**: **구글 플레이 콘솔 검토 중 (In Review)** (2026.09.28 제출 완료)
+* **공식 정책 웹페이지**:
+  * [개인정보처리방침 (Privacy Policy)](https://kong090821.github.io/kongkong/privacy.html)
+  * [계정 및 데이터 삭제 정책 (Data Deletion)](https://kong090821.github.io/kongkong/delete-account.html)
+
+---
+
 ## 🛠 기술 스택
-- **Language**: Kotlin 2.3.20
-- **UI Framework**: Jetpack Compose (Material 3)
-- **Navigation**: AndroidX Navigation3 (1.0.1)
+- **Language**: Java 17 / JavaScript (ES6+)
+- **Application Framework**: Android WebView Native Wrapper + Modern Responsive WebApp
+- **Build System**: Google Official `bundletool` & `aapt2` Automated Pipeline (`build_android.ps1`)
+- **Backend / Sync**: Firebase Firestore & Auth, Google Sheets API (실시간 데이터 연동)
 - **Minimum SDK**: Android 7.0 (API 24)
 - **Target SDK**: Android 16 (API 36)
