@@ -3562,11 +3562,12 @@
           if (isManual) {
             showToast(`🎉 구글 시트 최신 데이터 반영 완료! (${syncTime})`);
           }
-          if (currentScreen === 'maternityBagChecklistScreen') renderMaternityBagList();
-          else if (currentScreen === 'babyItemsChecklistScreen') renderBabyItemList();
-          else if (currentScreen === 'todoChecklistScreen') renderTodoList();
-          else if (currentScreen === 'benefitsChecklistScreen') renderNationalBenefitsList();
-          updateSavedBadges();
+          if (typeof refreshActiveScreen === 'function') {
+            refreshActiveScreen();
+          }
+          if (typeof updateSavedBadges === 'function') {
+            updateSavedBadges();
+          }
         }
       } catch (err) {
         console.warn("구글 시트 연동 실패:", err);

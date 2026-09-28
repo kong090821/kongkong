@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>꽁꽁 출산가방 - 모바일 프리뷰 & 신규 기능 테스트</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Pretendard', 'Malgun Gothic', sans-serif; }
+    body {
+      background: linear-gradient(135deg, #FFF3EE 0%, #F5F7FA 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 10px;
+      color: #2C3E50;
+    }
+    .preview-header {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+    .preview-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: #FF6F59;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .preview-desc {
+      font-size: 13px;
+      color: #777;
+      margin-top: 4px;
+    }
+    
+    /* 제어 툴바 */
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 18px;
+      background: #fff;
+      padding: 10px 16px;
+      border-radius: 16px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+      max-width: 650px;
+    }
+    .tool-btn {
+      padding: 8px 14px;
+      border-radius: 10px;
+      border: 1px solid #FFD6CF;
+      background: #FFF9F8;
+      color: #FF6F59;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .tool-btn:hover {
+      background: #FF6F59;
+      color: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(255, 111, 89, 0.25);
+    }
+    .tool-btn.primary {
+      background: #FF6F59;
+      color: #fff;
+      border: none;
+    }
+    .tool-btn.primary:hover {
+      background: #E55842;
+    }
+
+    /* 폰 디바이스 프레임 */
+    .device-container {
+      position: relative;
+      width: 412px;
+      height: 860px;
+      max-width: 100%;
+      background: #111;
+      border-radius: 46px;
+      padding: 12px;
+      box-shadow: 0 25px 60px -15px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.2) inset;
+    }
+    .notch {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 22px;
+      background: #111;
+      border-radius: 12px;
+      z-index: 10;
+    }
+    .device-screen {
+      width: 100%;
+      height: 100%;
+      border-radius: 36px;
+      overflow: hidden;
+      background: #FFF8F5;
+      border: none;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+
+    .notice-box {
+      margin-top: 18px;
+      background: #fff;
+      border-radius: 14px;
+      padding: 12px 18px;
+      font-size: 12px;
+      color: #666;
+      line-height: 1.6;
+      max-width: 500px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      border: 1px solid #eee;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="preview-header">
+    <div class="preview-title">
+      <span>🍼</span> 꽁꽁 출산가방 실시간 앱 프리뷰
+    </div>
+    <div class="preview-desc">
+      구글 스프레드시트 연동 · 실시간 맞춤 가방 추천 · 팝업 모달(예/아니오) 테스트
+    </div>
+  </div>
+
+  <!-- 상단 원클릭 테스트 툴바 -->
+  <div class="toolbar">
+    <button class="tool-btn primary" onclick="testOnboardingFlow()">
+      ✨ [1초 테스트] 설문 완료 ➔ 추천 팝업 띄우기
+    </button>
+    <button class="tool-btn" onclick="testDirectPromptModal()">
+      🎒 추천 팝업창(예/아니오) 바로 열기
+    </button>
+    <button class="tool-btn" onclick="testSyncGoogleSheet()">
+      ☁️ 구글 시트 실시간 동기화
+    </button>
+    <button class="tool-btn" onclick="refreshApp()">
+      🔄 새로고침
+    </button>
+    <button class="tool-btn" onclick="openOriginalApp()">
+      🌐 전체화면(새 탭) 열기
+    </button>
+  </div>
+
+  <!-- 스마트폰 프레임 -->
+  <div class="device-container">
+    <div class="notch"></div>
+    <div class="device-screen">
+      <iframe id="appFrame" src="index.html"></iframe>
+    </div>
+  </div>
+
+  <div class="notice-box">
+    💡 <b>테스트 안내:</b> 상단의 <b>[✨ 설문 완료 ➔ 추천 팝업 띄우기]</b> 버튼을 누르시면, 실제 사용자가 설문을 마쳤을 때 나타나는 <b>"설문에 따른 추천 품목을 가방에 담아드릴까요?"</b> 팝업창과 <b>[예 / 아니오]</b> 분기 처리를 즉시 시뮬레이션해 보실 수 있습니다.
+  </div>
+
+  <script>
+    const frame = document.getElementById('appFrame');
+
+    function refreshApp() {
+      frame.contentWindow.location.reload();
+    }
+
+    function openOriginalApp() {
+      window.open('index.html', '_blank');
+    }
+
+    // 1초 테스트: 비회원 로그인 -> 설문 진행 -> 추천 팝업 자동 트리거
+    function testOnboardingFlow() {
+      try {
+        const w = frame.contentWindow;
+        if (w.handleGuestLogin) {
+          w.handleGuestLogin();
+          setTimeout(() => {
+            if (w.submitOnboardingSurvey) {
+              w.submitOnboardingSurvey();
+            }
+          }, 300);
+        }
+      } catch (e) {
+        console.error(e);
+        alert('프레임 로딩 중입니다. 잠시 후 다시 눌러주세요.');
+      }
+    }
+
+    // 추천 팝업 모달 직접 열기
+    function testDirectPromptModal() {
+      try {
+        const w = frame.contentWindow;
+        if (w.goToScreen) {
+          w.goToScreen('dashboardScreen');
+        }
+        if (w.showRecommendationPromptModal) {
+          w.showRecommendationPromptModal();
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // 구글 시트 동기화 테스트
+    function testSyncGoogleSheet() {
+      try {
+        const w = frame.contentWindow;
+        if (w.syncFromGoogleSheet) {
+          w.syncFromGoogleSheet(true);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  </script>
+
+</body>
+</html>
