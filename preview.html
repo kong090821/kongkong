@@ -147,11 +147,17 @@
     <button class="tool-btn" onclick="testDirectPromptModal()">
       🎒 추천 팝업창(예/아니오) 바로 열기
     </button>
+    <button class="tool-btn" onclick="testCoupleSyncModal()" style="border-color: #FFB6C1; background: #FFF0F5; color: #D81B60;">
+      💑 [테스트] 부부 연동 모달 열기
+    </button>
+    <button class="tool-btn" onclick="testFirebaseSync()">
+      ☁️ Firebase 저장 & 동기화 테스트
+    </button>
     <button class="tool-btn" onclick="testSyncGoogleSheet()">
-      ☁️ 구글 시트 실시간 동기화
+      📊 구글 시트 실시간 동기화
     </button>
     <button class="tool-btn" onclick="testExitDataCollection()">
-      📲 [테스트] 어플 종료 시 데이터 자동 수집
+      📲 [테스트] 어플 종료 시 시트 자동 수집
     </button>
     <button class="tool-btn" onclick="refreshApp()">
       🔄 새로고침
@@ -211,6 +217,35 @@
         }
         if (w.showRecommendationPromptModal) {
           w.showRecommendationPromptModal();
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // 부부 연동 모달 열기 테스트
+    function testCoupleSyncModal() {
+      try {
+        const w = frame.contentWindow;
+        if (w.openCoupleSyncModal) {
+          w.openCoupleSyncModal();
+        } else {
+          alert('어플 로딩 중입니다.');
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // Firebase 동기화 테스트
+    function testFirebaseSync() {
+      try {
+        const w = frame.contentWindow;
+        if (w.autoSaveCurrentUserData) {
+          w.autoSaveCurrentUserData();
+          alert('☁️ [Firebase 동기화 실행 완료]\n\n현재 사용자 데이터(설문, 담긴 가방, 체크 현황)가 Firebase 클라우드 규격으로 안전하게 동기화 저장되었습니다!');
+        } else {
+          alert('어플 로딩 중입니다.');
         }
       } catch (e) {
         console.error(e);

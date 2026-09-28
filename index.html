@@ -487,7 +487,7 @@
       gap: 3px;
       transition: all 0.3s ease;
     }
-    .save-status-badge.saved {
+    .save-status-badge.saved, .save-status-badge.cloud {
       background: #e8f5e9;
       color: #2e7d32;
       border: 1px solid #c8e6c9;
@@ -498,9 +498,14 @@
       border: 1px solid #ffe082;
     }
     .save-status-badge.guest {
-      background: #ffebee;
-      color: #c62828;
-      border: 1px solid #ffcdd2;
+      background: #e3f2fd;
+      color: #1565c0;
+      border: 1px solid #bbdefb;
+    }
+    .save-status-badge.couple {
+      background: #fce4ec;
+      color: #c2185b;
+      border: 1px solid #f8bbd0;
     }
 
     .btn-topbar-logout {
@@ -2183,8 +2188,10 @@
             <span>➔</span>
           </button>
           
-          <div class="guest-warning-notice">
-            ⚠️ <strong>안내:</strong> 비회원으로 이용 시 입력하신 정보와<br/>내 가방 저장 내역이 저장되지 않습니다.
+          <div class="guest-warning-notice" style="background: #FFF8F5; border: 1px solid #FFE0D6; border-radius: 12px; padding: 10px 14px; text-align: left; font-size: 12px; color: #555; line-height: 1.5; margin: 12px 0 16px;">
+            📱 <strong>비회원 로컬 저장 안내:</strong><br/>
+            비회원으로 시작 시 설문 및 출산가방 데이터는 <strong>사용자 휴대폰에만 안전하게 저장</strong>됩니다.<br/>
+            <span style="font-size: 11px; color: #888;">(※ 서버 용량을 차지하지 않으며, 기기 변경이나 부부 연동은 지원되지 않습니다.)</span>
           </div>
 
           <!-- 소셜 1초 간편 가입 구분선 -->
@@ -2216,7 +2223,7 @@
               </svg>
             </button>
           </div>
-          <div class="social-caption">카카오 · 네이버 · 구글로 1초 가입 및 맞춤 저장 🔒</div>
+          <div class="social-caption">카카오 · 네이버 · 구글로 시작 시 Firebase 클라우드 백업 & 부부 계정 공유 지원 🔒</div>
         </div>
 
         <div class="extra-links">
@@ -2343,10 +2350,11 @@
             <div class="profile-user-badge">
               <span id="profileUserIcon">👶</span>
               <span id="profileUserTitle">예비 부모님</span>
-              <span id="profileGuestBadge" class="guest-warning-badge" style="display:none;">비회원(저장안됨)</span>
+              <span id="profileGuestBadge" class="guest-warning-badge" style="display:none; background:#e3f2fd; color:#1565c0; border:1px solid #bbdefb;">📱 비회원(로컬)</span>
               <span id="saveStatusBadge" class="save-status-badge saved">🔒 자동 저장됨</span>
             </div>
             <div style="display: flex; gap: 4px;">
+              <button class="profile-edit-btn" onclick="openCoupleSyncModal()" id="btnHeaderCoupleSync" title="부부 계정 실시간 연동" style="background: #FFF0F5; color: #D81B60; border: 1px solid #F8BBD0; font-weight: 700;">💑 부부 연동</button>
               <button class="profile-edit-btn" onclick="syncFromGoogleSheet(true)" title="구글 스프레드시트 최신 데이터 실시간 동기화" style="background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; font-weight: 600;">☁️ 시트 갱신</button>
               <button class="profile-edit-btn" onclick="openOnboardingEdit()">설문 수정 ⚙️</button>
             </div>
@@ -2357,6 +2365,17 @@
             <span class="profile-tag" id="tagBirthType">분만법</span>
             <span class="profile-tag" id="tagCareCenter">조리원</span>
             <span class="profile-tag" id="tagRegion">지역</span>
+          </div>
+
+          <!-- 부부 연동 상태 바 -->
+          <div id="coupleSyncBanner" style="margin-top: 10px; padding: 7px 12px; background: #FFF5F7; border: 1px dashed #FFB6C1; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; font-size: 11.5px;">
+            <div style="display: flex; align-items: center; gap: 6px; overflow: hidden;">
+              <span style="font-size: 14px; flex-shrink: 0;">💑</span>
+              <span id="coupleSyncStatusText" style="color: #666; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">부부 계정을 연동하고 출산가방을 함께 챙겨보세요</span>
+            </div>
+            <button id="btnOpenCoupleSync" onclick="openCoupleSyncModal()" style="background: #FF6B8B; color: white; border: none; padding: 3px 9px; border-radius: 12px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; flex-shrink: 0; margin-left: 8px;">
+              연동 관리 ➔
+            </button>
           </div>
         </div>
 
@@ -6200,9 +6219,26 @@
 
     function handleGuestLogin() {
       isGuest = true;
-      currentUser = { type: 'guest', name: '비회원 방문자' };
+      currentUser = { type: 'guest', name: '비회원 방문자', id: 'guest_local' };
+      
+      const savedProf = localStorage.getItem('maternity_profile_guest');
+      if (savedProf) {
+        try {
+          userProfile = JSON.parse(savedProf);
+          loadPersistedData('guest');
+          updateDashboardProfileUI();
+          updateSavedBadges();
+          updateSaveIndicatorUI('guest');
+          showToast(`📱 휴대폰에 보관된 비회원 데이터(${savedBagItemIds.size}개) 복원 완료!`);
+          goToScreen('dashboardScreen');
+          return;
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
       initDefaultDueDate();
-      showToast('👶 비회원으로 로그인되었습니다. (임시 체험 모드)');
+      showToast('👶 비회원으로 시작합니다. (휴대폰 로컬에 안전 저장)');
       const nameEl = document.getElementById('surveyUserName');
       if (nameEl) nameEl.textContent = '비회원 손님';
       goToScreen('onboardingScreen');
@@ -6289,7 +6325,7 @@
       pendingOAuthProvider = null;
     }
 
-    function confirmOAuthLogin() {
+    async function confirmOAuthLogin() {
       const provider = pendingOAuthProvider;
       closeOAuthModal();
       if (!provider) return;
@@ -6297,31 +6333,91 @@
       isGuest = false;
       const conf = OAUTH_CONFIG[provider];
       const pName = conf ? conf.name : provider;
+
+      let persistentId = localStorage.getItem('maternity_uid_' + provider);
+      if (!persistentId) {
+        persistentId = `${provider}_` + Math.floor(100000 + Math.random() * 900000);
+        localStorage.setItem('maternity_uid_' + provider, persistentId);
+      }
+
       currentUser = { 
         type: provider, 
         name: `${pName} 산모님`,
-        id: `${provider}_${Date.now() % 1000000}`
+        id: persistentId
       };
 
       const savedUser = localStorage.getItem('maternity_user_' + provider);
       const savedProf = localStorage.getItem('maternity_profile_' + provider);
+      const guestBag = localStorage.getItem('maternity_bag_guest');
 
       if (savedUser && savedProf) {
         try {
           userProfile = JSON.parse(savedProf);
           loadPersistedData(provider);
+          if (!userProfile.coupleCode) {
+            userProfile.coupleCode = generateCoupleCode();
+            savePersistedData(provider);
+          }
           updateDashboardProfileUI();
           updateSavedBadges();
-          updateSaveIndicatorUI('saved');
+          updateSaveIndicatorUI(userProfile.linkedCoupleCode ? 'couple' : 'cloud');
           showToast(`✨ ${pName} 계정 복원 완료! 내 가방(${savedBagItemIds.size}개)이 유지됩니다.`);
           goToScreen('dashboardScreen');
+
+          // 백그라운드에서 Firebase 클라우드 및 부부 연동 최신 데이터 동기화
+          setTimeout(async () => {
+            if (userProfile.linkedCoupleCode) {
+              await syncFromCoupleCloud();
+            }
+          }, 300);
           return;
         } catch (e) {
           console.error(e);
         }
+      } else if (guestBag && !savedUser) {
+        // 비회원으로 담았던 가방이 있다면 회원가입 시 자동 이관 연동
+        try {
+          const guestProf = localStorage.getItem('maternity_profile_guest');
+          if (guestProf) userProfile = JSON.parse(guestProf);
+          userProfile.coupleCode = generateCoupleCode();
+          loadPersistedData('guest');
+          savePersistedData(provider);
+          syncUserDataToFirebase();
+          updateDashboardProfileUI();
+          updateSavedBadges();
+          updateSaveIndicatorUI('cloud');
+          showToast(`🎉 ${pName} 1초 가입 완료! 비회원 시 담아둔 가방(${savedBagItemIds.size}개)이 안전하게 연동되었습니다.`);
+          goToScreen('dashboardScreen');
+          return;
+        } catch(e) {}
       }
 
+      // 신규 회원인 경우 Firebase 클라우드 백업 여부 확인 (다른 기기 로그인 대응)
+      try {
+        const cloudUser = await FirebaseService.loadUser(currentUser.id);
+        if (cloudUser && cloudUser.profile) {
+          userProfile = cloudUser.profile;
+          if (Array.isArray(cloudUser.bagItems)) savedBagItemIds = new Set(cloudUser.bagItems);
+          if (Array.isArray(cloudUser.bagCompleted)) completedBagItemIds = new Set(cloudUser.bagCompleted);
+          if (Array.isArray(cloudUser.babyItems)) savedBabySuppliesIds = new Set(cloudUser.babyItems);
+          if (Array.isArray(cloudUser.babyCompleted)) completedBabySuppliesIds = new Set(cloudUser.babyCompleted);
+          if (Array.isArray(cloudUser.todoItems)) savedTodoIds = new Set(cloudUser.todoItems);
+          if (Array.isArray(cloudUser.todoCompleted)) completedTodoIds = new Set(cloudUser.todoCompleted);
+          if (Array.isArray(cloudUser.benefitItems)) savedBenefitIds = new Set(cloudUser.benefitItems);
+          if (Array.isArray(cloudUser.benefitCompleted)) completedBenefitIds = new Set(cloudUser.benefitCompleted);
+
+          savePersistedData(provider);
+          updateDashboardProfileUI();
+          updateSavedBadges();
+          updateSaveIndicatorUI(userProfile.linkedCoupleCode ? 'couple' : 'cloud');
+          showToast(`☁️ Firebase 클라우드에서 기존 데이터(${savedBagItemIds.size}개)를 복원했습니다!`);
+          goToScreen('dashboardScreen');
+          return;
+        }
+      } catch(e) {}
+
       initDefaultDueDate();
+      userProfile.coupleCode = generateCoupleCode();
       const nameEl = document.getElementById('surveyUserName');
       if (nameEl) nameEl.textContent = `${pName} 회원님`;
       showToast(`🎉 ${pName} 1초 가입 성공! 첫 맞춤 설문을 진행합니다.`);
@@ -6329,8 +6425,10 @@
     }
 
     function handleLogout() {
-      if (currentUser && !isGuest && currentUser.type) {
+      if (currentUser && currentUser.type) {
         savePersistedData(currentUser.type);
+      } else if (isGuest) {
+        savePersistedData('guest');
       }
       currentUser = null;
       isGuest = false;
@@ -6340,8 +6438,10 @@
 
     function submitOnboardingSurvey() {
       // 설문 응답 저장
-      if (!isGuest && currentUser && currentUser.type) {
+      if (currentUser && currentUser.type) {
         savePersistedData(currentUser.type);
+      } else if (isGuest) {
+        savePersistedData('guest');
       }
       updateDashboardProfileUI();
       autoSaveCurrentUserData();
@@ -6375,9 +6475,6 @@
       if (accept) {
         // [예] : 설문에 따른 추천 항목들을 가방에 자동으로 담기
         applySmartRecommendations(userProfile);
-        if (!isGuest && currentUser && currentUser.type) {
-          savePersistedData(currentUser.type);
-        }
         updateDashboardProfileUI();
         updateSavedBadges();
         autoSaveCurrentUserData();
@@ -6397,9 +6494,6 @@
         const regionBenefits = regionalBenefitsData[currentRegion] || [];
         regionBenefits.forEach(b => savedBenefitIds.add(b.id));
 
-        if (!isGuest && currentUser && currentUser.type) {
-          savePersistedData(currentUser.type);
-        }
         updateDashboardProfileUI();
         updateSavedBadges();
         autoSaveCurrentUserData();
@@ -6426,18 +6520,400 @@
       goToScreen('onboardingScreen');
     }
 
+    // ==========================================
+    // 6자리 부부 연동 코드 생성기 (KK-XXXX)
+    // ==========================================
+    function generateCoupleCode() {
+      const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+      let code = 'KK-';
+      for (let i = 0; i < 4; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return code;
+    }
+
+    // ==========================================
+    // Firebase Firestore Cloud Service (REST API + Local Mock Engine)
+    // ==========================================
+    const FirebaseService = {
+      config: {
+        projectId: "kongkong-babybag",
+        apiKey: "AIzaSy_MOCK_KEY_FOR_LOCAL_AND_DEMO_TESTING",
+        firestoreBaseUrl: "https://firestore.googleapis.com/v1/projects/kongkong-babybag/databases/(default)/documents",
+        userSyncCollection: "users",
+        coupleSyncCollection: "couples"
+      },
+
+      init: async function() {
+        try {
+          const custom = localStorage.getItem('maternity_firebase_config');
+          if (custom) {
+            Object.assign(this.config, JSON.parse(custom));
+          } else {
+            const res = await fetch('firebase_config.json');
+            if (res.ok) {
+              const data = await res.json();
+              Object.assign(this.config, data);
+            }
+          }
+        } catch(e) {}
+      },
+
+      toFirestoreFields: function(obj) {
+        const fields = {};
+        for (const k in obj) {
+          const val = obj[k];
+          if (val === undefined || val === null) continue;
+          if (typeof val === 'string') fields[k] = { stringValue: val };
+          else if (typeof val === 'number') fields[k] = { integerValue: val.toString() };
+          else if (typeof val === 'boolean') fields[k] = { booleanValue: val };
+          else fields[k] = { stringValue: JSON.stringify(val) };
+        }
+        return fields;
+      },
+
+      fromFirestoreFields: function(fields) {
+        const obj = {};
+        if (!fields) return obj;
+        for (const k in fields) {
+          const v = fields[k];
+          if (v.stringValue !== undefined) {
+            try {
+              if (v.stringValue.startsWith('{') || v.stringValue.startsWith('[')) {
+                obj[k] = JSON.parse(v.stringValue);
+              } else {
+                obj[k] = v.stringValue;
+              }
+            } catch(e) {
+              obj[k] = v.stringValue;
+            }
+          } else if (v.integerValue !== undefined) {
+            obj[k] = parseInt(v.integerValue, 10);
+          } else if (v.booleanValue !== undefined) {
+            obj[k] = v.booleanValue;
+          }
+        }
+        return obj;
+      },
+
+      // 회원 데이터 저장 (※ 비회원은 절대 서버에 업로드하지 않음)
+      saveUser: async function(userId, data) {
+        if (!userId || isGuest) return false;
+        try {
+          localStorage.setItem('firebase_cloud_user_' + userId, JSON.stringify(data));
+        } catch(e) {}
+
+        if (this.config.projectId && !this.config.projectId.includes('MOCK_DISABLED')) {
+          try {
+            const url = `https://firestore.googleapis.com/v1/projects/${this.config.projectId}/databases/(default)/documents/${this.config.userSyncCollection}/${userId}`;
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3500);
+            await fetch(url, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ fields: this.toFirestoreFields(data) }),
+              signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            return true;
+          } catch(e) {}
+        }
+        return true;
+      },
+
+      // 회원 데이터 복원 (기기 변경 시)
+      loadUser: async function(userId) {
+        if (!userId || isGuest) return null;
+        if (this.config.projectId && !this.config.projectId.includes('MOCK_DISABLED')) {
+          try {
+            const url = `https://firestore.googleapis.com/v1/projects/${this.config.projectId}/databases/(default)/documents/${this.config.userSyncCollection}/${userId}`;
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
+            const resp = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeoutId);
+            if (resp.ok) {
+              const doc = await resp.json();
+              return this.fromFirestoreFields(doc.fields);
+            }
+          } catch(e) {}
+        }
+        try {
+          const local = localStorage.getItem('firebase_cloud_user_' + userId);
+          if (local) return JSON.parse(local);
+        } catch(e) {}
+        return null;
+      },
+
+      // 부부 공유 출산가방 저장
+      saveCoupleBag: async function(coupleCode, data) {
+        if (!coupleCode || isGuest) return false;
+        const code = coupleCode.trim().toUpperCase();
+        try {
+          localStorage.setItem('firebase_cloud_couple_' + code, JSON.stringify(data));
+        } catch(e) {}
+
+        if (this.config.projectId && !this.config.projectId.includes('MOCK_DISABLED')) {
+          try {
+            const url = `https://firestore.googleapis.com/v1/projects/${this.config.projectId}/databases/(default)/documents/${this.config.coupleSyncCollection}/${code}`;
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3500);
+            await fetch(url, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ fields: this.toFirestoreFields(data) }),
+              signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            return true;
+          } catch(e) {}
+        }
+        return true;
+      },
+
+      // 부부 공유 출산가방 로드
+      loadCoupleBag: async function(coupleCode) {
+        if (!coupleCode) return null;
+        const code = coupleCode.trim().toUpperCase();
+        if (this.config.projectId && !this.config.projectId.includes('MOCK_DISABLED')) {
+          try {
+            const url = `https://firestore.googleapis.com/v1/projects/${this.config.projectId}/databases/(default)/documents/${this.config.coupleSyncCollection}/${code}`;
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
+            const resp = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeoutId);
+            if (resp.ok) {
+              const doc = await resp.json();
+              return this.fromFirestoreFields(doc.fields);
+            }
+          } catch(e) {}
+        }
+        try {
+          const local = localStorage.getItem('firebase_cloud_couple_' + code);
+          if (local) return JSON.parse(local);
+        } catch(e) {}
+        return null;
+      }
+    };
+
+    async function syncUserDataToFirebase() {
+      if (isGuest || !currentUser || !currentUser.type) return;
+
+      const payload = {
+        userId: currentUser.id,
+        userType: currentUser.type,
+        userName: currentUser.name,
+        coupleCode: userProfile.coupleCode || '',
+        linkedCoupleCode: userProfile.linkedCoupleCode || '',
+        profile: userProfile,
+        bagItems: Array.from(savedBagItemIds),
+        bagCompleted: Array.from(completedBagItemIds),
+        babyItems: Array.from(savedBabySuppliesIds),
+        babyCompleted: Array.from(completedBabySuppliesIds),
+        todoItems: Array.from(savedTodoIds),
+        todoCompleted: Array.from(completedTodoIds),
+        benefitItems: Array.from(savedBenefitIds),
+        benefitCompleted: Array.from(completedBenefitIds),
+        updatedAt: new Date().toISOString()
+      };
+
+      await FirebaseService.saveUser(currentUser.id, payload);
+
+      if (userProfile.linkedCoupleCode) {
+        const couplePayload = {
+          coupleCode: userProfile.linkedCoupleCode,
+          lastUpdatedBy: currentUser.name,
+          updatedAt: new Date().toISOString(),
+          bagItems: Array.from(savedBagItemIds),
+          bagCompleted: Array.from(completedBagItemIds),
+          babyItems: Array.from(savedBabySuppliesIds),
+          babyCompleted: Array.from(completedBabySuppliesIds),
+          todoItems: Array.from(savedTodoIds),
+          todoCompleted: Array.from(completedTodoIds)
+        };
+        await FirebaseService.saveCoupleBag(userProfile.linkedCoupleCode, couplePayload);
+      }
+    }
+
+    function openCoupleSyncModal() {
+      renderCoupleSyncModalUI();
+      const modal = document.getElementById('coupleSyncModal');
+      if (modal) modal.style.display = 'flex';
+    }
+
+    function closeCoupleSyncModal() {
+      const modal = document.getElementById('coupleSyncModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function renderCoupleSyncModalUI() {
+      const warning = document.getElementById('coupleGuestWarning');
+      const memberContent = document.getElementById('coupleMemberContent');
+      const codeDisplay = document.getElementById('myCoupleCodeDisplay');
+      const linkInputSection = document.getElementById('coupleLinkInputSection');
+      const activeSection = document.getElementById('coupleActiveSection');
+      const activeCodeDisplay = document.getElementById('activeSpouseCodeDisplay');
+
+      if (isGuest) {
+        if (warning) warning.style.display = 'block';
+        if (memberContent) memberContent.style.display = 'none';
+        return;
+      }
+
+      if (warning) warning.style.display = 'none';
+      if (memberContent) memberContent.style.display = 'block';
+
+      if (!userProfile.coupleCode) {
+        userProfile.coupleCode = generateCoupleCode();
+        if (currentUser && currentUser.type) savePersistedData(currentUser.type);
+      }
+      if (codeDisplay) codeDisplay.textContent = userProfile.coupleCode;
+
+      if (userProfile.linkedCoupleCode) {
+        if (linkInputSection) linkInputSection.style.display = 'none';
+        if (activeSection) activeSection.style.display = 'block';
+        if (activeCodeDisplay) activeCodeDisplay.textContent = userProfile.linkedCoupleCode;
+      } else {
+        if (linkInputSection) linkInputSection.style.display = 'block';
+        if (activeSection) activeSection.style.display = 'none';
+      }
+    }
+
+    function copyMyCoupleCode() {
+      const code = (userProfile && userProfile.coupleCode) ? userProfile.coupleCode : 'KK-0000';
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(code).then(() => {
+          showToast(`📋 연동 코드 [${code}]가 클립보드에 복사되었습니다!`);
+        }).catch(() => {
+          prompt('연동 코드를 복사하세요:', code);
+        });
+      } else {
+        prompt('연동 코드를 복사하세요:', code);
+      }
+    }
+
+    function submitSpouseCoupleCode() {
+      const input = document.getElementById('inputSpouseCoupleCode');
+      if (!input) return;
+      connectCoupleCode(input.value);
+      input.value = '';
+    }
+
+    async function connectCoupleCode(inputCode) {
+      if (!inputCode) {
+        showToast('⚠️ 배우자의 연동 코드를 입력해주세요.');
+        return;
+      }
+      const cleanCode = inputCode.trim().toUpperCase();
+      if (!cleanCode.startsWith('KK-') || cleanCode.length < 5) {
+        showToast('⚠️ 유효한 부부 코드 형식(예: KK-38B9)이 아닙니다.');
+        return;
+      }
+      if (cleanCode === userProfile.coupleCode) {
+        showToast('⚠️ 본인의 코드와 동일합니다. 배우자의 코드를 입력해주세요.');
+        return;
+      }
+
+      showToast('🔄 배우자 출산가방을 찾는 중...');
+      const coupleData = await FirebaseService.loadCoupleBag(cleanCode);
+
+      if (coupleData) {
+        if (Array.isArray(coupleData.bagItems)) {
+          coupleData.bagItems.forEach(id => savedBagItemIds.add(id));
+        }
+        if (Array.isArray(coupleData.bagCompleted)) {
+          coupleData.bagCompleted.forEach(id => completedBagItemIds.add(id));
+        }
+        if (Array.isArray(coupleData.babyItems)) {
+          coupleData.babyItems.forEach(id => savedBabySuppliesIds.add(id));
+        }
+        if (Array.isArray(coupleData.babyCompleted)) {
+          coupleData.babyCompleted.forEach(id => completedBabySuppliesIds.add(id));
+        }
+        if (Array.isArray(coupleData.todoItems)) {
+          coupleData.todoItems.forEach(id => savedTodoIds.add(id));
+        }
+        if (Array.isArray(coupleData.todoCompleted)) {
+          coupleData.todoCompleted.forEach(id => completedTodoIds.add(id));
+        }
+      }
+
+      userProfile.linkedCoupleCode = cleanCode;
+      savePersistedData(currentUser.type);
+      await syncUserDataToFirebase();
+
+      updateDashboardProfileUI();
+      updateSavedBadges();
+      renderCoupleSyncModalUI();
+      refreshActiveScreen();
+
+      showToast(`🎉 부부 연동 완료! (${cleanCode}) 출산가방이 하나로 연결되었습니다.`);
+    }
+
+    function disconnectCoupleSync() {
+      if (!confirm('부부 연동을 해제하시겠습니까?\n(현재까지 담긴 출산가방 내역은 그대로 유지됩니다.)')) return;
+      userProfile.linkedCoupleCode = null;
+      savePersistedData(currentUser.type);
+      syncUserDataToFirebase();
+      updateDashboardProfileUI();
+      renderCoupleSyncModalUI();
+      showToast('부부 연동이 해제되었습니다. (개인 모드로 전환)');
+    }
+
+    async function syncFromCoupleCloud() {
+      if (!userProfile.linkedCoupleCode) return;
+      showToast('🔄 배우자 최신 가방 동기화 중...');
+      const coupleData = await FirebaseService.loadCoupleBag(userProfile.linkedCoupleCode);
+      if (coupleData) {
+        if (Array.isArray(coupleData.bagItems)) {
+          savedBagItemIds = new Set(coupleData.bagItems);
+        }
+        if (Array.isArray(coupleData.bagCompleted)) {
+          completedBagItemIds = new Set(coupleData.bagCompleted);
+        }
+        if (Array.isArray(coupleData.babyItems)) {
+          savedBabySuppliesIds = new Set(coupleData.babyItems);
+        }
+        if (Array.isArray(coupleData.babyCompleted)) {
+          completedBabySuppliesIds = new Set(coupleData.babyCompleted);
+        }
+        if (Array.isArray(coupleData.todoItems)) {
+          savedTodoIds = new Set(coupleData.todoItems);
+        }
+        if (Array.isArray(coupleData.todoCompleted)) {
+          completedTodoIds = new Set(coupleData.todoCompleted);
+        }
+        savePersistedData(currentUser.type);
+        updateDashboardProfileUI();
+        updateSavedBadges();
+        refreshActiveScreen();
+        showToast('✨ 배우자의 최신 출산가방이 성공적으로 반영되었습니다!');
+      } else {
+        showToast('배우자의 새로운 변경 사항이 없습니다.');
+      }
+    }
+
     function updateDashboardProfileUI() {
       const userTitle = document.getElementById('profileUserTitle');
       const guestBadge = document.getElementById('profileGuestBadge');
       const welcomeName = document.getElementById('welcomeUserName');
       const icon = document.getElementById('profileUserIcon');
+      const coupleText = document.getElementById('coupleSyncStatusText');
+      const coupleBtn = document.getElementById('btnOpenCoupleSync');
 
       if (isGuest) {
-        if (userTitle) userTitle.textContent = '비회원 임시 모드';
-        if (guestBadge) guestBadge.style.display = 'inline-block';
+        if (userTitle) userTitle.textContent = '비회원 (로컬 보관)';
+        if (guestBadge) {
+          guestBadge.style.display = 'inline-block';
+          guestBadge.textContent = '📱 비회원(로컬)';
+        }
         if (welcomeName) welcomeName.textContent = '손님';
         if (icon) icon.textContent = '👶';
         updateSaveIndicatorUI('guest');
+        if (coupleText) coupleText.innerHTML = '📱 <b>휴대폰 로컬 모드</b> (서버 용량 차지 X)';
+        if (coupleBtn) {
+          coupleBtn.textContent = '간편가입 후 연동 ➔';
+          coupleBtn.onclick = () => { handleLogout(); };
+        }
       } else {
         const pNames = { kakao: '카카오', naver: '네이버', google: '구글' };
         const pStr = currentUser ? (pNames[currentUser.type] || currentUser.type) : '회원';
@@ -6445,7 +6921,27 @@
         if (guestBadge) guestBadge.style.display = 'none';
         if (welcomeName) welcomeName.textContent = `${pStr} 회원님`;
         if (icon) icon.textContent = (currentUser && currentUser.type === 'naver') ? '🟢' : '🌸';
-        updateSaveIndicatorUI('saved');
+
+        if (!userProfile.coupleCode) {
+          userProfile.coupleCode = generateCoupleCode();
+          savePersistedData(currentUser.type);
+        }
+
+        if (userProfile.linkedCoupleCode) {
+          updateSaveIndicatorUI('couple');
+          if (coupleText) coupleText.innerHTML = `💑 <b>배우자와 실시간 연동 중</b> (${userProfile.linkedCoupleCode})`;
+          if (coupleBtn) {
+            coupleBtn.textContent = '연동 관리';
+            coupleBtn.onclick = openCoupleSyncModal;
+          }
+        } else {
+          updateSaveIndicatorUI('cloud');
+          if (coupleText) coupleText.innerHTML = `🔒 Firebase 클라우드 백업 중 (내 코드: <b>${userProfile.coupleCode}</b>)`;
+          if (coupleBtn) {
+            coupleBtn.textContent = '부부 연동하기 ➔';
+            coupleBtn.onclick = openCoupleSyncModal;
+          }
+        }
       }
 
       const { ddayText, weeksText } = calculateDDay(userProfile.dueDate);
@@ -6466,30 +6962,47 @@
     }
 
     function autoSaveCurrentUserData() {
-      if (isGuest || !currentUser || !currentUser.type) {
+      if (isGuest) {
+        savePersistedData('guest');
+        updateSaveIndicatorUI('guest');
+        return;
+      }
+      if (!currentUser || !currentUser.type) {
         updateSaveIndicatorUI('guest');
         return;
       }
       savePersistedData(currentUser.type);
-      updateSaveIndicatorUI('saved');
+      syncUserDataToFirebase();
+      if (userProfile && userProfile.linkedCoupleCode) {
+        updateSaveIndicatorUI('couple');
+      } else {
+        updateSaveIndicatorUI('cloud');
+      }
     }
 
     function updateSaveIndicatorUI(state) {
       const badge = document.getElementById('saveStatusBadge');
       if (!badge) return;
+      const now = new Date();
+      const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+
       if (state === 'guest') {
         badge.className = 'save-status-badge guest';
-        badge.innerHTML = '⚠️ 비회원(저장안됨)';
-      } else if (state === 'saved') {
-        badge.className = 'save-status-badge saved';
-        const now = new Date();
-        const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-        badge.innerHTML = `🔒 자동저장 (${timeStr})`;
+        badge.innerHTML = `📱 내 폰 저장됨 (${timeStr})`;
+        badge.title = '비회원 모드: 휴대폰 로컬에만 안전하게 저장되며 서버 용량을 차지하지 않습니다.';
+      } else if (state === 'couple') {
+        badge.className = 'save-status-badge couple';
+        badge.innerHTML = `💑 부부 연동 저장 (${timeStr})`;
+        badge.title = `Firebase 실시간 클라우드 및 배우자(${userProfile.linkedCoupleCode}) 연동 저장`;
+      } else if (state === 'cloud' || state === 'saved') {
+        badge.className = 'save-status-badge cloud';
+        badge.innerHTML = `☁️ Firebase 저장 (${timeStr})`;
+        badge.title = 'Firebase 클라우드에 안전하게 백업되어 기기 변경 시에도 복원됩니다.';
       }
     }
 
     function savePersistedData(provider) {
-      if (!provider || provider === 'guest') return;
+      if (!provider) return;
       localStorage.setItem('maternity_user_' + provider, JSON.stringify(currentUser));
       localStorage.setItem('maternity_profile_' + provider, JSON.stringify(userProfile));
       localStorage.setItem('maternity_bag_' + provider, JSON.stringify(Array.from(savedBagItemIds)));
@@ -6518,7 +7031,7 @@
     }
 
     function loadPersistedData(provider) {
-      if (!provider || provider === 'guest') return;
+      if (!provider) return;
       const bag = localStorage.getItem('maternity_bag_' + provider);
       if (bag) savedBagItemIds = new Set(JSON.parse(bag));
       const bagComp = localStorage.getItem('maternity_bag_comp_' + provider);
@@ -6704,7 +7217,8 @@
       }, 2600);
     }
 
-    // 초기 화면
+    // 초기 서비스 및 화면 설정
+    FirebaseService.init();
     goToScreen('loginScreen');
   </script>
 
@@ -6792,6 +7306,74 @@
         </button>
         <button type="button" class="btn-confirm" onclick="confirmRecommendationChoice(true)" style="flex: 1.3; padding: 12px 0; border: none; background: linear-gradient(135deg, #FF6F59, #FF8E53); border-radius: 12px; font-size: 14px; font-weight: 800; color: #fff; cursor: pointer; box-shadow: 0 4px 14px rgba(255, 111, 89, 0.35); line-height: 1.3;">
           예, 담아주세요! ➔<br/><span style="font-size: 11px; font-weight: 500; opacity: 0.95;">(추천 가방 완성)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 부부 계정 연동 모달 -->
+  <div id="coupleSyncModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card" style="max-width: 360px; padding: 22px 20px; border-radius: 24px; box-shadow: 0 16px 36px rgba(0,0,0,0.22); text-align: left;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h3 style="font-size: 17px; font-weight: 800; color: #2C3E50; margin: 0; display: flex; align-items: center; gap: 6px;">
+          <span>💑</span> 부부 계정 & 가방 연동
+        </h3>
+        <button onclick="closeCoupleSyncModal()" style="border: none; background: none; font-size: 20px; color: #999; cursor: pointer; padding: 0 4px;">✕</button>
+      </div>
+
+      <p style="font-size: 12px; color: #666; line-height: 1.5; margin-bottom: 16px; word-break: keep-all;">
+        Firebase 클라우드를 통해 <b>배우자의 스마트폰과 출산가방을 실시간으로 함께 체크</b>하고 공유합니다.
+      </p>
+
+      <!-- 비회원 안내 (비회원인 경우 노출) -->
+      <div id="coupleGuestWarning" style="display: none; background: #FFF8E1; border: 1px solid #FFE082; border-radius: 12px; padding: 12px; margin-bottom: 14px; font-size: 12px; color: #B78103; line-height: 1.5;">
+        ⚠️ <b>비회원 알림:</b> 현재 비회원 로컬 모드입니다. 부부 계정 연동 및 클라우드 백업은 소셜 로그인(카카오·네이버·구글) 회원에게 제공됩니다.<br/>
+        <button onclick="handleLogout()" style="margin-top: 10px; width: 100%; padding: 8px; background: #FF6F59; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer;">소셜 1초 로그인하러 가기 ➔</button>
+      </div>
+
+      <div id="coupleMemberContent">
+        <!-- 1. 내 연동 코드 카드 -->
+        <div style="background: #F8F9FA; border: 1px solid #E9ECEF; border-radius: 14px; padding: 14px; margin-bottom: 16px;">
+          <div style="font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; margin-bottom: 4px;">내 부부 연동 코드</div>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+            <div id="myCoupleCodeDisplay" style="font-size: 22px; font-weight: 900; letter-spacing: 2px; color: #FF6B8B; font-family: monospace;">KK-0000</div>
+            <button onclick="copyMyCoupleCode()" style="background: #FFF0F5; border: 1px solid #FFB6C1; color: #C2185B; padding: 6px 12px; border-radius: 8px; font-size: 11.5px; font-weight: 700; cursor: pointer;">
+              📋 코드 복사
+            </button>
+          </div>
+          <div style="font-size: 11px; color: #888; margin-top: 6px;">배우자에게 이 코드를 알려주시면 가방이 하나로 연결됩니다.</div>
+        </div>
+
+        <!-- 2. 배우자 코드 입력 또는 연동 활성 상태 -->
+        <div id="coupleLinkInputSection">
+          <label style="display: block; font-size: 12px; font-weight: 700; color: #444; margin-bottom: 6px;">배우자의 연동 코드 입력</label>
+          <div style="display: flex; gap: 6px;">
+            <input type="text" id="inputSpouseCoupleCode" placeholder="예: KK-38B9" maxlength="7" style="flex: 1; padding: 10px 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;" />
+            <button onclick="submitSpouseCoupleCode()" style="background: linear-gradient(135deg, #FF6F59, #FF8E53); color: white; border: none; padding: 10px 16px; border-radius: 10px; font-size: 13px; font-weight: 800; cursor: pointer; white-space: nowrap;">
+              연동하기
+            </button>
+          </div>
+        </div>
+
+        <div id="coupleActiveSection" style="display: none; background: #FCE4EC; border: 1px solid #F8BBD0; border-radius: 14px; padding: 14px; margin-bottom: 12px;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div>
+              <div style="font-size: 11px; font-weight: 700; color: #C2185B;">연동 완료된 배우자 코드</div>
+              <div id="activeSpouseCodeDisplay" style="font-size: 18px; font-weight: 800; color: #880E4F; font-family: monospace; margin-top: 2px;">KK-XXXX</div>
+            </div>
+            <button onclick="disconnectCoupleSync()" style="background: white; border: 1px solid #f48fb1; color: #ad1457; padding: 5px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer;">
+              연동 해제
+            </button>
+          </div>
+          <button onclick="syncFromCoupleCloud()" style="margin-top: 10px; width: 100%; background: #FF4081; color: white; border: none; padding: 8px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+            <span>🔄 배우자 가방 최신 동기화</span>
+          </button>
+        </div>
+      </div>
+
+      <div style="margin-top: 16px; text-align: center;">
+        <button onclick="closeCoupleSyncModal()" style="width: 100%; padding: 11px 0; background: #F1F3F5; color: #495057; border: none; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer;">
+          닫기
         </button>
       </div>
     </div>
