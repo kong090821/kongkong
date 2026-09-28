@@ -45,8 +45,8 @@ Write-Host "2. Linking Resources & Generating R.java (APK & Proto format)..."
 
 Write-Host "3. Compiling Java sources with javac (Java 17 target)..."
 $javaFiles = @(
-    "android/app/src/main/java/com/kongkong/maternitybag/MainActivity.java",
-    "$buildDir/gen/com/kongkong/maternitybag/R.java"
+    "android/app/src/main/java/com/kongkong/babybag/MainActivity.java",
+    "$buildDir/gen/com/kongkong/babybag/R.java"
 )
 & $javac -encoding UTF-8 -cp $androidJar -source 17 -target 17 -d "$buildDir/classes" $javaFiles
 
