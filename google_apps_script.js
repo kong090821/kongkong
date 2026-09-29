@@ -37,6 +37,7 @@ function onOpen() {
     .addItem('🎯 맞춤 추천 설정 갱신', 'updateRecommendationSettingsFromStats')
     .addSeparator()
     .addItem('✨ [자동 완성] 신규 품목 데이터 및 추천 상품 채우기', 'autoFillMissingRowData')
+    .addItem('💜 [사용자 추가] 신규 등록 품목 연보라색 셀 강조 표시', 'highlightCustomUserAddedItems')
     .addItem('☕ [수동 실행] 맘카페 언급 1위 데이터 지금 수집', 'updateMomCafeWeeklyData')
     .addItem('📦 [수동 실행] 쿠팡 TOP 3 랭킹 데이터 지금 수집', 'updateCoupangDailyTop3')
     .addSeparator()
@@ -1246,4 +1247,45 @@ function analyzeAndUpdateRecommendations(ss, isSilent) {
   }
 
   return validLogs;
+}
+
+// ------------------------------------------------------------------------------
+// 💜 [사용자 추가 품목 연보라색 강조 및 검토 상태 갱신]
+// ------------------------------------------------------------------------------
+function highlightCustomUserAddedItems() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheets = ['출산가방 체크리스트', '육아용품 체크리스트', '시기별할일', '출산혜택정리'];
+  let count = 0;
+
+  sheets.forEach(name => {
+    const sheet = ss.getSheetByName(name);
+    if (!sheet || sheet.getLastRow() < 2) return;
+    const lastRow = sheet.getLastRow();
+    const lastCol = sheet.getLastColumn();
+    const range = sheet.getRange(2, 1, lastRow - 1, lastCol);
+    const values = range.getValues();
+    const backgrounds = range.getBackgrounds();
+    const fontColors = range.getFontColors();
+    const fontWeights = range.getFontWeights();
+
+    for (let i = 0; i < values.length; i++) {
+      const id = String(values[i][0] || '').trim();
+      if (id.startsWith('custom_') || id.includes('custom')) {
+        for (let j = 0; j < lastCol; j++) {
+          backgrounds[i][j] = '#E8D5F5'; // 연보라색 배경
+          fontColors[i][j] = '#330033';  // 짙은 보라색 글자
+          fontWeights[i][j] = 'bold';
+        }
+        count++;
+      }
+    }
+    range.setBackgrounds(backgrounds);
+    range.setFontColors(fontColors);
+    range.setFontWeights(fontWeights);
+  });
+
+  SpreadsheetApp.getUi().alert('💜 사용자 추가 품목 검토 강조 완료',
+    '총 ' + count + '개의 사용자 추가 품목이 연보라색(#E8D5F5)으로 셀 강조 표시되었습니다.\n\n개발자 검토 후 어플 반영 버튼을 통해 정식 등록을 결정하세요!',
+    SpreadsheetApp.getUi().ButtonSet.OK
+  );
 }
