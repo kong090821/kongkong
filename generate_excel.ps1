@@ -26,6 +26,13 @@ function Format-HeaderRow($sheet, $colCount) {
     $range.HorizontalAlignment = -4108 # xlCenter
 }
 
+function Format-CustomRow($sheet, $rowNum, $colCount) {
+    $range = $sheet.Range($sheet.Cells.Item($rowNum, 1), $sheet.Cells.Item($rowNum, $colCount))
+    $range.Interior.Color = 0xF5D5E8 # 연보라색 배경 (#E8D5F5 in BGR)
+    $range.Font.Color = 0x330033     # 짙은 보라색 글자 (#330033 in BGR)
+    $range.Font.Bold = $true
+}
+
 # 1. Sheet 1: Maternity Bag
 Write-Host "Creating Sheet 1: 출산가방 체크리스트..."
 $sheet1 = $workbook.Sheets.Item(1)
@@ -49,6 +56,9 @@ foreach ($item in $data.maternityBag) {
     $sheet1.Cells.Item($r, 9) = [string]$item.top1
     $sheet1.Cells.Item($r, 10) = [string]$item.top2
     $sheet1.Cells.Item($r, 11) = [string]$item.top3
+    if ([string]$item.id -like "custom_*" -or [string]$item.id -like "*_custom_*" -or $item.isCustom -eq $true) {
+        Format-CustomRow $sheet1 $r $headers1.Length
+    }
     $r++
 }
 $sheet1.Columns.AutoFit()
@@ -76,6 +86,9 @@ foreach ($item in $data.babySupplies) {
     $sheet2.Cells.Item($r, 9) = [string]$item.top1
     $sheet2.Cells.Item($r, 10) = [string]$item.top2
     $sheet2.Cells.Item($r, 11) = [string]$item.top3
+    if ([string]$item.id -like "custom_*" -or [string]$item.id -like "*_custom_*" -or $item.isCustom -eq $true) {
+        Format-CustomRow $sheet2 $r $headers2.Length
+    }
     $r++
 }
 $sheet2.Columns.AutoFit()
@@ -97,6 +110,9 @@ foreach ($item in $data.todos) {
     $sheet3.Cells.Item($r, 3) = [string]$item.role
     $sheet3.Cells.Item($r, 4) = [string]$item.title
     $sheet3.Cells.Item($r, 5) = [string]$item.tip
+    if ([string]$item.id -like "custom_*" -or [string]$item.id -like "*_custom_*" -or $item.isCustom -eq $true) {
+        Format-CustomRow $sheet3 $r $headers3.Length
+    }
     $r++
 }
 $sheet3.Columns.AutoFit()
@@ -121,11 +137,14 @@ foreach ($item in $data.benefits) {
     $sheet4.Cells.Item($r, 6) = [string]$item.eligibility
     $sheet4.Cells.Item($r, 7) = [string]$item.timing
     $sheet4.Cells.Item($r, 8) = [string]$item.place
+    if ([string]$item.id -like "custom_*" -or [string]$item.id -like "*_custom_*" -or $item.isCustom -eq $true) {
+        Format-CustomRow $sheet4 $r $headers4.Length
+    }
     $r++
 }
 $sheet4.Columns.AutoFit()
 
-# 5. Sheet 5: Custom Recommendation Rules (🎯 맞춤_추천_설정)
+# 5. Sheet 5: Custom Recommendation Rules
 Write-Host "Creating Sheet 5: 맞춤_추천_설정..."
 $sheet5 = $workbook.Sheets.Add([System.Reflection.Missing]::Value, $sheet4)
 $sheet5.Name = "🎯 맞춤_추천_설정"
@@ -154,7 +173,7 @@ foreach ($rule in $recommendationRules) {
 }
 $sheet5.Columns.AutoFit()
 
-# 6. Sheet 6: User Activity Statistics (📊 사용자_활동_통계)
+# 6. Sheet 6: User Activity Statistics
 Write-Host "Creating Sheet 6: 사용자_활동_통계..."
 $sheet6 = $workbook.Sheets.Add([System.Reflection.Missing]::Value, $sheet5)
 $sheet6.Name = "📊 사용자_활동_통계"
