@@ -2125,7 +2125,52 @@
       background: #DDD;
       margin: 8px auto 0 auto;
     }
+
+    /* 모바일 기기 및 안드로이드 앱 화면 자동 맞춤 */
+    @media screen and (max-width: 600px), (max-device-width: 600px) {
+      body {
+        padding: 0 !important;
+        background-color: var(--bg-warm) !important;
+        min-height: 100vh !important;
+      }
+      .preview-header,
+      .notch,
+      .status-bar {
+        display: none !important;
+      }
+      .device-frame {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+      }
+    }
+
+    html.is-mobile-app body {
+      padding: 0 !important;
+      background-color: var(--bg-warm) !important;
+    }
+    html.is-mobile-app .preview-header,
+    html.is-mobile-app .notch,
+    html.is-mobile-app .status-bar {
+      display: none !important;
+    }
+    html.is-mobile-app .device-frame {
+      width: 100vw !important;
+      max-width: 100vw !important;
+      height: 100vh !important;
+      height: 100dvh !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
   </style>
+  <script>
+    if (window.location.protocol === 'file:' || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+      document.documentElement.classList.add('is-mobile-app');
+    }
+  </script>
 </head>
 <body>
 
