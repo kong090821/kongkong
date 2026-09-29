@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "295356325142",
+    "project_id": "kongkong-16e76",
+    "storage_bucket": "kongkong-16e76.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:295356325142:android:c1d664d3ad9f844fb50437",
+        "android_client_info": {
+          "package_name": "com.kongkong.babybag"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "295356325142-320513dom36uad8b1if8d15pjgqkpslm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAVS5UCD4bnbWStWT4diPXX4M4JIynrkyk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "295356325142-320513dom36uad8b1if8d15pjgqkpslm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
