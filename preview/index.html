@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
@@ -2236,7 +2236,7 @@
           <div class="guest-warning-notice" style="background: #FFF8F5; border: 1px solid #FFE0D6; border-radius: 12px; padding: 10px 14px; text-align: left; font-size: 12px; color: #555; line-height: 1.5; margin: 12px 0 16px;">
             📱 <strong>비회원 로컬 저장 안내:</strong><br/>
             비회원으로 시작 시 설문 및 출산가방 데이터는 <strong>사용자 휴대폰에만 안전하게 저장</strong>됩니다.<br/>
-            <span style="font-size: 11px; color: #888;">(※ 서버 용량을 차지하지 않으며, 기기 변경이나 부부 연동은 지원되지 않습니다.)</span>
+            <span style="font-size: 11px; color: #888;">(※ 기기 변경이나 부부 연동은 지원되지 않습니다.)</span>
           </div>
 
           <!-- 소셜 1초 간편 가입 구분선 -->
@@ -6249,14 +6249,11 @@
       savedBabySuppliesIds.clear();
       completedBabySuppliesIds.clear();
       ["bs_f_6", "bs_s_1", "bs_s_12", "bs_c_1", "bs_c_5", "bs_c_6", "bs_o_1", "bs_o_4"].forEach(id => savedBabySuppliesIds.add(id));
-      completedBabySuppliesIds.add("bs_f_6");
 
       // 4. 시기별 할일 맞춤
       savedTodoIds.clear();
       completedTodoIds.clear();
       ["todo_b_1", "todo_b_2", "todo_b_17", "todo_b_18", "todo_b_23", "todo_b_24", "todo_b_25", "todo_h_1", "todo_c_1", "todo_c_2"].forEach(id => savedTodoIds.add(id));
-      completedTodoIds.add("todo_b_17");
-      completedTodoIds.add("todo_b_18");
       if (profile.careCenter === "이용함") {
         savedTodoIds.add("todo_c_3");
       }
@@ -6954,7 +6951,7 @@
         if (welcomeName) welcomeName.textContent = '손님';
         if (icon) icon.textContent = '👶';
         updateSaveIndicatorUI('guest');
-        if (coupleText) coupleText.innerHTML = '📱 <b>휴대폰 로컬 모드</b> (서버 용량 차지 X)';
+        if (coupleText) coupleText.innerHTML = '📱 <b>휴대폰 로컬 모드</b>';
         if (coupleBtn) {
           coupleBtn.textContent = '간편가입 후 연동 ➔';
           coupleBtn.onclick = () => { handleLogout(); };
@@ -7034,7 +7031,7 @@
       if (state === 'guest') {
         badge.className = 'save-status-badge guest';
         badge.innerHTML = `📱 내 폰 저장됨 (${timeStr})`;
-        badge.title = '비회원 모드: 휴대폰 로컬에만 안전하게 저장되며 서버 용량을 차지하지 않습니다.';
+        badge.title = '비회원 모드: 휴대폰 로컬에만 안전하게 저장됩니다.';
       } else if (state === 'couple') {
         badge.className = 'save-status-badge couple';
         badge.innerHTML = `💑 부부 연동 저장 (${timeStr})`;
