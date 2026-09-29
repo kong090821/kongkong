@@ -1017,27 +1017,126 @@ function logUserActivity(ss, data) {
 // ------------------------------------------------------------------------------
 // 13. [맞춤 추천 관리 엔진] 시트(🎯 맞춤_추천_설정) 기반 동적 가방 설정
 // ------------------------------------------------------------------------------
+function getItemTitleMap(ss) {
+  const titleMap = {};
+  const sheets = ['출산가방 체크리스트', '육아용품 체크리스트', '시기별할일', '출산혜택정리'];
+  
+  sheets.forEach(function(sheetName) {
+    const s = ss.getSheetByName(sheetName);
+    if (!s || s.getLastRow() < 2) return;
+    const values = s.getRange(2, 1, s.getLastRow() - 1, s.getLastColumn()).getValues();
+    values.forEach(function(row) {
+      const id = String(row[0] || '').trim();
+      if (!id) return;
+      let title = '';
+      if (sheetName === '출산혜택정리') {
+        title = String(row[2] || '').trim();
+      } else {
+        title = String(row[3] || '').trim();
+      }
+      if (id && title) {
+        titleMap[id] = title;
+      }
+    });
+  });
+
+  const defaults = {
+    'm_cloth_1': '수유브라', 'm_cloth_2': '산모팬티', 'm_cloth_3': '무압박 수유양말', 'm_cloth_4': '실내 슬리퍼',
+    'm_cloth_5': '의료용 압박스타킹', 'm_cloth_6': '손목보호대', 'm_cloth_7': '산후복대', 'm_cloth_8': '가디건/겉옷',
+    'm_hyg_1': '맘스 안심팬티', 'm_hyg_2': '오버나이트 생리대', 'm_hyg_3': '마이비데 (비데물티슈)', 'm_hyg_7': '흉터 시트 (제왕절개용)', 'm_hyg_8': '회음부 방석',
+    'm_feed_1': '수유패드', 'm_feed_2': '모유저장팩', 'm_feed_4': '유두보호크림', 'm_feed_6': '유축기 깔때기', 'm_feed_7': '수유 쿠션',
+    'm_sk_1': '세면도구 세트', 'm_sk_2': '기초 화장품', 'm_sk_3': '립밤 & 수분크림',
+    'b_cloth_1': '배냇저고리', 'b_cloth_2': '속싸개', 'b_cloth_3': '겉싸개', 'b_care_1': '손수건', 'b_care_3': '아기 로션/수딩젤', 'b_care_4': '아기 영양제 (유산균/비타민D)',
+    'b_safe_1': '신생아 카시트', 'g_doc_1': '산모수첩 & 신분증', 'g_doc_2': '결제 수단 (카드/현금)', 'g_life_1': '꺾인 빨대 & 텀블러', 'g_life_4': '휴대폰 충전기 & 멀티탭'
+  };
+  for (let k in defaults) {
+    if (!titleMap[k]) titleMap[k] = defaults[k];
+  }
+
+  return titleMap;
+}
+
+function buildPairedRow(categoryName, idList, titleMap) {
+  const row = [categoryName];
+  idList.forEach(function(id) {
+    const cleanId = String(id || '').trim();
+    if (!cleanId) return;
+    const title = titleMap[cleanId] || cleanId;
+    row.push(cleanId);
+    row.push(title);
+  });
+  return row;
+}
+
 function getOrCreateRecommendationSheet(ss) {
   let sheet = ss.getSheetByName('🎯 맞춤_추천_설정');
+  const titleMap = getItemTitleMap(ss);
+
+  const headers = [
+    '구분', 
+    '추천품목ID1', '품목명1', 
+    '추천품목ID2', '품목명2', 
+    '추천품목ID3', '품목명3', 
+    '추천품목ID4', '품목명4', 
+    '추천품목ID5', '품목명5', 
+    '추천품목ID6', '품목명6', 
+    '추천품목ID7', '품목명7', 
+    '추천품목ID8', '품목명8'
+  ];
+
   if (!sheet) {
     sheet = ss.insertSheet('🎯 맞춤_추천_설정');
-    sheet.appendRow(['구분', '추천 품목 ID 목록 (쉼표 구분)', '설명 및 안내']);
-    sheet.getRange(1, 1, 1, 3).setBackground('#E8EAF6').setFontWeight('bold');
+    sheet.appendRow(headers);
+    sheet.getRange(1, 1, 1, headers.length).setBackground('#E8EAF6').setFontWeight('bold');
     sheet.setFrozenRows(1);
 
     const defaultRules = [
-      ['제왕절개', 'm_cloth_7, m_hyg_7, m_hyg_1, m_cloth_5, g_life_1', '산후복대, 흉터시트, 맘스안심팬티, 압박스타킹, 꺾인빨대 텀블러'],
-      ['자연분만', 'm_hyg_8, m_hyg_3, m_hyg_2', '회음부방석, 마이비데, 오버나이트 생리대 세트'],
-      ['조리원이용', 'm_feed_1, m_feed_2, m_feed_4, m_feed_6, m_feed_7, m_cloth_6, b_care_3, b_care_4', '수유패드, 저장팩, 유두크림, 유축깔때기, 손목보호대, 아기로션/영양제'],
-      ['자택조리', 'm_feed_1, m_feed_4, b_care_3', '기본 수유패드, 유두보호크림, 아기로션'],
-      ['공통산모', 'm_cloth_1, m_cloth_2, m_cloth_3, m_cloth_4, m_cloth_8, m_sk_1, m_sk_2, m_sk_3', '수유브라, 산모팬티, 무압박양말, 슬리퍼, 세면/화장품 세트'],
-      ['공통신생아', 'b_cloth_1, b_cloth_2, b_cloth_3, b_care_1, b_safe_1', '배냇저고리, 속싸개, 겉싸개, 손수건, 카시트'],
-      ['공통보호자', 'g_doc_1, g_doc_2, g_life_4', '산모수첩/신분증, 결제수단, 충전기/멀티탭']
+      buildPairedRow('제왕절개', ['m_cloth_7', 'm_hyg_7', 'm_hyg_1', 'm_cloth_5', 'g_life_1'], titleMap),
+      buildPairedRow('자연분만', ['m_hyg_8', 'm_hyg_3', 'm_hyg_2'], titleMap),
+      buildPairedRow('조리원이용', ['m_feed_1', 'm_feed_2', 'm_feed_4', 'm_feed_6', 'm_feed_7', 'm_cloth_6', 'b_care_3', 'b_care_4'], titleMap),
+      buildPairedRow('자택조리', ['m_feed_1', 'm_feed_4', 'b_care_3'], titleMap),
+      buildPairedRow('공통산모', ['m_cloth_1', 'm_cloth_2', 'm_cloth_3', 'm_cloth_4', 'm_cloth_8', 'm_sk_1', 'm_sk_2', 'm_sk_3'], titleMap),
+      buildPairedRow('공통신생아', ['b_cloth_1', 'b_cloth_2', 'b_cloth_3', 'b_care_1', 'b_safe_1'], titleMap),
+      buildPairedRow('공통보호자', ['g_doc_1', 'g_doc_2', 'g_life_4'], titleMap)
     ];
 
     defaultRules.forEach(function(r) {
       sheet.appendRow(r);
     });
+  } else {
+    // 3열 이하인 구버전 구조 자동 업그레이드
+    const firstHeader = String(sheet.getRange(1, 2).getValue() || '').trim();
+    if (firstHeader.indexOf('목록') !== -1 || sheet.getLastColumn() <= 3) {
+      const oldValues = sheet.getDataRange().getValues();
+      sheet.clearContents();
+      sheet.getRange(1, 1, 1, headers.length).setValues([headers]).setBackground('#E8EAF6').setFontWeight('bold');
+      sheet.setFrozenRows(1);
+
+      const categoryDefaults = {
+        '제왕절개': ['m_cloth_7', 'm_hyg_7', 'm_hyg_1', 'm_cloth_5', 'g_life_1'],
+        '자연분만': ['m_hyg_8', 'm_hyg_3', 'm_hyg_2'],
+        '조리원이용': ['m_feed_1', 'm_feed_2', 'm_feed_4', 'm_feed_6', 'm_feed_7', 'm_cloth_6', 'b_care_3', 'b_care_4'],
+        '자택조리': ['m_feed_1', 'm_feed_4', 'b_care_3'],
+        '공통산모': ['m_cloth_1', 'm_cloth_2', 'm_cloth_3', 'm_cloth_4', 'm_cloth_8', 'm_sk_1', 'm_sk_2', 'm_sk_3'],
+        '공통신생아': ['b_cloth_1', 'b_cloth_2', 'b_cloth_3', 'b_care_1', 'b_safe_1'],
+        '공통보호자': ['g_doc_1', 'g_doc_2', 'g_life_4']
+      };
+
+      for (let r = 1; r < oldValues.length; r++) {
+        const cat = String(oldValues[r][0] || '').trim();
+        if (!cat) continue;
+        let ids = [];
+        const rawIds = String(oldValues[r][1] || '').trim();
+        if (rawIds) {
+          ids = rawIds.split(',').map(s => s.trim()).filter(Boolean);
+        } else if (categoryDefaults[cat]) {
+          ids = categoryDefaults[cat];
+        }
+        if (ids.length > 0) {
+          sheet.appendRow(buildPairedRow(cat, ids, titleMap));
+        }
+      }
+    }
   }
   return sheet;
 }
@@ -1055,21 +1154,41 @@ function getRecommendationRules(ss) {
     commonGuardian: []
   };
 
-  function parseIds(str) {
-    if (!str) return [];
-    return String(str).split(',').map(s => s.trim()).filter(Boolean);
-  }
+  const keyMap = {
+    '제왕절개': 'cesarean',
+    '자연분만': 'natural',
+    '조리원이용': 'careCenter',
+    '자택조리': 'homeCare',
+    '공통산모': 'commonMaternity',
+    '공통신생아': 'commonBaby',
+    '공통보호자': 'commonGuardian'
+  };
 
   for (let i = 1; i < values.length; i++) {
     const type = String(values[i][0] || '').trim();
-    const ids = parseIds(values[i][1]);
-    if (type === '제왕절개') rules.cesarean = ids;
-    else if (type === '자연분만') rules.natural = ids;
-    else if (type === '조리원이용') rules.careCenter = ids;
-    else if (type === '자택조리') rules.homeCare = ids;
-    else if (type === '공통산모') rules.commonMaternity = ids;
-    else if (type === '공통신생아') rules.commonBaby = ids;
-    else if (type === '공통보호자') rules.commonGuardian = ids;
+    if (keyMap[type] && rules[keyMap[type]].length === 0) {
+      const ids = [];
+      const row = values[i];
+      for (let c = 1; c < row.length; c++) {
+        const val = String(row[c] || '').trim();
+        if (!val) continue;
+        if (val.indexOf(',') !== -1) {
+          val.split(',').forEach(p => {
+            const cleanP = p.trim();
+            if (cleanP && ids.indexOf(cleanP) === -1) ids.push(cleanP);
+          });
+        } else {
+          if (c % 2 === 1) {
+            if (ids.indexOf(val) === -1) ids.push(val);
+          } else {
+            if (/^(m_|b_|g_|todo_|ben_|custom)/i.test(val) && ids.indexOf(val) === -1) {
+              ids.push(val);
+            }
+          }
+        }
+      }
+      rules[keyMap[type]] = ids;
+    }
   }
 
   return rules;
@@ -1126,7 +1245,7 @@ function showGuideDialog() {
     '• 쿠팡 최근 수집: ' + coupangLog + '\n\n' +
     '🛡️ 신기능 안내:\n' +
     '1. 📊 사용자_활동_통계: 앱 종료 시 산모들의 실제 가방 데이터가 실시간 자동 수집됩니다.\n' +
-    '2. 🎯 맞춤 추천 설정 갱신: 수집된 통계를 바탕으로 [맞춤_추천_설정] 시트가 최신 트렌드로 자동 갱신됩니다.\n' +
+    '2. 🎯 맞춤 추천 설정 갱신: 수집된 통계를 바탕으로 [맞춤_추천_설정] 시트 하단에 추천 품목이 보라색 글씨로 갱신됩니다.\n' +
     '3. 🚀 시트별 반영: 원하는 시트만 골라서 어플에 개별 반영하거나 전체 반영할 수 있습니다.\n' +
     '4. 🛑 빨간색 셀: 자동 수집 시 절대 덮어쓰지 않고 영구 보존됩니다.',
     ui.ButtonSet.OK
@@ -1134,7 +1253,7 @@ function showGuideDialog() {
 }
 
 // ------------------------------------------------------------------------------
-// 15. [통계 분석 엔진] 사용자 활동 통계 기반 추천 가방 자동 계산 & 갱신
+// 15. [통계 분석 엔진] 사용자 활동 통계 기반 추천 가방 자동 계산 & 하단 추가 (보라색 글자)
 // ------------------------------------------------------------------------------
 function analyzeAndUpdateRecommendationsManual() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -1217,31 +1336,66 @@ function analyzeAndUpdateRecommendations(ss, isSilent) {
     '자연분만': getTopIds(naturalCounts, 4, defaultRules.natural),
     '조리원이용': getTopIds(careCenterCounts, 8, defaultRules.careCenter),
     '자택조리': getTopIds(homeCareCounts, 4, defaultRules.homeCare),
-    '공통산모': getTopIds(commonCounts, 8, defaultRules.commonMaternity),
-    '공통신생아': defaultRules.commonBaby,
-    '공통보호자': defaultRules.commonGuardian
+    '공통산모': getTopIds(commonCounts, 8, defaultRules.commonMaternity)
   };
 
   const recSheet = getOrCreateRecommendationSheet(ss);
-  const recValues = recSheet.getDataRange().getValues();
+  const titleMap = getItemTitleMap(ss);
+  const now = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm");
 
-  for (let r = 1; r < recValues.length; r++) {
-    const cat = String(recValues[r][0] || '').trim();
-    if (newRules[cat] && newRules[cat].length > 0) {
-      const cell = recSheet.getRange(r + 1, 2);
-      if (!isRedColor(cell.getBackground())) {
-        cell.setValue(newRules[cat].join(', '));
-        cell.setBackground('#EDE7F6'); // 연보라색 (통계 기반 자동 갱신 표시)
-      }
+  // 기존 하단 통계 추천 섹션 감지
+  const currentValues = recSheet.getDataRange().getValues();
+  let statsStartRow = -1;
+
+  for (let r = 0; r < currentValues.length; r++) {
+    const firstCell = String(currentValues[r][0] || '').trim();
+    if (firstCell.indexOf('📊') !== -1 || firstCell.indexOf('[통계') !== -1) {
+      statsStartRow = r + 1;
+      break;
     }
   }
 
+  // 기존 하단 통계 추천 행이 이미 존재하면 해당 행부터 초기화 후 새로 재작성
+  if (statsStartRow !== -1 && recSheet.getLastRow() >= statsStartRow) {
+    const numRowsToDelete = recSheet.getLastRow() - statsStartRow + 1;
+    recSheet.deleteRows(statsStartRow, numRowsToDelete);
+  }
+
+  recSheet.appendRow(['']); // 구분 빈 행
+
+  // 통계 기반 추천 구분 헤더 행 작성
+  const sepText = '📊 [통계 기반 추천 후보 (자동 갱신: ' + now + ')] - 아래 보라색 품목을 검토 후 상단 추천 행으로 자유롭게 복사하세요.';
+  const sepRowIdx = recSheet.appendRow([sepText]).getLastRow();
+  recSheet.getRange(sepRowIdx, 1, 1, 17).setBackground('#EDE7F6').setFontColor('#4A148C').setFontWeight('bold');
+
+  // 통계 추천 작성할 5개 카테고리
+  const statsCategories = ['제왕절개', '자연분만', '조리원이용', '자택조리', '공통산모'];
+  const newRowNumbers = [];
+
+  statsCategories.forEach(function(cat) {
+    const categoryLabel = '[통계추천] ' + cat;
+    const pairedRow = buildPairedRow(categoryLabel, newRules[cat], titleMap);
+    const addedRowIdx = recSheet.appendRow(pairedRow).getLastRow();
+    newRowNumbers.push(addedRowIdx);
+  });
+
+  // 하단 통계 추천 행 전체에 보라색 글자 색상 (#7B1FA2) 및 은은한 백그라운드 적용
+  newRowNumbers.forEach(function(rIdx) {
+    const maxCol = recSheet.getLastColumn();
+    const rowRange = recSheet.getRange(rIdx, 1, 1, maxCol);
+    rowRange.setFontColor('#7B1FA2'); // 보라색 글자
+    rowRange.setFontWeight('bold');
+    rowRange.setBackground('#FAF5FF'); // 연보라 채우기
+  });
+
   if (!isSilent) {
     SpreadsheetApp.getUi().alert(
-      '🎯 맞춤 추천 설정 갱신 완료',
-      '총 ' + validLogs + '건의 산모 활동 데이터를 분석하여 [🎯 맞춤_추천_설정] 시트의 품목을 최신 트렌드로 자동 갱신했습니다!\n\n' +
-      '※ 연보라색(#EDE7F6)으로 표시된 품목들을 검토하신 후,\n' +
-      '상단 메뉴에서 [🎯 5. 맞춤 추천 가방 설정만 반영]을 누르시면 어플에 즉시 배포됩니다.',
+      '🎯 맞춤 추천 통계 갱신 완료',
+      '총 ' + validLogs + '건의 산모 활동 데이터를 분석하여 [🎯 맞춤_추천_설정] 시트 아래쪽에 최신 추천 품목을 보라색 글씨로 작성했습니다!\n\n' +
+      '• 기존 데이터: 상단에 그대로 보존됩니다.\n' +
+      '• 통계 추천 데이터: 하단에 [통계추천] 항목으로 보라색 글씨로 작성되었습니다.\n\n' +
+      '하단의 보라색 품목을 검토하시고 상단 추천 행에 복사해 넣으신 뒤,\n' +
+      '상단 메뉴 [🎯 5. 맞춤 추천 가방 설정만 반영]을 누르시면 어플에 즉시 배포됩니다.',
       SpreadsheetApp.getUi().ButtonSet.OK
     );
   }

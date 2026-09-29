@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
+import android.webkit.JavascriptInterface;
 import android.webkit.JsResult;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -23,7 +24,6 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // WebView 인스턴스 생성 및 전체 화면 바인딩
         mWebView = new WebView(this);
         setContentView(mWebView);
 
@@ -40,10 +40,9 @@ public class MainActivity extends Activity {
         settings.setSupportZoom(false);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
 
-        // 하드웨어 가속
         mWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        mWebView.addJavascriptInterface(new WebAppInterface(), "AndroidInterface");
 
-        // 자바스크립트 Alert / Confirm 대화상자 브릿지 처리
         mWebView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onJsAlert(WebView view, String url, String message, final JsResult result) {
@@ -89,35 +88,50 @@ public class MainActivity extends Activity {
         mWebView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                return false; // WebView 내부에서 모든 페이지 로딩
+                return false;
             }
         });
 
-        // 로컬 Asset index.html 로드
         mWebView.loadUrl("file:///android_asset/index.html");
     }
 
-    // 안드로이드 뒤로가기 버튼 처리
+    public class WebAppInterface {
+        @JavascriptInterface
+        public void exitApp() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    new AlertDialog.Builder(MainActivity.this)
+                            .setTitle("앱 종료")
+                            .setMessage("꽁꽁 출산가방 앱을 종료하시겠습니까?")
+                            .setPositiveButton("종료", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    finish();
+                                }
+                            })
+                            .setNegativeButton("취소", null)
+                            .show();
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void closeApp() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    finish();
+                }
+            });
+        }
+    }
+
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
-            if (mWebView.canGoBack()) {
-                mWebView.goBack();
-                return true;
-            } else {
-                new AlertDialog.Builder(this)
-                        .setTitle("앱 종료")
-                        .setMessage("꽁꽁 출산가방 앱을 종료하시겠습니까?")
-                        .setPositiveButton("종료", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                finish();
-                            }
-                        })
-                        .setNegativeButton("취소", null)
-                        .show();
-                return true;
-            }
+            mWebView.evaluateJavascript("javascript:if(window.handleHardwareBackPress){window.handleHardwareBackPress();}", null);
+            return true;
         }
         return super.onKeyDown(keyCode, event);
     }

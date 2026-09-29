@@ -148,7 +148,7 @@ $sheet4.Columns.AutoFit()
 Write-Host "Creating Sheet 5: 맞춤_추천_설정..."
 $sheet5 = $workbook.Sheets.Add([System.Reflection.Missing]::Value, $sheet4)
 $sheet5.Name = "🎯 맞춤_추천_설정"
-$headers5 = @("구분", "추천 품목 ID 목록 (쉼표 구분)", "설명 및 포함 품목 안내")
+$headers5 = @("구분", "추천품목ID1", "품목명1", "추천품목ID2", "품목명2", "추천품목ID3", "품목명3", "추천품목ID4", "품목명4", "추천품목ID5", "품목명5", "추천품목ID6", "품목명6", "추천품목ID7", "품목명7", "추천품목ID8", "품목명8")
 for ($c = 0; $c -lt $headers5.Length; $c++) {
     $sheet5.Cells.Item(1, $c + 1) = $headers5[$c]
 }

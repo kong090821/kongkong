@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
@@ -22,6 +22,8 @@
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Noto Sans KR", Roboto, "Segoe UI", sans-serif;
       -webkit-tap-highlight-color: transparent;
+      word-break: keep-all;
+      word-wrap: break-word;
     }
 
     body {
@@ -433,25 +435,29 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px;
       margin-bottom: 6px;
     }
     .profile-user-badge {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
-      font-size: 13px;
+      gap: 4px;
+      font-size: 14px;
       font-weight: 800;
       color: var(--text-dark);
+      flex-shrink: 0;
     }
     .profile-edit-btn {
       background: #fff;
       border: 1px solid #ffccbc;
       color: var(--primary);
       border-radius: 8px;
-      font-size: 11.5px;
+      font-size: 11px;
       font-weight: 700;
-      padding: 3px 8px;
+      padding: 3px 6px;
       cursor: pointer;
+      white-space: nowrap;
     }
     .profile-tags-row {
       display: flex;
@@ -818,6 +824,21 @@
       background: #b71c1c;
     }
 
+    .btn-item-restore {
+      background: #2e7d32;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-item-restore:hover {
+      background: #1b5e20;
+    }
+
     .benefit-item-card {
       background: var(--surface);
       border-radius: 14px;
@@ -1130,6 +1151,29 @@
     .completed-saved-row .benefit-badge {
       opacity: 0.55;
       filter: grayscale(80%);
+    }
+
+    /* 삭제 처리된 품목 스타일 (가운뎃줄 & 하단 배치 & 복구) */
+    .is-deleted-card {
+      background: #f5f5f5 !important;
+      border-color: #e0e0e0 !important;
+      opacity: 0.7;
+    }
+    .is-deleted-card .single-line-text,
+    .is-deleted-card .benefit-title-text,
+    .is-deleted-card .benefit-desc,
+    .is-deleted-card .benefit-eligibility-box,
+    .is-deleted-card div,
+    .is-deleted-card span {
+      text-decoration: line-through !important;
+      color: #888888 !important;
+    }
+    .is-deleted-card .tag-chip-location,
+    .is-deleted-card .tag-chip-period,
+    .is-deleted-card .tag-chip-purchase,
+    .is-deleted-card .benefit-badge {
+      opacity: 0.5;
+      filter: grayscale(100%);
     }
 
     /* 내 가방 통합 뷰 및 섹션 타이틀 스타일 */
@@ -2145,6 +2189,7 @@
         height: 100dvh !important;
         border-radius: 0 !important;
         box-shadow: none !important;
+        padding-top: max(28px, env(safe-area-inset-top)) !important;
       }
     }
 
@@ -2164,6 +2209,7 @@
       height: 100dvh !important;
       border-radius: 0 !important;
       box-shadow: none !important;
+      padding-top: max(28px, env(safe-area-inset-top)) !important;
     }
   </style>
   <script>
@@ -2268,7 +2314,7 @@
               </svg>
             </button>
           </div>
-          <div class="social-caption">카카오 · 네이버 · 구글로 시작 시 Firebase 클라우드 백업 & 부부 계정 공유 지원 🔒</div>
+          <div class="social-caption">카카오 · 네이버 · 구글로 시작 시 클라우드 백업 & 부부 계정 공유 지원 🔒</div>
         </div>
 
         <div class="extra-links">
@@ -2394,14 +2440,12 @@
           <div class="profile-top-row">
             <div class="profile-user-badge">
               <span id="profileUserIcon">👶</span>
-              <span id="profileUserTitle">예비 부모님</span>
-              <span id="profileGuestBadge" class="guest-warning-badge" style="display:none; background:#e3f2fd; color:#1565c0; border:1px solid #bbdefb;">📱 비회원(로컬)</span>
-              <span id="saveStatusBadge" class="save-status-badge saved">🔒 자동 저장됨</span>
+              <span id="profileUserTitle" style="font-weight: 800; font-size: 15px; color: #2C3E50; white-space: nowrap;">예비 부모님</span>
             </div>
-            <div style="display: flex; gap: 4px;">
-              <button class="profile-edit-btn" onclick="openCoupleSyncModal()" id="btnHeaderCoupleSync" title="부부 계정 실시간 연동" style="background: #FFF0F5; color: #D81B60; border: 1px solid #F8BBD0; font-weight: 700;">💑 부부 연동</button>
-              <button class="profile-edit-btn" onclick="syncFromGoogleSheet(true)" title="구글 스프레드시트 최신 데이터 실시간 동기화" style="background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; font-weight: 600;">☁️ 시트 갱신</button>
-              <button class="profile-edit-btn" onclick="openOnboardingEdit()">설문 수정 ⚙️</button>
+            <div style="display: flex; gap: 4px; flex-wrap: nowrap;">
+              <button class="profile-edit-btn" onclick="openCoupleSyncModal()" id="btnHeaderCoupleSync" title="부부 계정 실시간 연동" style="background: #FFF0F5; color: #D81B60; border: 1px solid #F8BBD0; font-weight: 700; white-space: nowrap;">💑 부부 연동</button>
+              <button class="profile-edit-btn" onclick="syncFromGoogleSheet(true)" title="최신 품목 데이터 실시간 업데이트" style="background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; font-weight: 600; white-space: nowrap;">🔄 품목 업데이트</button>
+              <button class="profile-edit-btn" onclick="openOnboardingEdit()" style="white-space: nowrap;">설문 수정 ⚙️</button>
             </div>
           </div>
           <div class="profile-tags-row" id="profileTagsContainer">
@@ -3747,22 +3791,17 @@
       "g_doc_1", "g_doc_2", "g_dad_1", "g_life_1", "g_life_4"
     ]);
 
-    let completedBagItemIds = new Set([
-      "m_cloth_1", "m_cloth_2", "m_cloth_3", "m_cloth_4", "m_cloth_5",
-      "m_cloth_6", "m_cloth_7", "m_cloth_8", "m_hyg_1", "m_hyg_2",
-      "m_hyg_3", "m_hyg_5", // 15개 중 12개 완료 = 80%
-      "b_cloth_1", "b_cloth_2", "b_care_1",
-      "g_doc_1", "g_doc_2", "g_life_1"
-    ]);
+    let completedBagItemIds = new Set();
 
     let savedBabySuppliesIds = new Set(["bs_f_6", "bs_s_1", "bs_s_12", "bs_c_1", "bs_c_5", "bs_c_6", "bs_o_1", "bs_o_4"]);
-    let completedBabySuppliesIds = new Set(["bs_f_6", "bs_s_1"]);
+    let completedBabySuppliesIds = new Set();
 
     let savedTodoIds = new Set(["todo_b_1", "todo_b_2", "todo_b_17", "todo_b_18", "todo_b_23", "todo_b_24", "todo_b_25"]);
-    let completedTodoIds = new Set(["todo_b_17", "todo_b_18"]);
+    let completedTodoIds = new Set();
 
     let savedBenefitIds = new Set(["nat_1", "nat_2", "nat_3", "nat_6", "nat_7", "reg_seoul_1", "per_1", "per_5"]);
-    let completedBenefitIds = new Set(["nat_1", "nat_7"]);
+    let completedBenefitIds = new Set();
+    let deletedItemIds = new Set();
 
     let currentBagTab = 0;
     let isBagDeleteMode = false;
@@ -4304,6 +4343,7 @@
     }
 
     function createBagItemRowHTML(item) {
+      const isDeleted = deletedItemIds.has(item.id);
       const isSaved = savedBagItemIds.has(item.id);
       const momcafeProd = item.momcafe1st || getMomcafeRank1Product(item.title);
 
@@ -4314,12 +4354,17 @@
         return `<span class="tag-chip-location ${cls}">${t}</span>`;
       }).join('');
 
-      const checkColContent = isBagDeleteMode
-        ? `<button class="btn-item-delete" onclick="deleteBagItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')">삭제 🗑️</button>`
-        : `<input type="checkbox" class="benefit-checkbox" ${isSaved ? 'checked' : ''} onclick="toggleBagItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')" />`;
+      let checkColContent = '';
+      if (isDeleted) {
+        checkColContent = `<button class="btn-item-restore" onclick="restoreBagItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')">🔄 복구</button>`;
+      } else if (isBagDeleteMode) {
+        checkColContent = `<button class="btn-item-delete" onclick="deleteBagItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')">삭제 🗑️</button>`;
+      } else {
+        checkColContent = `<input type="checkbox" class="benefit-checkbox" ${isSaved ? 'checked' : ''} onclick="toggleBagItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')" />`;
+      }
 
       return `
-        <div class="bag-item-card ${isSaved ? 'saved' : ''}">
+        <div class="bag-item-card ${isDeleted ? 'is-deleted-card' : (isSaved ? 'saved' : '')}">
           <div class="bag-item-card-main">
             <div class="bag-col-name">
               <div class="single-line-text" style="font-weight:700; color:var(--text-dark); font-size:13px; text-align:center;">${item.title}</div>
@@ -4379,43 +4424,56 @@
         return;
       }
 
-      if (sortBag.col && sortBag.dir !== 'none') {
-        const isAsc = sortBag.dir === 'asc';
-        data = [...data].sort((a, b) => {
-          let res = 0;
-          if (sortBag.col === 'title') res = (a.title || '').localeCompare(b.title || '', 'ko-KR');
-          else if (sortBag.col === 'tag') {
-            const ta = (a.locationTags || []).join('');
-            const tb = (b.locationTags || []).join('');
-            res = ta.localeCompare(tb, 'ko-KR');
-          } else if (sortBag.col === 'saved') {
-            const sa = savedBagItemIds.has(a.id) ? 1 : 0;
-            const sb = savedBagItemIds.has(b.id) ? 1 : 0;
-            res = sa - sb;
-          }
-          return isAsc ? res : -res;
-        });
-
-        let html = '';
-        data.forEach(item => { html += createBagItemRowHTML(item); });
-        container.innerHTML = html;
-        return;
-      }
-
-      const grouped = {};
-      data.forEach(item => {
-        const sec = item.section || "일반 항목";
-        if (!grouped[sec]) grouped[sec] = [];
-        grouped[sec].push(item);
-      });
+      const activeItems = data.filter(i => !deletedItemIds.has(i.id));
+      const deletedItems = data.filter(i => deletedItemIds.has(i.id));
 
       let html = '';
-      Object.keys(grouped).forEach(sectionName => {
-        html += `<div class="section-title-badge">❖ ${sectionName}</div>`;
-        grouped[sectionName].forEach(item => {
+
+      if (activeItems.length > 0) {
+        if (sortBag.col && sortBag.dir !== 'none') {
+          const isAsc = sortBag.dir === 'asc';
+          const sortedActive = [...activeItems].sort((a, b) => {
+            let res = 0;
+            if (sortBag.col === 'title') res = (a.title || '').localeCompare(b.title || '', 'ko-KR');
+            else if (sortBag.col === 'tag') {
+              const ta = (a.locationTags || []).join('');
+              const tb = (b.locationTags || []).join('');
+              res = ta.localeCompare(tb, 'ko-KR');
+            } else if (sortBag.col === 'saved') {
+              const sa = savedBagItemIds.has(a.id) ? 1 : 0;
+              const sb = savedBagItemIds.has(b.id) ? 1 : 0;
+              res = sa - sb;
+            }
+            return isAsc ? res : -res;
+          });
+          sortedActive.forEach(item => { html += createBagItemRowHTML(item); });
+        } else {
+          const grouped = {};
+          activeItems.forEach(item => {
+            const sec = item.section || "일반 항목";
+            if (!grouped[sec]) grouped[sec] = [];
+            grouped[sec].push(item);
+          });
+          Object.keys(grouped).forEach(sectionName => {
+            html += `<div class="section-title-badge">❖ ${sectionName}</div>`;
+            grouped[sectionName].forEach(item => {
+              html += createBagItemRowHTML(item);
+            });
+          });
+        }
+      }
+
+      if (deletedItems.length > 0) {
+        html += `<div class="section-title-badge" style="background:#fff3e0; color:#d84315; border:1px solid #ffcc80; margin-top:16px;">─── 🗑️ 삭제 처리된 품목 (${deletedItems.length}개) ───</div>`;
+        deletedItems.forEach(item => {
           html += createBagItemRowHTML(item);
         });
-      });
+      }
+
+      if (!html) {
+        html = `<div class="empty-state"><h3>검색/필터 결과가 없습니다.</h3><p>다른 검색어를 입력하거나 필터를 '전체'로 변경해 보세요.</p></div>`;
+      }
+
       container.innerHTML = html;
     }
 
@@ -4435,12 +4493,18 @@
     }
 
     function deleteBagItem(id, title) {
-      maternityBagItemsData = maternityBagItemsData.filter(i => i.id !== id);
-      babyBagItemsData = babyBagItemsData.filter(i => i.id !== id);
-      guardianBagItemsData = guardianBagItemsData.filter(i => i.id !== id);
+      deletedItemIds.add(id);
       savedBagItemIds.delete(id);
       completedBagItemIds.delete(id);
-      showToast(`'${title}' 준비물이 삭제되었습니다 🗑️`);
+      showToast(`'${title}' 삭제 처리되었습니다 🗑️`);
+      renderMaternityBagList();
+      updateSavedBadges();
+      autoSaveCurrentUserData();
+    }
+
+    function restoreBagItem(id, title) {
+      deletedItemIds.delete(id);
+      showToast(`'${title}' 품목이 복구되었습니다 🔄`);
       renderMaternityBagList();
       updateSavedBadges();
       autoSaveCurrentUserData();
@@ -4504,6 +4568,7 @@
     }
 
     function createBabyItemRowHTML(item) {
+      const isDeleted = deletedItemIds.has(item.id);
       const isSaved = savedBabySuppliesIds.has(item.id);
       const momcafeProd = item.momcafe1st || getMomcafeRank1Product(item.title);
 
@@ -4518,12 +4583,17 @@
       const purchaseCls = item.purchaseTag === '#당근' ? 'carrot' : 'newitem';
       const purchaseHTML = `<span class="tag-chip-purchase ${purchaseCls}">${item.purchaseTag || '#새제품'}</span>`;
 
-      const checkCol = isBabyDeleteMode
-        ? `<button class="btn-item-delete" onclick="deleteBabyItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')">삭제 🗑️</button>`
-        : `<input type="checkbox" class="benefit-checkbox" ${isSaved ? 'checked' : ''} onclick="toggleBabySupply('${item.id}', '${item.title.replace(/'/g, "\\'")}')" />`;
+      let checkCol = '';
+      if (isDeleted) {
+        checkCol = `<button class="btn-item-restore" onclick="restoreBabyItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')">🔄 복구</button>`;
+      } else if (isBabyDeleteMode) {
+        checkCol = `<button class="btn-item-delete" onclick="deleteBabyItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')">삭제 🗑️</button>`;
+      } else {
+        checkCol = `<input type="checkbox" class="benefit-checkbox" ${isSaved ? 'checked' : ''} onclick="toggleBabySupply('${item.id}', '${item.title.replace(/'/g, "\\'")}')" />`;
+      }
 
       return `
-        <div class="bag-item-card ${isSaved ? 'saved' : ''}">
+        <div class="bag-item-card ${isDeleted ? 'is-deleted-card' : (isSaved ? 'saved' : '')}">
           <div class="bag-item-card-main">
             <div class="bag-col-name">
               <div class="single-line-text" style="font-weight:700; color:var(--text-dark); font-size:13px; text-align:center;">${item.title}</div>
@@ -4590,37 +4660,50 @@
         return;
       }
 
-      if (sortBaby.col && sortBaby.dir !== 'none') {
-        const isAsc = sortBaby.dir === 'asc';
-        data = [...data].sort((a, b) => {
-          let res = 0;
-          if (sortBaby.col === 'title') res = (a.title || '').localeCompare(b.title || '', 'ko-KR');
-          else if (sortBaby.col === 'period') res = (a.periodTags || []).join('').localeCompare((b.periodTags || []).join(''), 'ko-KR');
-          else if (sortBaby.col === 'purchase') res = (a.purchaseTag || '').localeCompare(b.purchaseTag || '', 'ko-KR');
-          else if (sortBaby.col === 'saved') res = (savedBabySuppliesIds.has(a.id) ? 1 : 0) - (savedBabySuppliesIds.has(b.id) ? 1 : 0);
-          return isAsc ? res : -res;
-        });
-
-        let html = '';
-        data.forEach(item => { html += createBabyItemRowHTML(item); });
-        container.innerHTML = html;
-        return;
-      }
-
-      const grouped = {};
-      data.forEach(item => {
-        const sec = item.section || "일반 용품";
-        if (!grouped[sec]) grouped[sec] = [];
-        grouped[sec].push(item);
-      });
+      const activeItems = data.filter(i => !deletedItemIds.has(i.id));
+      const deletedItems = data.filter(i => deletedItemIds.has(i.id));
 
       let html = '';
-      Object.keys(grouped).forEach(sectionName => {
-        html += `<div class="section-title-badge" style="background:#e8f5e9; color:#2e7d32; border:1px solid #c8e6c9;">❖ ${sectionName}</div>`;
-        grouped[sectionName].forEach(item => {
+
+      if (activeItems.length > 0) {
+        if (sortBaby.col && sortBaby.dir !== 'none') {
+          const isAsc = sortBaby.dir === 'asc';
+          const sortedActive = [...activeItems].sort((a, b) => {
+            let res = 0;
+            if (sortBaby.col === 'title') res = (a.title || '').localeCompare(b.title || '', 'ko-KR');
+            else if (sortBaby.col === 'period') res = (a.periodTags || []).join('').localeCompare((b.periodTags || []).join(''), 'ko-KR');
+            else if (sortBaby.col === 'purchase') res = (a.purchaseTag || '').localeCompare(b.purchaseTag || '', 'ko-KR');
+            else if (sortBaby.col === 'saved') res = (savedBabySuppliesIds.has(a.id) ? 1 : 0) - (savedBabySuppliesIds.has(b.id) ? 1 : 0);
+            return isAsc ? res : -res;
+          });
+          sortedActive.forEach(item => { html += createBabyItemRowHTML(item); });
+        } else {
+          const grouped = {};
+          activeItems.forEach(item => {
+            const sec = item.section || "일반 용품";
+            if (!grouped[sec]) grouped[sec] = [];
+            grouped[sec].push(item);
+          });
+          Object.keys(grouped).forEach(sectionName => {
+            html += `<div class="section-title-badge" style="background:#e8f5e9; color:#2e7d32; border:1px solid #c8e6c9;">❖ ${sectionName}</div>`;
+            grouped[sectionName].forEach(item => {
+              html += createBabyItemRowHTML(item);
+            });
+          });
+        }
+      }
+
+      if (deletedItems.length > 0) {
+        html += `<div class="section-title-badge" style="background:#fff3e0; color:#d84315; border:1px solid #ffcc80; margin-top:16px;">─── 🗑️ 삭제 처리된 품목 (${deletedItems.length}개) ───</div>`;
+        deletedItems.forEach(item => {
           html += createBabyItemRowHTML(item);
         });
-      });
+      }
+
+      if (!html) {
+        html = `<div class="empty-state"><h3>검색/필터 결과가 없습니다.</h3><p>다른 검색어를 입력하거나 필터를 '전체'로 변경해 보세요.</p></div>`;
+      }
+
       container.innerHTML = html;
     }
 
@@ -4639,10 +4722,17 @@
     }
 
     function deleteBabyItem(id, title) {
-      babySuppliesData = babySuppliesData.filter(i => i.id !== id);
+      deletedItemIds.add(id);
       savedBabySuppliesIds.delete(id);
       completedBabySuppliesIds.delete(id);
-      showToast(`'${title}' 육아용품 삭제됨 🗑️`);
+      showToast(`'${title}' 삭제 처리되었습니다 🗑️`);
+      renderBabyItemList();
+      autoSaveCurrentUserData();
+    }
+
+    function restoreBabyItem(id, title) {
+      deletedItemIds.delete(id);
+      showToast(`'${title}' 육아용품이 복구되었습니다 🔄`);
       renderBabyItemList();
       autoSaveCurrentUserData();
     }
@@ -4705,18 +4795,24 @@
     }
 
     function createTodoItemRowHTML(item) {
+      const isDeleted = deletedItemIds.has(item.id);
       const isSaved = savedTodoIds.has(item.id);
 
       let roleStyle = "background:#e8f5e9; color:#2e7d32;";
       if (item.roleTag === '#아빠') roleStyle = "background:#e3f2fd; color:#1565c0;";
       else if (item.roleTag === '#엄마') roleStyle = "background:#fff0ec; color:#ff6f59;";
 
-      const checkCol = isTodoDeleteMode
-        ? `<button class="btn-item-delete" onclick="deleteTodoItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')">삭제 🗑️</button>`
-        : `<input type="checkbox" class="benefit-checkbox" ${isSaved ? 'checked' : ''} onclick="toggleTodoSaved('${item.id}', '${item.title.replace(/'/g, "\\'")}')" />`;
+      let checkCol = '';
+      if (isDeleted) {
+        checkCol = `<button class="btn-item-restore" onclick="restoreTodoItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')">🔄 복구</button>`;
+      } else if (isTodoDeleteMode) {
+        checkCol = `<button class="btn-item-delete" onclick="deleteTodoItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')">삭제 🗑️</button>`;
+      } else {
+        checkCol = `<input type="checkbox" class="benefit-checkbox" ${isSaved ? 'checked' : ''} onclick="toggleTodoSaved('${item.id}', '${item.title.replace(/'/g, "\\'")}')" />`;
+      }
 
       return `
-        <div class="bag-item-row ${isSaved ? 'saved' : ''}">
+        <div class="bag-item-row ${isDeleted ? 'is-deleted-card' : (isSaved ? 'saved' : '')}">
           <div class="bag-col-name" style="text-align: center; justify-content: center;">
             <div class="single-line-text" style="font-weight:700; color:var(--text-dark); font-size:13px; text-align:center;">${item.title}</div>
             ${item.tip ? `<div class="single-line-text" style="font-size:11px; color:var(--text-muted); margin-top:2px; text-align:center;">${item.tip}</div>` : ''}
@@ -4764,19 +4860,38 @@
         return;
       }
 
-      if (sortTodo.col && sortTodo.dir !== 'none') {
-        const isAsc = sortTodo.dir === 'asc';
-        data = [...data].sort((a, b) => {
-          let res = 0;
-          if (sortTodo.col === 'title') res = (a.title || '').localeCompare(b.title || '', 'ko-KR');
-          else if (sortTodo.col === 'tip') res = (a.tip || '').localeCompare(b.tip || '', 'ko-KR');
-          else if (sortTodo.col === 'role') res = (a.roleTag || '').localeCompare(b.roleTag || '', 'ko-KR');
-          else if (sortTodo.col === 'saved') res = (savedTodoIds.has(a.id) ? 1 : 0) - (savedTodoIds.has(b.id) ? 1 : 0);
-          return isAsc ? res : -res;
-        });
+      const activeItems = data.filter(i => !deletedItemIds.has(i.id));
+      const deletedItems = data.filter(i => deletedItemIds.has(i.id));
+
+      let html = '';
+
+      if (activeItems.length > 0) {
+        if (sortTodo.col && sortTodo.dir !== 'none') {
+          const isAsc = sortTodo.dir === 'asc';
+          const sortedActive = [...activeItems].sort((a, b) => {
+            let res = 0;
+            if (sortTodo.col === 'title') res = (a.title || '').localeCompare(b.title || '', 'ko-KR');
+            else if (sortTodo.col === 'tip') res = (a.tip || '').localeCompare(b.tip || '', 'ko-KR');
+            else if (sortTodo.col === 'role') res = (a.roleTag || '').localeCompare(b.roleTag || '', 'ko-KR');
+            else if (sortTodo.col === 'saved') res = (savedTodoIds.has(a.id) ? 1 : 0) - (savedTodoIds.has(b.id) ? 1 : 0);
+            return isAsc ? res : -res;
+          });
+          html += sortedActive.map(createTodoItemRowHTML).join('');
+        } else {
+          html += activeItems.map(createTodoItemRowHTML).join('');
+        }
       }
 
-      container.innerHTML = data.map(createTodoItemRowHTML).join('');
+      if (deletedItems.length > 0) {
+        html += `<div class="section-title-badge" style="background:#fff3e0; color:#d84315; border:1px solid #ffcc80; margin-top:16px;">─── 🗑️ 삭제 처리된 품목 (${deletedItems.length}개) ───</div>`;
+        html += deletedItems.map(createTodoItemRowHTML).join('');
+      }
+
+      if (!html) {
+        html = `<div class="empty-state"><h3>검색/필터 결과가 없습니다.</h3><p>다른 검색어를 입력하거나 필터를 '전체'로 변경해 보세요.</p></div>`;
+      }
+
+      container.innerHTML = html;
     }
 
     function toggleTodoSaved(id, title) {
@@ -4794,10 +4909,18 @@
     }
 
     function deleteTodoItem(id, title) {
-      todoItemsData = todoItemsData.filter(i => i.id !== id);
+      deletedItemIds.add(id);
       savedTodoIds.delete(id);
       completedTodoIds.delete(id);
-      showToast(`'${title}' 할일 삭제됨 🗑️`);
+      showToast(`'${title}' 삭제 처리되었습니다 🗑️`);
+      renderTodoItemList();
+      updateSavedBadges();
+      autoSaveCurrentUserData();
+    }
+
+    function restoreTodoItem(id, title) {
+      deletedItemIds.delete(id);
+      showToast(`'${title}' 할일이 복구되었습니다 🔄`);
       renderTodoItemList();
       updateSavedBadges();
       autoSaveCurrentUserData();
@@ -4929,14 +5052,20 @@
     }
 
     function createBenefitCardHTML(item) {
+      const isDeleted = deletedItemIds.has(item.id);
       const isSaved = savedBenefitIds.has(item.id);
 
-      const checkColContent = isBenefitsDeleteMode
-        ? `<button class="btn-item-delete" onclick="deleteBenefitItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')">삭제 🗑️</button>`
-        : `<input type="checkbox" class="benefit-checkbox" ${isSaved ? 'checked' : ''} onclick="toggleBenefit('${item.id}', '${item.title.replace(/'/g, "\\'")}')" />`;
+      let checkColContent = '';
+      if (isDeleted) {
+        checkColContent = `<button class="btn-item-restore" onclick="restoreBenefitItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')">🔄 복구</button>`;
+      } else if (isBenefitsDeleteMode) {
+        checkColContent = `<button class="btn-item-delete" onclick="deleteBenefitItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')">삭제 🗑️</button>`;
+      } else {
+        checkColContent = `<input type="checkbox" class="benefit-checkbox" ${isSaved ? 'checked' : ''} onclick="toggleBenefit('${item.id}', '${item.title.replace(/'/g, "\\'")}')" />`;
+      }
 
       return `
-        <div class="benefit-card-row ${isSaved ? 'saved' : ''}">
+        <div class="benefit-card-row ${isDeleted ? 'is-deleted-card' : (isSaved ? 'saved' : '')}">
           <div class="benefit-info-col">
             <div class="benefit-title-row">
               <span class="benefit-title-text">${item.title}</span>
@@ -4958,15 +5087,33 @@
       `;
     }
 
-    function renderNationalBenefits() {
-      const container = document.getElementById('nationalBenefitsList');
+    function renderBenefitListContainer(containerId, rawList) {
+      const container = document.getElementById(containerId);
       if (!container) return;
-      const list = filterAndSortBenefits(nationalBenefitsData);
+      const list = filterAndSortBenefits(rawList);
       if (list.length === 0) {
         container.innerHTML = `<div class="empty-state"><h3>검색/필터 결과가 없습니다.</h3><p>다른 검색어를 입력하거나 필터를 '전체'로 변경해 보세요.</p></div>`;
         return;
       }
-      container.innerHTML = list.map(createBenefitCardHTML).join('');
+      const activeItems = list.filter(i => !deletedItemIds.has(i.id));
+      const deletedItems = list.filter(i => deletedItemIds.has(i.id));
+
+      let html = '';
+      if (activeItems.length > 0) {
+        html += activeItems.map(createBenefitCardHTML).join('');
+      }
+      if (deletedItems.length > 0) {
+        html += `<div class="section-title-badge" style="background:#fff3e0; color:#d84315; border:1px solid #ffcc80; margin-top:16px;">─── 🗑️ 삭제 처리된 혜택 (${deletedItems.length}개) ───</div>`;
+        html += deletedItems.map(createBenefitCardHTML).join('');
+      }
+      if (!html) {
+        html = `<div class="empty-state"><h3>검색/필터 결과가 없습니다.</h3><p>다른 검색어를 입력하거나 필터를 '전체'로 변경해 보세요.</p></div>`;
+      }
+      container.innerHTML = html;
+    }
+
+    function renderNationalBenefits() {
+      renderBenefitListContainer('nationalBenefitsList', nationalBenefitsData);
     }
 
     function renderRegionalChips() {
@@ -4987,37 +5134,27 @@
     }
 
     function renderRegionalBenefits() {
-      const container = document.getElementById('regionalBenefitsList');
-      if (!container) return;
       const raw = regionalBenefitsData[currentRegion] || [];
-      const list = filterAndSortBenefits(raw);
-      if (list.length === 0) {
-        container.innerHTML = `<div class="empty-state"><h3>검색/필터 결과가 없습니다.</h3><p>다른 검색어를 입력하거나 필터를 '전체'로 변경해 보세요.</p></div>`;
-        return;
-      }
-      container.innerHTML = list.map(createBenefitCardHTML).join('');
+      renderBenefitListContainer('regionalBenefitsList', raw);
     }
 
     function renderPersonalBenefits() {
-      const container = document.getElementById('personalBenefitsList');
-      if (!container) return;
-      const list = filterAndSortBenefits(personalBenefitsData);
-      if (list.length === 0) {
-        container.innerHTML = `<div class="empty-state"><h3>검색/필터 결과가 없습니다.</h3><p>다른 검색어를 입력하거나 필터를 '전체'로 변경해 보세요.</p></div>`;
-        return;
-      }
-      container.innerHTML = list.map(createBenefitCardHTML).join('');
+      renderBenefitListContainer('personalBenefitsList', personalBenefitsData);
     }
 
     function deleteBenefitItem(id, title) {
-      nationalBenefitsData = nationalBenefitsData.filter(i => i.id !== id);
-      personalBenefitsData = personalBenefitsData.filter(i => i.id !== id);
-      Object.keys(regionalBenefitsData).forEach(reg => {
-        regionalBenefitsData[reg] = regionalBenefitsData[reg].filter(i => i.id !== id);
-      });
+      deletedItemIds.add(id);
       savedBenefitIds.delete(id);
       completedBenefitIds.delete(id);
-      showToast(`'${title}' 혜택 삭제됨 🗑️`);
+      showToast(`'${title}' 삭제 처리되었습니다 🗑️`);
+      refreshActiveBenefitScreen();
+      updateSavedBadges();
+      autoSaveCurrentUserData();
+    }
+
+    function restoreBenefitItem(id, title) {
+      deletedItemIds.delete(id);
+      showToast(`'${title}' 혜택이 복구되었습니다 🔄`);
       refreshActiveBenefitScreen();
       updateSavedBadges();
       autoSaveCurrentUserData();
@@ -6134,7 +6271,7 @@
       let weeksText = "";
       if (passedDays > 0 && passedDays <= 294) {
         const weeks = Math.floor(passedDays / 7);
-        weeksText = `임신 ${weeks}주차`;
+        weeksText = `${weeks}주차`;
       }
       return { dday: diffDays, ddayText, weeksText };
     }
@@ -6317,14 +6454,41 @@
         serviceName: '꽁꽁 출산가방',
         brandColor: '#FFFFFF',
         textColor: '#3c4043',
-        title: 'Google 계정으로 로그인 (Firebase 연동)',
+        title: 'Google 계정으로 로그인',
         logoSvg: '<svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.25 21.36 7.33 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.16 0 9.94 0 12s.46 3.84 1.26 5.42l4.02-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.25 2.64 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>',
-        scopes: ['Google Firebase 클라우드 백업 [필수]', 'Google 계정 ID 연동 [필수]'],
-        badge: '구글 Firebase 공식 연동 (Project: kongkong-16e76)'
+        scopes: ['Google 계정 백업 [필수]', 'Google 계정 ID 연동 [필수]'],
+        badge: '구글 계정 연동'
       }
     };
 
     let pendingOAuthProvider = null;
+
+    function triggerRealOAuthLogin(provider) {
+      const conf = OAUTH_CONFIG[provider];
+      if (!conf) return;
+
+      const currentUrl = location.href.split('?')[0].split('#')[0];
+      let oauthUrl = '';
+
+      if (provider === 'naver') {
+        oauthUrl = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${conf.clientId}&redirect_uri=${encodeURIComponent(currentUrl)}&state=naver_oauth`;
+      } else if (provider === 'kakao') {
+        oauthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${conf.clientId}&redirect_uri=${encodeURIComponent(currentUrl)}&response_type=code&state=kakao_oauth`;
+      } else if (provider === 'google') {
+        oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${conf.clientId}&redirect_uri=${encodeURIComponent(currentUrl)}&response_type=token&scope=email%20profile&state=google_oauth`;
+      }
+
+      // 로컬 file:// 모드 및 웹 모드 대응
+      if (location.protocol === 'file:') {
+        const confirmWeb = confirm(`[${conf.name} 공식 로그인 인증]\n${conf.name} 공식 서버(https://${provider === 'naver' ? 'nid.naver.com' : (provider === 'kakao' ? 'kauth.kakao.com' : 'accounts.google.com')})로 이동하여 실제 계정과 비밀번호로 로그인하시겠습니까?`);
+        if (confirmWeb) {
+          window.open(oauthUrl, '_blank');
+          confirmOAuthLogin();
+        }
+      } else {
+        window.location.href = oauthUrl;
+      }
+    }
 
     function handleSocialLogin(provider) {
       const conf = OAUTH_CONFIG[provider];
@@ -6344,8 +6508,8 @@
       document.getElementById('oauthModalTitle').textContent = conf.title;
       document.getElementById('oauthModalTitle').style.color = conf.textColor;
       document.getElementById('oauthClientIdText').textContent = (provider === 'naver')
-        ? `Client ID: ${conf.clientId} (공식 인증)`
-        : `연동 방식: ${conf.badge}`;
+        ? `Client ID: ${conf.clientId} (네이버 공식 서명)`
+        : `공식 키: ${conf.badge}`;
 
       const scopesHtml = conf.scopes.map(s => `<div class="oauth-perm-item">✓ ${s}</div>`).join('');
       document.getElementById('oauthScopesList').innerHTML = scopesHtml;
@@ -6358,7 +6522,7 @@
       } else {
         btnConfirm.style.border = 'none';
       }
-      btnConfirm.innerHTML = `<span>${conf.name}로 1초 시작하기 ➔</span>`;
+      btnConfirm.innerHTML = `<span>${conf.name} 공식 로그인 시작 ➔</span>`;
 
       document.getElementById('oauthModal').style.display = 'flex';
     }
@@ -6385,7 +6549,7 @@
 
       currentUser = { 
         type: provider, 
-        name: `${pName} 산모님`,
+        name: `${pName} 회원님`,
         id: persistentId
       };
 
@@ -6403,11 +6567,9 @@
           }
           updateDashboardProfileUI();
           updateSavedBadges();
-          updateSaveIndicatorUI(userProfile.linkedCoupleCode ? 'couple' : 'cloud');
-          showToast(`✨ ${pName} 계정 복원 완료! 내 가방(${savedBagItemIds.size}개)이 유지됩니다.`);
+          showToast(`✨ ${pName} 공식 로그인 연결 완료! 내 가방이 유지됩니다.`);
           goToScreen('dashboardScreen');
 
-          // 백그라운드에서 Firebase 클라우드 및 부부 연동 최신 데이터 동기화
           setTimeout(async () => {
             if (userProfile.linkedCoupleCode) {
               await syncFromCoupleCloud();
@@ -6943,16 +7105,13 @@
       const coupleText = document.getElementById('coupleSyncStatusText');
       const coupleBtn = document.getElementById('btnOpenCoupleSync');
 
+      if (guestBadge) guestBadge.style.display = 'none';
+
       if (isGuest) {
-        if (userTitle) userTitle.textContent = '비회원 (로컬 보관)';
-        if (guestBadge) {
-          guestBadge.style.display = 'inline-block';
-          guestBadge.textContent = '📱 비회원(로컬)';
-        }
+        if (userTitle) userTitle.textContent = '비회원';
         if (welcomeName) welcomeName.textContent = '손님';
         if (icon) icon.textContent = '👶';
-        updateSaveIndicatorUI('guest');
-        if (coupleText) coupleText.innerHTML = '📱 <b>휴대폰 로컬 모드</b>';
+        if (coupleText) coupleText.innerHTML = '📱 <b>개인 안전 모드</b>';
         if (coupleBtn) {
           coupleBtn.textContent = '간편가입 후 연동 ➔';
           coupleBtn.onclick = () => { handleLogout(); };
@@ -6960,9 +7119,8 @@
       } else {
         const pNames = { kakao: '카카오', naver: '네이버', google: '구글' };
         const pStr = currentUser ? (pNames[currentUser.type] || currentUser.type) : '회원';
-        if (userTitle) userTitle.textContent = `${pStr} 맞춤 회원`;
-        if (guestBadge) guestBadge.style.display = 'none';
-        if (welcomeName) welcomeName.textContent = `${pStr} 회원님`;
+        if (userTitle) userTitle.textContent = `${pStr}`;
+        if (welcomeName) welcomeName.textContent = `${pStr}님`;
         if (icon) icon.textContent = (currentUser && currentUser.type === 'naver') ? '🟢' : '🌸';
 
         if (!userProfile.coupleCode) {
@@ -6971,15 +7129,13 @@
         }
 
         if (userProfile.linkedCoupleCode) {
-          updateSaveIndicatorUI('couple');
           if (coupleText) coupleText.innerHTML = `💑 <b>배우자와 실시간 연동 중</b> (${userProfile.linkedCoupleCode})`;
           if (coupleBtn) {
             coupleBtn.textContent = '연동 관리';
             coupleBtn.onclick = openCoupleSyncModal;
           }
         } else {
-          updateSaveIndicatorUI('cloud');
-          if (coupleText) coupleText.innerHTML = `🔒 Firebase 클라우드 백업 중 (내 코드: <b>${userProfile.coupleCode}</b>)`;
+          if (coupleText) coupleText.innerHTML = `🔒 클라우드 안전 백업 적용 (내 연동 코드: <b>${userProfile.coupleCode}</b>)`;
           if (coupleBtn) {
             coupleBtn.textContent = '부부 연동하기 ➔';
             coupleBtn.onclick = openCoupleSyncModal;
@@ -6995,10 +7151,10 @@
       if (tagGen) tagGen.textContent = userProfile.gender === '남아' ? '👦 남아' : (userProfile.gender === '여아' ? '👧 여아' : '🤍 성별 미정');
 
       const tagBirth = document.getElementById('tagBirthType');
-      if (tagBirth) tagBirth.textContent = userProfile.birthType === '제왕절개' ? '🏥 제왕절개' : (userProfile.birthType === '자연분만' ? '🌸 자연분만' : '🤔 분만 미정');
+      if (tagBirth) tagBirth.textContent = userProfile.birthType === '제왕절개' ? '🏥 제왕' : (userProfile.birthType === '자연분만' ? '🌸 자분' : '🤔 분만 미정');
 
       const tagCare = document.getElementById('tagCareCenter');
-      if (tagCare) tagCare.textContent = userProfile.careCenter === '이용함' ? '🏢 조리원 입소' : '🏡 자택 조리';
+      if (tagCare) tagCare.textContent = userProfile.careCenter === '이용함' ? '🏢 조리원' : '🏡 자택';
 
       const tagReg = document.getElementById('tagRegion');
       if (tagReg) tagReg.textContent = `📍 ${userProfile.region || '서울'}`;
@@ -7007,41 +7163,16 @@
     function autoSaveCurrentUserData() {
       if (isGuest) {
         savePersistedData('guest');
-        updateSaveIndicatorUI('guest');
         return;
       }
-      if (!currentUser || !currentUser.type) {
-        updateSaveIndicatorUI('guest');
-        return;
-      }
+      if (!currentUser || !currentUser.type) return;
       savePersistedData(currentUser.type);
       syncUserDataToFirebase();
-      if (userProfile && userProfile.linkedCoupleCode) {
-        updateSaveIndicatorUI('couple');
-      } else {
-        updateSaveIndicatorUI('cloud');
-      }
     }
 
     function updateSaveIndicatorUI(state) {
       const badge = document.getElementById('saveStatusBadge');
-      if (!badge) return;
-      const now = new Date();
-      const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-
-      if (state === 'guest') {
-        badge.className = 'save-status-badge guest';
-        badge.innerHTML = `📱 내 폰 저장됨 (${timeStr})`;
-        badge.title = '비회원 모드: 휴대폰 로컬에만 안전하게 저장됩니다.';
-      } else if (state === 'couple') {
-        badge.className = 'save-status-badge couple';
-        badge.innerHTML = `💑 부부 연동 저장 (${timeStr})`;
-        badge.title = `Firebase 실시간 클라우드 및 배우자(${userProfile.linkedCoupleCode}) 연동 저장`;
-      } else if (state === 'cloud' || state === 'saved') {
-        badge.className = 'save-status-badge cloud';
-        badge.innerHTML = `☁️ Firebase 저장 (${timeStr})`;
-        badge.title = 'Firebase 클라우드에 안전하게 백업되어 기기 변경 시에도 복원됩니다.';
-      }
+      if (badge) badge.style.display = 'none';
     }
 
     function savePersistedData(provider) {
@@ -7056,6 +7187,7 @@
       localStorage.setItem('maternity_baby_comp_' + provider, JSON.stringify(Array.from(completedBabySuppliesIds)));
       localStorage.setItem('maternity_todo_' + provider, JSON.stringify(Array.from(savedTodoIds)));
       localStorage.setItem('maternity_todo_comp_' + provider, JSON.stringify(Array.from(completedTodoIds)));
+      localStorage.setItem('maternity_deleted_' + provider, JSON.stringify(Array.from(deletedItemIds)));
 
       // 커스텀 추가 항목 영구 보관
       const customBag = (maternityBagItemsData || []).filter(i => i.id && i.id.startsWith('custom_'))
@@ -7094,6 +7226,9 @@
       if (todo) savedTodoIds = new Set(JSON.parse(todo));
       const todoComp = localStorage.getItem('maternity_todo_comp_' + provider);
       if (todoComp) completedTodoIds = new Set(JSON.parse(todoComp));
+
+      const deletedStr = localStorage.getItem('maternity_deleted_' + provider);
+      if (deletedStr) deletedItemIds = new Set(JSON.parse(deletedStr));
 
       // 커스텀 추가 항목 복원
       const customBagStr = localStorage.getItem('maternity_custom_bag_' + provider);
@@ -7151,7 +7286,19 @@
       'benefitsCategoryScreen', 'nationalBenefitsScreen', 'regionalBenefitsScreen', 'personalBenefitsScreen'
     ];
 
-    function goToScreen(screenId) {
+    let screenHistory = ['dashboardScreen'];
+
+    function goToScreen(screenId, pushHistory = true) {
+      if (screenId === 'dashboardScreen') {
+        screenHistory = ['dashboardScreen'];
+      } else if (screenId === 'loginScreen') {
+        screenHistory = ['loginScreen'];
+      } else if (pushHistory) {
+        if (screenHistory[screenHistory.length - 1] !== screenId) {
+          screenHistory.push(screenId);
+        }
+      }
+
       screens.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
@@ -7178,6 +7325,45 @@
       else if (screenId === 'personalBenefitsScreen') renderPersonalBenefits();
       else if (screenId === 'myBagScreen') { currentMyBagFeatureTab = null; updateSavedBadges(); renderMyBagIntegratedView(); }
     }
+
+    // 안드로이드 하드웨어 뒤로가기 버튼 핸들러 (모달 닫기 -> 이전 화면 이동 -> 앱 종료 확인)
+    window.handleHardwareBackPress = function() {
+      // 1. 열려있는 모달이 있으면 먼저 모달 닫기
+      const modals = [
+        'oauthModal', 'coupleSyncModal', 'genericModal', 'itemDetailModal', 
+        'recommendationPromptModal', 'customItemModal'
+      ];
+      for (const mId of modals) {
+        const mEl = document.getElementById(mId);
+        if (mEl && (mEl.style.display === 'flex' || mEl.style.display === 'block')) {
+          if (mId === 'oauthModal') closeOAuthModal();
+          else if (mId === 'coupleSyncModal') closeCoupleSyncModal();
+          else if (mId === 'genericModal') closeGenericModal();
+          else mEl.style.display = 'none';
+          return true;
+        }
+      }
+
+      // 2. 화면 스택에 이전 화면이 존재하면 이전 화면으로 이동
+      if (screenHistory.length > 1) {
+        screenHistory.pop(); // 현재 화면 제거
+        const prevScreen = screenHistory[screenHistory.length - 1];
+        goToScreen(prevScreen, false);
+        return true;
+      }
+
+      // 3. 메인 화면이거나 이전 스택이 없는 경우 안드로이드 종료 대화상자 호출
+      if (window.AndroidInterface && window.AndroidInterface.exitApp) {
+        window.AndroidInterface.exitApp();
+      } else {
+        if (confirm('꽁꽁 출산가방 앱을 종료하시겠습니까?')) {
+          if (window.AndroidInterface && window.AndroidInterface.closeApp) {
+            window.AndroidInterface.closeApp();
+          }
+        }
+      }
+      return true;
+    };
 
     function refreshActiveScreen() {
       const b1 = document.getElementById('maternityBagChecklistScreen');
@@ -7365,12 +7551,12 @@
       </div>
 
       <p style="font-size: 12px; color: #666; line-height: 1.5; margin-bottom: 16px; word-break: keep-all;">
-        Firebase 클라우드를 통해 <b>배우자의 스마트폰과 출산가방을 실시간으로 함께 체크</b>하고 공유합니다.
+        클라우드 연동을 통해 <b>배우자의 스마트폰과 출산가방을 실시간으로 함께 체크</b>하고 공유합니다.
       </p>
 
       <!-- 비회원 안내 (비회원인 경우 노출) -->
       <div id="coupleGuestWarning" style="display: none; background: #FFF8E1; border: 1px solid #FFE082; border-radius: 12px; padding: 12px; margin-bottom: 14px; font-size: 12px; color: #B78103; line-height: 1.5;">
-        ⚠️ <b>비회원 알림:</b> 현재 비회원 로컬 모드입니다. 부부 계정 연동 및 클라우드 백업은 소셜 로그인(카카오·네이버·구글) 회원에게 제공됩니다.<br/>
+        ⚠️ <b>비회원 알림:</b> 현재 비회원 모드입니다. 부부 계정 연동 및 클라우드 백업은 소셜 로그인(카카오·네이버·구글) 회원에게 제공됩니다.<br/>
         <button onclick="handleLogout()" style="margin-top: 10px; width: 100%; padding: 8px; background: #FF6F59; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer;">소셜 1초 로그인하러 가기 ➔</button>
       </div>
 
