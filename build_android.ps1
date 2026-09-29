@@ -1,6 +1,9 @@
-$ErrorActionPreference = "Stop"
-
-$sdkDir = "C:\Users\user\AppData\Local\Android\Sdk"
+$userSdk = "$env:LOCALAPPDATA\Android\Sdk"
+if (Test-Path $userSdk) {
+    $sdkDir = $userSdk
+} else {
+    $sdkDir = "C:\Users\user\AppData\Local\Android\Sdk"
+}
 $buildToolsDir = "$sdkDir\build-tools\36.0.0"
 $platformDir = "$sdkDir\platforms\android-37.0"
 $androidJar = "$platformDir\android.jar"
