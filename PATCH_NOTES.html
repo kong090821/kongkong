@@ -321,6 +321,22 @@
     <div class="section-card">
       <h2>📜 2. 최신 변경 및 패치 이력 (Patch Logs)</h2>
 
+      <!-- 2026-09-30 (v1.1.2) -->
+      <div class="patch-block">
+        <div class="patch-date">🗓️ 2026-09-30</div>
+        <div class="patch-version">패치 버전 1.1.2</div>
+
+        <div class="patch-group">
+          <div class="patch-group-title">📱 안드로이드 하드웨어/소프트웨어 뒤로가기(Back Stack) 종합 고도화</div>
+          <ul>
+            <li><strong>[Navigation] 내비게이션 백스택(screenHistory) 중복 방지:</strong> 화면 이동 시 중복 스택 저장을 차단하고 다단계 화면 이동 후 뒤로가기 시 이전 순서대로 차근차근 돌아가도록 스택 제어 로직 개선.</li>
+            <li><strong>[UI/UX] 상단 헤더 뒤로가기(◀) 통합:</strong> 앱 화면 상단 헤더의 뒤로가기 버튼 클릭 시에도 스마트폰 물리/제스처 백버튼과 100% 동일한 <code>goBackScreen()</code> 스택 pop 핸들러 적용.</li>
+            <li><strong>[Modal & Sheet] 탑시트 및 팝업 우선 닫기:</strong> 맘카페 TOP 3 드로어(TopSheet) 또는 팝업 모달이 열려있는 상태에서 뒤로가기 시 화면 전환이나 앱 종료 없이 열린 팝업을 먼저 닫도록 스마트 분기 처리.</li>
+            <li><strong>[Exit Dialog] 루트 메인 화면 전용 종료 안내:</strong> 더 이상 뒤로 갈 백스택이 없는 최상위 화면(`dashboardScreen` / `loginScreen`)에서만 종료 확인 팝업(`exitApp`)이 동작하도록 방어 로직 강화.</li>
+          </ul>
+        </div>
+      </div>
+
       <!-- 2026-09-30 -->
       <div class="patch-block">
         <div class="patch-date">🗓️ 2026-09-30</div>

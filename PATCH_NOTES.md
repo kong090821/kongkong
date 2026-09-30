@@ -48,7 +48,12 @@ Below is the chronological history of feature updates, UI redesigns, and fixes. 
 
 ---
 
-### 🗓️ 2026-09-30 (패치 버전 1.0.3)
+### 🗓️ 2026-09-30 (패치 버전 1.1.2)
+#### 📱 백스택(Back Stack) & 뒤로가기 이벤트 핸들러 종합 고도화
+- **[Navigation] 내비게이션 백스택 중복 방지**: 화면 이동 시 중복 스택 저장을 차단하고(`slice(0, existingIdx + 1)`), 3단계 이상 이동 후에도 백버튼 클릭 시 이전 화면으로 차근차근 복귀되도록 구현.
+- **[UI/UX] 상단 헤더 뒤로가기(◀) 통합**: 화면 상단의 `◀` 버튼 클릭 시에도 스마트폰 물리/제스처 백버튼과 동일하게 작동하는 `goBackScreen()` 핸들러 적용.
+- **[Modal & Sheet] 탑시트 및 팝업 우선 닫기**: 맘카페 TOP 3 드로어(`topSheetContainer`)나 모달 팝업이 열려있는 상태에서 뒤로가기를 누르면 화면 전환/종료 없이 열린 팝업만 먼저 닫히도록 예외 분기 추가.
+- **[Exit Dialog] 메인 화면 앱 종료 대화상자**: 더 이상 이전 화면이 없는 최상단 메인 화면(`dashboardScreen` / `loginScreen`)에서만 종료 확인 팝업(`exitApp`)이 실행되도록 보호 로직 강화.
 #### 📱 백버튼 동작 및 UI 하단 여백 개선
 - **[Android] 네이티브 뒤로가기 버튼 연동**: 스마트폰 하단바 백버튼 및 안드로이드 system back 제스처 실행 시 앱이 즉시 종료되던 문제 수정. WebView 내 `onBackPressed()` 및 `onKeyDown(KEYCODE_BACK)`을 오버라이드하여 앱 내부 화면/팝업 이전으로 이동하도록 구현.
 - **[UI/UX] 하단버튼 가림 방지**: 스마트폰 하단 네비게이션 바/홈바에 `[내 가방 확인하기]` 버튼 및 대시보드 하단 요소가 가려지던 현상을 해결하기 위해 Safe Area `padding-bottom` 보정 여백 추가.
