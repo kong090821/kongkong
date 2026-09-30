@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
@@ -14,10 +15,13 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.window.OnBackInvokedCallback;
+import android.window.OnBackInvokedDispatcher;
 
 public class MainActivity extends Activity {
 
     private WebView mWebView;
+    private OnBackInvokedCallback mOnBackInvokedCallback;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -42,6 +46,20 @@ public class MainActivity extends Activity {
 
         mWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         mWebView.addJavascriptInterface(new WebAppInterface(), "AndroidInterface");
+
+        // Android 13+ (API 33, 34, 35, 36) 뒤로가기 제스처 및 시스템 백버튼 콜백 등록
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            mOnBackInvokedCallback = new OnBackInvokedCallback() {
+                @Override
+                public void onBackInvoked() {
+                    handleBackNavigation();
+                }
+            };
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                OnBackInvokedDispatcher.PRIORITY_DEFAULT,
+                mOnBackInvokedCallback
+            );
+        }
 
         mWebView.setWebChromeClient(new WebChromeClient() {
             @Override
@@ -128,20 +146,53 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    public void onBackPressed() {
-        if (mWebView != null) {
-            mWebView.evaluateJavascript("javascript:if(window.handleHardwareBackPress){window.handleHardwareBackPress();}else{window.history.back();}", null);
-        } else {
-            super.onBackPressed();
+    protected void onDestroy() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && mOnBackInvokedCallback != null) {
+            try {
+                getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback(mOnBackInvokedCallback);
+            } catch (Exception ignored) {}
         }
+        super.onDestroy();
+    }
+
+    // 뒤로가기 통합 처리: 웹뷰 자바스크립트 핸들러 호출
+    public void handleBackNavigation() {
+        if (mWebView != null) {
+            mWebView.evaluateJavascript("javascript:if(window.handleHardwareBackPress){window.handleHardwareBackPress();}", null);
+        }
+    }
+
+    // 물리 키보드 및 3버튼 내비게이션 바 뒤로가기 완벽 가로채기
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
+            if (event.getAction() == KeyEvent.ACTION_UP) {
+                handleBackNavigation();
+            }
+            return true; // 시스템 기본 종료 동작을 완벽히 차단
+        }
+        return super.dispatchKeyEvent(event);
+    }
+
+    @Override
+    public void onBackPressed() {
+        handleBackNavigation();
     }
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
-            onBackPressed();
             return true;
         }
         return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            handleBackNavigation();
+            return true;
+        }
+        return super.onKeyUp(keyCode, event);
     }
 }

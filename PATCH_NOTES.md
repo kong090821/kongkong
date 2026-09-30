@@ -48,10 +48,11 @@ Below is the chronological history of feature updates, UI redesigns, and fixes. 
 
 ---
 
-### 🗓️ 2026-09-30 (패치 버전 1.1.3)
-#### 📱 서브 화면 백버튼 안전 가드 & 메인 화면 [네/아니오] 종료 팝업 연동
+### 🗓️ 2026-10-01 (패치 버전 1.1.3 / versionCode 13)
+#### 📱 안드로이드 13~15 제스처/네비게이션바 뒤로가기 완벽 제어 & 화면 전환 안전 가드
+- **[Android 13+ Native] OnBackInvokedCallback & dispatchKeyEvent 적용**: 최신 안드로이드(Android 13, 14, 15)에서 시스템 뒤로가기 제스처나 네비게이션바 클릭 시 OS가 앱을 강제 종료하던 문제를 `OnBackInvokedCallback` 및 `dispatchKeyEvent`로 가로채어 임의 종료 차단.
 - **[Navigation Guard] 서브 화면 백버튼 절대 종료 방지**: 출산가방, 육아용품, 할일, 혜택 등 체크리스트/서브 화면에서 뒤로가기 클릭 시 절대 앱이 종료되지 않고 이전 화면 또는 홈 화면(`dashboardScreen`)으로 안전하게 이동.
-- **[Exit Dialog] 메인 화면 전용 [네/아니오] 팝업**: 최상위 홈 메인 화면(`dashboardScreen`)에서 뒤로가기 클릭 시에만 "꽁꽁 출산가방 앱을 종료하시겠습니까?" 팝업 노출 (`[네]` 선택 시 앱 종료, `[아니오]` 선택 시 팝업 닫힘).
+- **[Exit Dialog] 메인 화면 전용 [네/아니오] 팝업**: 최상위 홈 메인 화면(`dashboardScreen`)에서 뒤로가기 클릭 시에만 "꽁꽁 출산가방 앱을 종료하시겠습니까?" 팝업 노출 (`[네]` 선택 시에만 앱 종료, `[아니오]` 선택 시 팝업 닫힘).
 #### 📱 백스택(Back Stack) & 뒤로가기 이벤트 핸들러 종합 고도화
 - **[Navigation] 내비게이션 백스택 중복 방지**: 화면 이동 시 중복 스택 저장을 차단하고(`slice(0, existingIdx + 1)`), 3단계 이상 이동 후에도 백버튼 클릭 시 이전 화면으로 차근차근 복귀되도록 구현.
 - **[UI/UX] 상단 헤더 뒤로가기(◀) 통합**: 화면 상단의 `◀` 버튼 클릭 시에도 스마트폰 물리/제스처 백버튼과 동일하게 작동하는 `goBackScreen()` 핸들러 적용.
