@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>꽁꽁 출산가방 - 패치노트 & 기능 개발 명세서</title>
+  <style>
+    :root {
+      --primary-color: #ff6f59;
+      --primary-light: #fff4f1;
+      --primary-border: #ffe8e3;
+      --bg-color: #f8f9fa;
+      --card-bg: #ffffff;
+      --text-dark: #2c3e50;
+      --text-muted: #6c757d;
+      --border-color: #e9ecef;
+      --blue-accent: #1e88e5;
+      --blue-bg: #e3f2fd;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.65;
+      color: var(--text-dark);
+      background-color: var(--bg-color);
+      margin: 0;
+      padding: 20px 12px;
+    }
+
+    .container {
+      max-width: 920px;
+      margin: 0 auto;
+    }
+
+    .header-card {
+      background: linear-gradient(135deg, #ffffff 0%, #fff8f7 100%);
+      border: 1px solid var(--primary-border);
+      border-radius: 20px;
+      padding: 28px;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 30px rgba(255, 111, 89, 0.08);
+      position: relative;
+    }
+
+    .app-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--primary-color);
+      margin: 0 0 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .app-subtitle {
+      font-size: 15px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+      background: #ffffff;
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid #f1f3f5;
+    }
+
+    .meta-item { font-size: 13.5px; }
+    .meta-item span { font-weight: 700; color: var(--text-dark); }
+
+    .section-card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 24px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    }
+
+    h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-top: 0;
+      margin-bottom: 18px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--primary-border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-top: 22px;
+      margin-bottom: 12px;
+    }
+
+    /* Table Styling */
+    .table-wrapper {
+      overflow-x: auto;
+      margin: 16px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      text-align: left;
+    }
+
+    th {
+      background-color: var(--primary-light);
+      color: var(--primary-color);
+      font-weight: 700;
+      padding: 12px 14px;
+      border-bottom: 2px solid var(--primary-border);
+    }
+
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: top;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:nth-child(even) td { background-color: #fafbfc; }
+
+    /* Badge & Tag Styling */
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 6px;
+      background: #f1f3f5;
+      color: #495057;
+      margin-right: 4px;
+      margin-bottom: 4px;
+    }
+
+    .badge-primary { background: var(--primary-light); color: var(--primary-color); border: 1px solid var(--primary-border); }
+    .badge-blue { background: var(--blue-bg); color: var(--blue-accent); }
+
+    /* Patch History Timeline */
+    .patch-block {
+      border-left: 3px solid var(--primary-color);
+      padding-left: 20px;
+      margin-bottom: 28px;
+      position: relative;
+    }
+
+    .patch-block::before {
+      content: '';
+      position: absolute;
+      left: -7px;
+      top: 4px;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--primary-color);
+    }
+
+    .patch-date {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--primary-color);
+      margin-bottom: 4px;
+    }
+
+    .patch-version {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+
+    .patch-group {
+      margin-bottom: 14px;
+    }
+
+    .patch-group-title {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    li {
+      font-size: 14px;
+      color: #444;
+      margin-bottom: 6px;
+    }
+
+    .highlight-box {
+      background: var(--primary-light);
+      border-left: 4px solid var(--primary-color);
+      padding: 14px 18px;
+      border-radius: 0 10px 10px 0;
+      font-size: 14px;
+      margin: 16px 0;
+    }
+
+    .guide-box {
+      background: #f8f9fa;
+      border: 1px dashed #ced4da;
+      border-radius: 12px;
+      padding: 18px;
+      font-size: 13.5px;
+      color: #495057;
+    }
+
+    code {
+      background: #e9ecef;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: Consolas, Monaco, monospace;
+      font-size: 13px;
+      color: #d63384;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    
+    <!-- Header -->
+    <div class="header-card">
+      <h1 class="app-title">🍼 꽁꽁 출산가방 패치노트</h1>
+      <div class="app-subtitle">안드로이드 출산 준비물 & 혜택 체크리스트 어플리케이션 개발 이력 문서</div>
+      
+      <div class="meta-grid">
+        <div class="meta-item"><span>앱 명칭:</span> 꽁꽁 출산가방</div>
+        <div class="meta-item"><span>패키지명:</span> <code>com.kongkong.babybag</code></div>
+        <div class="meta-item"><span>최종 업데이트:</span> 2026년 9월 30일</div>
+        <div class="meta-item"><span>실행 방식:</span> 브라우저 더블클릭 열람 가능</div>
+      </div>
+    </div>
+
+    <!-- 1. 앱 핵심 기능 및 개요 -->
+    <div class="section-card">
+      <h2>📌 1. 앱 핵심 기능 및 개요</h2>
+      
+      <h3>🛍️ 4대 핵심 체크리스트 & 혜택 모듈</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 20%;">모듈명</th>
+              <th style="width: 30%;">주요 탭 / 분류</th>
+              <th style="width: 50%;">핵심 기능 및 상세 설명</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>출산가방 체크리스트</strong></td>
+              <td>• 산모용품<br>• 신생아용품<br>• 보호자 & 공통용품</td>
+              <td>• 분만법(자연분만/제왕절개) 및 조리원 이용 여부 맞춤 필터링<br>• 맘카페 1위, 쿠팡 TOP 3 필수템 배지 표시<br>• 가방 보관 위치 태그(캐리어, 서브백 등) 무제한 설정</td>
+            </tr>
+            <tr>
+              <td><strong>육아용품 체크리스트</strong></td>
+              <td>• 수유·이유식<br>• 위생·목욕<br>• 침구·의류<br>• 외출·안전·가전</td>
+              <td>• 필수 준비물 vs 선택/핫딜 추천 항목 분리<br>• 출산 전 준비 / 조리원 / 생후 1~3개월 시기별 구매 가이드</td>
+            </tr>
+            <tr>
+              <td><strong>시기별 할일 체크리스트</strong></td>
+              <td>• 임신 초기 (1~12주)<br>• 임신 중기 (13~27주)<br>• 임신 후기 (28주~)<br>• 출산·조리원·출산 후</td>
+              <td>• 주차별 필수 검사 및 준비 사항 타임라인<br>• 👨‍👩‍👧‍👦 <strong>보호자(아빠) 전담 역할 태그</strong> (출생신고, 첫만남이용권, 카시트 설치 등) 제공</td>
+            </tr>
+            <tr>
+              <td><strong>출산 혜택 정리</strong></td>
+              <td>• 국가 바우처<br>• 17개 지자체 혜택<br>• 개인 맞춤 혜택</td>
+              <td>• 첫만남이용권, 부모급여, 아동수당, 건강관리 지원 요약<br>• 전국 17개 시도 지자체별 출산지원금 및 축하용품 조회</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>🎨 UI/UX & 개인화 온보딩</h3>
+      <ul>
+        <li><strong>비회원 로컬 안심 이용 모드:</strong> 로그인 없이 <code>비회원으로 시작하기</code> 단일 버튼으로 즉시 체험하며, 데이터는 단말기 <code>localStorage</code>에 안전 보관.</li>
+        <li><strong>개인화 온보딩 설문:</strong>
+          <ul>
+            <li><strong>별명(닉네임) 입력:</strong> 메인 화면 상단에 <code>"반가워요, [별명]님!"</code> 개인 맞춤 인사말 적용.</li>
+            <li><strong>D-Day 계산기:</strong> 출산예정일 입력 시 실시간 D-Day 및 주차/개월 수 연산.</li>
+            <li><strong>단일행 프로필 태그 바:</strong> <code>D-Day</code>, <code>성별</code>, <code>분만법</code>, <code>조리원</code>, <code>지역</code> 5가지 태그를 한 줄(Single Line)로 깔끔하게 배치.</li>
+          </ul>
+        </li>
+        <li><strong>하단 네비게이션 & Safe Area:</strong> 스마트폰 하단 시스템 바에 <code>[내 가방 확인하기]</code> 버튼이 가려지지 않도록 보정 여백 적용.</li>
+        <li><strong>브랜드 앱 아이콘:</strong> 파스텔 웜톤 핑크 복숭아 출산가방 아이콘 적용 완료.</li>
+      </ul>
+
+      <h3>🌐 구글 시트 API 실시간 동기화 (`google_apps_script.js`)</h3>
+      <ul>
+        <li>앱 재설치 없이 구글 시트 마스터 데이터(가방/용품/할일/혜택)를 실시간 반영.</li>
+        <li>신규 바이럴 데이터 파란색 셀(<code>#BBDEFB</code>) 자동 시각화 및 미승인 항목 동기화 제외.</li>
+        <li>선배맘 추천 TOP 3 및 맘카페 1위 최저가 구매 링크 탑시트 모달 제공.</li>
+      </ul>
+
+      <h3>📱 안드로이드 네이티브 백버튼 연동 (`MainActivity.java`)</h3>
+      <ul>
+        <li>안드로이드 system back 제스처 및 하단 뒤로가기 버튼 클릭 시 앱 종료 대신 팝업/이전 화면 이동(<code>window.handleHardwareBackPress</code>).</li>
+      </ul>
+    </div>
+
+    <!-- 2. 최신 변경 및 패치 이력 -->
+    <div class="section-card">
+      <h2>📜 2. 최신 변경 및 패치 이력 (Patch Logs)</h2>
+
+      <!-- 2026-09-30 -->
+      <div class="patch-block">
+        <div class="patch-date">🗓️ 2026-09-30</div>
+        <div class="patch-version">패치 버전 1.0.3</div>
+
+        <div class="patch-group">
+          <div class="patch-group-title">📱 백버튼 동작 및 UI 하단 여백 개선</div>
+          <ul>
+            <li><strong>[Android] 네이티브 뒤로가기 연동:</strong> 스마트폰 하단바 백버튼 및 제스처 실행 시 앱이 종료되던 문제 해결 (WebView 백버튼 이벤트 오버라이드).</li>
+            <li><strong>[UI/UX] 하단버튼 가림 방지:</strong> 스마트폰 하단 네비게이션 바에 <code>[내 가방 확인하기]</code> 버튼이 가려지지 않도록 Safe Area 보정 여백 추가.</li>
+          </ul>
+        </div>
+
+        <div class="patch-group">
+          <div class="patch-group-title">👤 로그인 단순화 & 온보딩 개편</div>
+          <ul>
+            <li><strong>[회원] 비회원전용 체험 모드:</strong> 소셜 로그인 버튼을 제거하고 <code>비회원으로 시작하기</code> 단일 버튼으로 간소화.</li>
+            <li><strong>[온보딩] 별명(닉네임) 도입:</strong> 설문조사에 별명 입력 단계를 추가하고 메인 화면에 <code>"반가워요, [별명]님!"</code> 표기.</li>
+          </ul>
+        </div>
+
+        <div class="patch-group">
+          <div class="patch-group-title">🎨 타이틀 & 프로필 태그 정렬</div>
+          <ul>
+            <li><strong>[UI/UX] 상단 타이틀 정렬:</strong> 홈 화면 제목(꽁꽁 출산가방)을 가운데 정렬.</li>
+            <li><strong>[UI/UX] 단일행 5-태그 바:</strong> <code>D-Day</code>, <code>성별</code>, <code>분만법</code>, <code>조리원</code>, <code>지역</code> 프로필 태그를 한 줄에 한눈에 노출.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 2026-09-29 -->
+      <div class="patch-block">
+        <div class="patch-date">🗓️ 2026-09-29</div>
+        <div class="patch-version">패치 버전 1.0.2</div>
+
+        <div class="patch-group">
+          <div class="patch-group-title">📊 구글 시트 마스터 데이터 & Apps Script 자동화</div>
+          <ul>
+            <li><strong>[Data] Apps Script API 구축:</strong> 구글 시트 마스터 데이터 원클릭 앱 동기화 지원.</li>
+            <li><strong>[Data] 파란색 셀 하이라이트:</strong> 신규 바이럴 데이터 파란색 배경(<code>#BBDEFB</code>) 자동 시각화.</li>
+            <li><strong>[Feature] 선배맘 TOP 3 탑시트:</strong> 맘카페 및 쿠팡 실시간 1위 추천품 정보 및 구매 링크 탑시트 모달 적용.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 2026-09-28 -->
+      <div class="patch-block">
+        <div class="patch-date">🗓️ 2026-09-28</div>
+        <div class="patch-version">패치 버전 1.0.1</div>
+
+        <div class="patch-group">
+          <div class="patch-group-title">🖼️ 브랜딩 아이콘 & 안드로이드 패키징</div>
+          <ul>
+            <li><strong>[Asset] 브랜드 아이콘 업데이트:</strong> 파스텔 웜톤 복숭아 출산가방 아이콘(<code>ggong_icon.png</code>) 교체 및 Android mipmap 동기화.</li>
+            <li><strong>[Build] 하이브리드 앱 환경 설정:</strong> Android SDK 34 / AGP 8.7+ 하이브리드 웹뷰 빌드 구조 정립.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 2026-09-23 -->
+      <div class="patch-block">
+        <div class="patch-date">🗓️ 2026-09-23</div>
+        <div class="patch-version">패치 버전 1.0.0 (최초 개발)</div>
+
+        <div class="patch-group">
+          <div class="patch-group-title">🚀 4대 핵심 모듈 및 기본 프레임워크 구축</div>
+          <ul>
+            <li>출산가방, 육아용품, 시기별 할일, 출산혜택 4대 체크리스트 구축.</li>
+            <li>개인화 맞춤 설문(D-Day, 성별, 분만법, 조리원, 지역) 개발.</li>
+            <li>로컬 스토리지(<code>localStorage</code>) 기반 자동 저장 구현.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. 앞으로의 업데이트 안내 -->
+    <div class="section-card">
+      <h2>📝 3. 패치노트 파일 관리 안내</h2>
+      <div class="guide-box">
+        <p><strong>💡 사용자 및 개발자 참고:</strong></p>
+        <p>• 이 파일(<code>PATCH_NOTES.html</code>)은 윈도우 탐색기에서 <strong>마우스 더블클릭만 하시면 크롬이나 엣지 브라우저에서 바로 예쁘게 열어보실 수 있는 문서 파일</strong>입니다.</p>
+        <p>• 앞으로 새로운 기능 수정이나 업데이트가 있을 때마다 제가 **이 파일(`PATCH_NOTES.html`)과 `PATCH_NOTES.md`를 함께 최신 상태로 자동 갱신**해 드릴 예정입니다.</p>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

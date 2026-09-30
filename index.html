@@ -461,17 +461,25 @@
     }
     .profile-tags-row {
       display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 3px;
+      width: 100%;
+      margin-top: 4px;
+      overflow-x: hidden;
     }
     .profile-tag {
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 700;
-      padding: 2px 7px;
+      padding: 2px 5px;
       border-radius: 6px;
       background: #fff;
       border: 1px solid #ffe0b2;
       color: #e65100;
+      white-space: nowrap;
+      flex-shrink: 1;
+      text-align: center;
     }
     .guest-warning-badge {
       background: #ffebee;
@@ -657,9 +665,13 @@
 
     /* 대시보드 화면 */
     .sub-screen {
-      padding: 14px;
+      padding: 14px 14px calc(36px + env(safe-area-inset-bottom, 0px)) 14px;
       display: flex;
       flex-direction: column;
+    }
+
+    #dashboardScreen {
+      padding-bottom: calc(44px + env(safe-area-inset-bottom, 0px)) !important;
     }
 
     .dashboard-topbar {
@@ -667,11 +679,19 @@
       align-items: center;
       justify-content: space-between;
       margin-bottom: 10px;
+      position: relative;
+      min-height: 32px;
     }
     .topbar-title {
       font-size: 18px;
       font-weight: 800;
       color: var(--text-dark);
+      text-align: center;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      pointer-events: none;
+      white-space: nowrap;
     }
     .btn-back {
       background: none;
@@ -754,7 +774,7 @@
 
     .btn-my-bag {
       width: 100%;
-      padding: 13px;
+      padding: 14px 16px;
       background: linear-gradient(135deg, #ff6f59 0%, #ff8e72 100%);
       color: #fff;
       border: none;
@@ -767,6 +787,8 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
+      margin-top: 10px;
+      margin-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
     }
 
     .action-btn-row {
@@ -2190,6 +2212,7 @@
         border-radius: 0 !important;
         box-shadow: none !important;
         padding-top: max(28px, env(safe-area-inset-top)) !important;
+        padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
       }
     }
 
@@ -2210,6 +2233,7 @@
       border-radius: 0 !important;
       box-shadow: none !important;
       padding-top: max(28px, env(safe-area-inset-top)) !important;
+      padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
     }
   </style>
   <script>
@@ -2263,7 +2287,7 @@
 
     <div class="screen-container" id="screenContainer">
       
-      <!-- [1] 로그인 화면 -->
+      <!-- [1] 로그인 화면 (비회원 전용) -->
       <div id="loginScreen" class="screen">
         <div class="icon-wrapper" title="꽁꽁 출산가방 공식 앱 아이콘">
           <img src="ggong_icon.png" alt="꽁꽁 출산가방 앱 아이콘" class="app-icon-img" onerror="this.src='ggong_icon.jpg'" />
@@ -2273,48 +2297,16 @@
         <p class="app-subtitle">설레는 아기와의 만남, 꽁꽁 싸매어 완벽 준비해요</p>
 
         <div class="login-card">
-          <!-- 비회원으로 이용하기 버튼 우선 배치 -->
+          <!-- 비회원으로 이용하기 버튼 단일배치 -->
           <button id="btnGuestLogin" class="btn-guest-login" onclick="handleGuestLogin()">
-            <span>👶 비회원으로 이용하기</span>
+            <span>👶 출산가방 시작하기 (비회원)</span>
             <span>➔</span>
           </button>
           
-          <div class="guest-warning-notice" style="background: #FFF8F5; border: 1px solid #FFE0D6; border-radius: 12px; padding: 10px 14px; text-align: left; font-size: 12px; color: #555; line-height: 1.5; margin: 12px 0 16px;">
-            📱 <strong>비회원 로컬 저장 안내:</strong><br/>
-            비회원으로 시작 시 설문 및 출산가방 데이터는 <strong>사용자 휴대폰에만 안전하게 저장</strong>됩니다.<br/>
-            <span style="font-size: 11px; color: #888;">(※ 기기 변경이나 부부 연동은 지원되지 않습니다.)</span>
+          <div class="guest-warning-notice" style="background: #FFF8F5; border: 1px solid #FFE0D6; border-radius: 12px; padding: 12px 14px; text-align: left; font-size: 12px; color: #555; line-height: 1.5; margin-top: 14px;">
+            📱 <strong>로컬 안전 보관 안내:</strong><br/>
+            모든 설문 및 출산가방 체크 내역은 <strong>사용자 휴대폰에만 안전하게 자동 저장</strong>됩니다.
           </div>
-
-          <!-- 소셜 1초 간편 가입 구분선 -->
-          <div class="login-divider">
-            <span>또는 1초 간편 회원가입 / 시작</span>
-          </div>
-
-          <!-- 3개 소셜 동그란 로고 버튼 -->
-          <div class="social-btn-group">
-            <!-- 카카오 -->
-            <button class="social-round-btn kakao" onclick="handleSocialLogin('kakao')" title="카카오로 1초 시작하기">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="#381E1F">
-                <path d="M12 3C6.477 3 2 6.477 2 10.772c0 2.766 1.848 5.19 4.646 6.556l-.946 3.498c-.083.308.261.547.518.377l4.133-2.735c.536.071 1.085.109 1.649.109 5.523 0 10-3.477 10-7.805C22 6.477 17.523 3 12 3z"/>
-              </svg>
-            </button>
-            <!-- 네이버 -->
-            <button class="social-round-btn naver" onclick="handleSocialLogin('naver')" title="네이버로 1초 시작하기">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="#FFFFFF">
-                <path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z"/>
-              </svg>
-            </button>
-            <!-- 구글 -->
-            <button class="social-round-btn google" onclick="handleSocialLogin('google')" title="구글로 1초 시작하기">
-              <svg width="24" height="24" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
-                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.25 21.36 7.33 24 12 24z"/>
-                <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.16 0 9.94 0 12s.46 3.84 1.26 5.42l4.02-3.15z"/>
-                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.25 2.64 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
-              </svg>
-            </button>
-          </div>
-          <div class="social-caption">카카오 · 네이버 · 구글로 시작 시 클라우드 백업 & 부부 계정 공유 지원 🔒</div>
         </div>
 
         <div class="extra-links">
@@ -2337,23 +2329,34 @@
         <div class="welcome-bar" style="background:#fff6f3; border:1px solid #ffd4c7; margin-bottom:12px;">
           <div class="welcome-text">
             <h2>반가워요, <span id="surveyUserName">예비 부모님</span>! 👶</h2>
-            <p>5가지 질문에 답해주시면 딱 맞는 준비물과 혜택을 챙겨드려요.</p>
+            <p>6가지 질문에 답해주시면 딱 맞는 준비물과 혜택을 챙겨드려요.</p>
           </div>
         </div>
 
-        <!-- 1. 출산 예정일 -->
+        <!-- 1. 별명 (닉네임) -->
         <div class="survey-card">
           <div class="survey-question-title">
-            <span>📅</span> 1. 출산 예정일
+            <span>✏️</span> 1. 별명 (닉네임 / 예비 엄마·아빠 이름)
+          </div>
+          <input type="text" id="surveyNicknameInput" class="survey-date-input" placeholder="예: 꽁꽁이엄마, 진규아빠, 대전맘" style="font-size: 14px; font-weight: 700;" oninput="updateSurveyNickname(this.value)" />
+          <div style="font-size:11px; color:var(--text-muted); margin-top:6px;">
+            * 홈 화면 인삿말에 표시될 별명을 자유롭게 입력해 주세요.
+          </div>
+        </div>
+
+        <!-- 2. 출산 예정일 -->
+        <div class="survey-card">
+          <div class="survey-question-title">
+            <span>📅</span> 2. 출산 예정일
           </div>
           <input type="date" id="surveyDueDate" class="survey-date-input" onchange="updateDueDateBadge()" />
           <div id="surveyDueDateBadge" class="survey-date-badge">D-Day 계산 중...</div>
         </div>
 
-        <!-- 2. 아이 성별 -->
+        <!-- 3. 아이 성별 -->
         <div class="survey-card">
           <div class="survey-question-title">
-            <span>👶</span> 2. 아이 성별
+            <span>👶</span> 3. 아이 성별
           </div>
           <div class="survey-chips-row" id="surveyGenderChips">
             <div class="survey-chip active" onclick="selectSurveyChip('gender', '남아', this)">👦 남아</div>
@@ -2362,10 +2365,10 @@
           </div>
         </div>
 
-        <!-- 3. 거주지역 -->
+        <!-- 4. 거주지역 -->
         <div class="survey-card">
           <div class="survey-question-title">
-            <span>📍</span> 3. 거주지역 (지자체 혜택 연동)
+            <span>📍</span> 4. 거주지역 (지자체 혜택 연동)
           </div>
           <select id="surveyRegionSelect" class="survey-region-select" onchange="selectSurveyRegion(this.value)">
             <option value="서울" selected>서울특별시</option>
@@ -2391,10 +2394,10 @@
           </div>
         </div>
 
-        <!-- 4. 분만 방법 -->
+        <!-- 5. 분만 방법 -->
         <div class="survey-card">
           <div class="survey-question-title">
-            <span>🏥</span> 4. 분만 방법 (맞춤 준비물 연동)
+            <span>🏥</span> 5. 분만 방법 (맞춤 준비물 연동)
           </div>
           <div class="survey-chips-row" id="surveyBirthChips">
             <div class="survey-chip active" onclick="selectSurveyChip('birthType', '자연분만', this)">🌸 자연분만</div>
@@ -2406,10 +2409,10 @@
           </div>
         </div>
 
-        <!-- 5. 조리원 이용 여부 -->
+        <!-- 6. 조리원 이용 여부 -->
         <div class="survey-card">
           <div class="survey-question-title">
-            <span>🏢</span> 5. 산후조리원 이용 여부
+            <span>🏢</span> 6. 산후조리원 이용 여부
           </div>
           <div class="survey-chips-row" id="surveyCareChips">
             <div class="survey-chip active" onclick="selectSurveyChip('careCenter', '이용함', this)">🏢 조리원 이용함 (입소)</div>
@@ -2427,23 +2430,21 @@
         </button>
       </div>
 
-      <!-- [2] 대시보드 화면 (맞춤 아이콘: 캐리어, 젖병, 달력, 동전 + 글자 뱃지 제거) -->
+      <!-- [2] 대시보드 화면 -->
       <div id="dashboardScreen" class="screen sub-screen">
         <div class="dashboard-topbar">
-          <button class="btn-back" onclick="handleLogout()" title="로그아웃 / 처음으로">◀</button>
+          <button class="btn-back" onclick="handleLogout()" title="처음으로">◀</button>
           <div class="topbar-title">출산 준비 홈</div>
-          <button class="btn-topbar-logout" onclick="handleLogout()" title="로그아웃 및 계정 전환">로그아웃 ↩</button>
+          <button class="btn-topbar-logout" onclick="handleLogout()" title="초기 화면으로 이동">처음으로 ↩</button>
         </div>
 
         <!-- 맞춤 프로필 정보 카드 -->
         <div id="dashboardProfileCard" class="dashboard-profile-card">
           <div class="profile-top-row">
             <div class="profile-user-badge">
-              <span id="profileUserIcon">👶</span>
-              <span id="profileUserTitle" style="font-weight: 800; font-size: 15px; color: #2C3E50; white-space: nowrap;">예비 부모님</span>
+              <span style="font-weight: 800; font-size: 14.5px; color: #2C3E50; white-space: nowrap;">👶 출산 준비 프로필</span>
             </div>
             <div style="display: flex; gap: 4px; flex-wrap: nowrap;">
-              <button class="profile-edit-btn" onclick="openCoupleSyncModal()" id="btnHeaderCoupleSync" title="부부 계정 실시간 연동" style="background: #FFF0F5; color: #D81B60; border: 1px solid #F8BBD0; font-weight: 700; white-space: nowrap;">💑 부부 연동</button>
               <button class="profile-edit-btn" onclick="syncFromGoogleSheet(true)" title="최신 품목 데이터 실시간 업데이트" style="background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; font-weight: 600; white-space: nowrap;">🔄 품목 업데이트</button>
               <button class="profile-edit-btn" onclick="openOnboardingEdit()" style="white-space: nowrap;">설문 수정 ⚙️</button>
             </div>
@@ -2455,22 +2456,11 @@
             <span class="profile-tag" id="tagCareCenter">조리원</span>
             <span class="profile-tag" id="tagRegion">지역</span>
           </div>
-
-          <!-- 부부 연동 상태 바 -->
-          <div id="coupleSyncBanner" style="margin-top: 10px; padding: 7px 12px; background: #FFF5F7; border: 1px dashed #FFB6C1; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; font-size: 11.5px;">
-            <div style="display: flex; align-items: center; gap: 6px; overflow: hidden;">
-              <span style="font-size: 14px; flex-shrink: 0;">💑</span>
-              <span id="coupleSyncStatusText" style="color: #666; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">부부 계정을 연동하고 출산가방을 함께 챙겨보세요</span>
-            </div>
-            <button id="btnOpenCoupleSync" onclick="openCoupleSyncModal()" style="background: #FF6B8B; color: white; border: none; padding: 3px 9px; border-radius: 12px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; flex-shrink: 0; margin-left: 8px;">
-              연동 관리 ➔
-            </button>
-          </div>
         </div>
 
         <div class="welcome-bar">
           <div class="welcome-text">
-            <h2>반가워요, <span id="welcomeUserName">예비 엄마·아빠</span>! 👶</h2>
+            <h2>반가워요, <span id="welcomeUserName">예비 엄마·아빠</span> 님! 👶</h2>
             <p>설문 기반으로 준비물과 혜택이 담겼어요</p>
           </div>
           <!-- 캐리어 아이콘 -->
@@ -3776,6 +3766,7 @@
     let isGuest = false;
 
     let userProfile = {
+      nickname: "예비 엄마·아빠",
       dueDate: "",
       gender: "남아",
       region: "서울",
@@ -6238,6 +6229,12 @@
     // ==========================================
     // 로그인, 온보딩 설문 & 스마트 맞춤 추천 엔진
     // ==========================================
+    function updateSurveyNickname(val) {
+      userProfile.nickname = val ? val.trim() : "";
+      const nameEl = document.getElementById('surveyUserName');
+      if (nameEl) nameEl.textContent = userProfile.nickname || '예비 엄마·아빠';
+    }
+
     function initDefaultDueDate() {
       const today = new Date();
       // 기본값: 오늘로부터 90일 후 (약 3개월)
@@ -6419,7 +6416,9 @@
       initDefaultDueDate();
       showToast('👶 비회원으로 시작합니다. (휴대폰 로컬에 안전 저장)');
       const nameEl = document.getElementById('surveyUserName');
-      if (nameEl) nameEl.textContent = '비회원 손님';
+      if (nameEl) nameEl.textContent = userProfile.nickname || '예비 엄마·아빠';
+      const nickInp = document.getElementById('surveyNicknameInput');
+      if (nickInp) nickInp.value = userProfile.nickname || '';
       goToScreen('onboardingScreen');
     }
 
@@ -6478,13 +6477,8 @@
         oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${conf.clientId}&redirect_uri=${encodeURIComponent(currentUrl)}&response_type=token&scope=email%20profile&state=google_oauth`;
       }
 
-      // 로컬 file:// 모드 및 웹 모드 대응
       if (location.protocol === 'file:') {
-        const confirmWeb = confirm(`[${conf.name} 공식 로그인 인증]\n${conf.name} 공식 서버(https://${provider === 'naver' ? 'nid.naver.com' : (provider === 'kakao' ? 'kauth.kakao.com' : 'accounts.google.com')})로 이동하여 실제 계정과 비밀번호로 로그인하시겠습니까?`);
-        if (confirmWeb) {
-          window.open(oauthUrl, '_blank');
-          confirmOAuthLogin();
-        }
+        showToast(`🔒 [${conf.name} 로그인] 안드로이드 로컬 앱(file://) 특성상 개발자 콘솔의 키해시/앱키 등록 후 실제 SDK 인증이 동작합니다.`);
       } else {
         window.location.href = oauthUrl;
       }
@@ -6709,10 +6703,10 @@
     }
 
     function openOnboardingEdit() {
-      if (currentUser) {
-        const nameEl = document.getElementById('surveyUserName');
-        if (nameEl) nameEl.textContent = currentUser.name;
-      }
+      const nameEl = document.getElementById('surveyUserName');
+      if (nameEl) nameEl.textContent = userProfile.nickname || '예비 엄마·아빠';
+      const nickInp = document.getElementById('surveyNicknameInput');
+      if (nickInp) nickInp.value = userProfile.nickname || '';
       const inp = document.getElementById('surveyDueDate');
       if (inp && userProfile.dueDate) {
         inp.value = userProfile.dueDate;
@@ -7098,60 +7092,19 @@
     }
 
     function updateDashboardProfileUI() {
-      const userTitle = document.getElementById('profileUserTitle');
-      const guestBadge = document.getElementById('profileGuestBadge');
       const welcomeName = document.getElementById('welcomeUserName');
-      const icon = document.getElementById('profileUserIcon');
-      const coupleText = document.getElementById('coupleSyncStatusText');
-      const coupleBtn = document.getElementById('btnOpenCoupleSync');
+      const nick = (userProfile && userProfile.nickname && userProfile.nickname.trim()) ? userProfile.nickname.trim() : '예비 엄마·아빠';
+      if (welcomeName) welcomeName.textContent = nick;
 
-      if (guestBadge) guestBadge.style.display = 'none';
-
-      if (isGuest) {
-        if (userTitle) userTitle.textContent = '비회원';
-        if (welcomeName) welcomeName.textContent = '손님';
-        if (icon) icon.textContent = '👶';
-        if (coupleText) coupleText.innerHTML = '📱 <b>개인 안전 모드</b>';
-        if (coupleBtn) {
-          coupleBtn.textContent = '간편가입 후 연동 ➔';
-          coupleBtn.onclick = () => { handleLogout(); };
-        }
-      } else {
-        const pNames = { kakao: '카카오', naver: '네이버', google: '구글' };
-        const pStr = currentUser ? (pNames[currentUser.type] || currentUser.type) : '회원';
-        if (userTitle) userTitle.textContent = `${pStr}`;
-        if (welcomeName) welcomeName.textContent = `${pStr}님`;
-        if (icon) icon.textContent = (currentUser && currentUser.type === 'naver') ? '🟢' : '🌸';
-
-        if (!userProfile.coupleCode) {
-          userProfile.coupleCode = generateCoupleCode();
-          savePersistedData(currentUser.type);
-        }
-
-        if (userProfile.linkedCoupleCode) {
-          if (coupleText) coupleText.innerHTML = `💑 <b>배우자와 실시간 연동 중</b> (${userProfile.linkedCoupleCode})`;
-          if (coupleBtn) {
-            coupleBtn.textContent = '연동 관리';
-            coupleBtn.onclick = openCoupleSyncModal;
-          }
-        } else {
-          if (coupleText) coupleText.innerHTML = `🔒 클라우드 안전 백업 적용 (내 연동 코드: <b>${userProfile.coupleCode}</b>)`;
-          if (coupleBtn) {
-            coupleBtn.textContent = '부부 연동하기 ➔';
-            coupleBtn.onclick = openCoupleSyncModal;
-          }
-        }
-      }
-
-      const { ddayText, weeksText } = calculateDDay(userProfile.dueDate);
+      const { ddayText } = calculateDDay(userProfile.dueDate);
       const tagDue = document.getElementById('tagDueDate');
-      if (tagDue) tagDue.textContent = weeksText ? `${ddayText} (${weeksText})` : ddayText;
+      if (tagDue) tagDue.textContent = ddayText || 'D-Day';
 
       const tagGen = document.getElementById('tagGender');
       if (tagGen) tagGen.textContent = userProfile.gender === '남아' ? '👦 남아' : (userProfile.gender === '여아' ? '👧 여아' : '🤍 성별 미정');
 
       const tagBirth = document.getElementById('tagBirthType');
-      if (tagBirth) tagBirth.textContent = userProfile.birthType === '제왕절개' ? '🏥 제왕' : (userProfile.birthType === '자연분만' ? '🌸 자분' : '🤔 분만 미정');
+      if (tagBirth) tagBirth.textContent = userProfile.birthType === '제왕절개' ? '🏥 제왕' : (userProfile.birthType === '자연분만' ? '🌸 자분' : '🤔 미정');
 
       const tagCare = document.getElementById('tagCareCenter');
       if (tagCare) tagCare.textContent = userProfile.careCenter === '이용함' ? '🏢 조리원' : '🏡 자택';

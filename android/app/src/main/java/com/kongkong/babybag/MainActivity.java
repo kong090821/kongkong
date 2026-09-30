@@ -128,9 +128,18 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    public void onBackPressed() {
+        if (mWebView != null) {
+            mWebView.evaluateJavascript("javascript:if(window.handleHardwareBackPress){window.handleHardwareBackPress();}else{window.history.back();}", null);
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
-            mWebView.evaluateJavascript("javascript:if(window.handleHardwareBackPress){window.handleHardwareBackPress();}", null);
+            onBackPressed();
             return true;
         }
         return super.onKeyDown(keyCode, event);

@@ -8,15 +8,19 @@
  *    - 새 행을 추가하고 품목명만 적어도, 고유 ID 자동 생성 및 맘카페 1위/쿠팡 TOP 1~3 자동 완성
  *    - [어플에 즉시 반영하기] 클릭 시 새로 추가한 행이 어플에 실시간으로 즉시 등록
  * 
- * 2. 🛡️ 빨간색 셀 잠금 & 바이럴 광고 차단:
- *    - 사용자가 빨간색(채우기 색상)으로 칠해둔 셀은 자동 수집 시 절대 덮어쓰지 않고 값 영구 보존!
+ * 2. 🔴 빨간색 셀 잠금 & 중요 내용 보호:
+ *    - 사용자가 빨간색(채우기 색상)으로 칠해둔 셀은 중요 항목으로서 자동 수집 시 절대 덮어쓰지 않고 영구 보존!
  *    - 빨간색으로 지정된 상품은 '바이럴 광고 블랙리스트'로 인식되어 향후 자동 수집 추천에서도 자동 제외
  * 
- * 3. ☕ 맘카페 & 📦 쿠팡 분리 자동 수집 스케줄러:
- *    - 맘카페 최다 언급: 매주 월요일 새벽 06:00 자동 수집 (검토: 연노랑 #FFFDE7)
- *    - 쿠팡 실시간 랭킹: 매일 새벽 06:00 자동 수집 (검토: 연초록 #E8F5E9)
+ * 3. 💙 파란색 셀 분리 & 바이럴/광고 수동 검토 엔진:
+ *    - 데이터 수집 시 바이럴/광고 의심 상품은 파란색(채우기 색상: #BBDEFB) 배경으로 자동 분리!
+ *    - 파란색 배경 셀/행은 자동 수집 시 덮어쓰이지 않으며, 사용자가 직접 배경색을 흰색으로 바꾸기 전까지 어플 배포에서 자동 제외!
  * 
- * 4. 🚀 실시간 어플 동기화:
+ * 4. ☕ 맘카페 & 📦 쿠팡 분리 자동 수집 스케줄러:
+ *    - 맘카페 최다 언급: 매주 월요일 새벽 06:00 자동 수집 (검토: 연노랑 #FFFDE7 / 바이럴: 파란색 #BBDEFB)
+ *    - 쿠팡 실시간 랭킹: 매일 새벽 06:00 자동 수집 (검토: 연초록 #E8F5E9 / 바이럴: 파란색 #BBDEFB)
+ * 
+ * 5. 🚀 실시간 어플 동기화:
  *    - [최신 데이터를 어플에 즉시 반영하기] 클릭 시 모든 앱 사용자 및 웹 프리뷰에 실시간 배포
  */
 
@@ -93,7 +97,7 @@ function syncToApp() {
     if (autoFilled > 0) {
       msg += '• 신규 추가 행: ' + autoFilled + '개 품목 ID 및 데이터 자동 생성\n';
     }
-    msg += '\n✅ 전체 시트의 모든 수정 내용이 어플에 즉시 반영되었습니다!';
+    msg += '\n🔴 빨간색(중요 보존) 및 💙 파란색(바이럴 검토 대기) 항목을 안전하게 처리하고,\n✅ 검토 완료(흰색 배경)된 데이터만 어플에 성공적으로 실시간 반영되었습니다!';
 
     ui.alert('🎉 전체 어플 데이터 갱신 완료!', msg, ui.ButtonSet.OK);
   } catch (err) {
@@ -258,29 +262,30 @@ function onEdit(e) {
     const ss = sheet.getParent();
     const blacklist = getBlacklistedProducts(ss);
 
-    // 8열(맘카페) 확인 및 자동 채우기 (빨간색이 아닐 때만)
+    // 8열(맘카페) 확인 및 자동 채우기 (빨간색, 파란색이 아닐 때만)
     const momCell = sheet.getRange(row, 8);
-    if (!String(momCell.getValue() || '').trim() && !isRedColor(momCell.getBackground())) {
-      momCell.setValue(fetchMomCafeMention(keyword, blacklist));
-      momCell.setBackground('#E1F5FE'); // 자동완성 표시: 연하늘색
+    if (!String(momCell.getValue() || '').trim() && !isRedColor(momCell.getBackground()) && !isBlueColor(momCell.getBackground())) {
+      const momVal = fetchMomCafeMention(keyword, blacklist);
+      momCell.setValue(momVal);
+      momCell.setBackground(isViralAdKeyword(momVal) ? '#BBDEFB' : '#E1F5FE');
     }
 
-    // 9~11열(쿠팡 TOP 1~3) 확인 및 자동 채우기 (빨간색이 아닐 때만)
+    // 9~11열(쿠팡 TOP 1~3) 확인 및 자동 채우기 (빨간색, 파란색이 아닐 때만)
     const coupang = fetchCoupangTop3(keyword, blacklist);
     const top1Cell = sheet.getRange(row, 9);
-    if (!String(top1Cell.getValue() || '').trim() && !isRedColor(top1Cell.getBackground())) {
+    if (!String(top1Cell.getValue() || '').trim() && !isRedColor(top1Cell.getBackground()) && !isBlueColor(top1Cell.getBackground())) {
       top1Cell.setValue(coupang.top1);
-      top1Cell.setBackground('#E1F5FE');
+      top1Cell.setBackground(isViralAdKeyword(coupang.top1) ? '#BBDEFB' : '#E1F5FE');
     }
     const top2Cell = sheet.getRange(row, 10);
-    if (!String(top2Cell.getValue() || '').trim() && !isRedColor(top2Cell.getBackground())) {
+    if (!String(top2Cell.getValue() || '').trim() && !isRedColor(top2Cell.getBackground()) && !isBlueColor(top2Cell.getBackground())) {
       top2Cell.setValue(coupang.top2);
-      top2Cell.setBackground('#E1F5FE');
+      top2Cell.setBackground(isViralAdKeyword(coupang.top2) ? '#BBDEFB' : '#E1F5FE');
     }
     const top3Cell = sheet.getRange(row, 11);
-    if (!String(top3Cell.getValue() || '').trim() && !isRedColor(top3Cell.getBackground())) {
+    if (!String(top3Cell.getValue() || '').trim() && !isRedColor(top3Cell.getBackground()) && !isBlueColor(top3Cell.getBackground())) {
       top3Cell.setValue(coupang.top3);
-      top3Cell.setBackground('#E1F5FE');
+      top3Cell.setBackground(isViralAdKeyword(coupang.top3) ? '#BBDEFB' : '#E1F5FE');
     }
   }
 }
@@ -291,25 +296,24 @@ function autoFillMissingRowData() {
   const count = ensureRowIntegrity(ss);
   SpreadsheetApp.getUi().alert(
     '✨ 자동 완성 완료',
-    '총 ' + count + '개 신규 품목의 ID 및 맘카페/쿠팡 추천 데이터가 자동으로 채워졌습니다.\n\n확인 후 [최신 데이터를 어플에 즉시 반영하기]를 누르시면 어플에 바로 적용됩니다.',
+    '총 ' + count + '개 신규 품목의 ID 및 맘카페/쿠팡 추천 데이터가 자동으로 채워졌습니다.\n\n확인 후 [어플에 즉시 반영하기]를 누르시면 어플에 바로 적용됩니다.',
     SpreadsheetApp.getUi().ButtonSet.OK
   );
 }
 
 // ------------------------------------------------------------------------------
-// 4. [빨간색 채우기 감지 & 바이럴 광고 차단 엔진]
+// 4. [색상 감지 & 바이럴 광고 차단 엔진]
 // ------------------------------------------------------------------------------
 
 /**
- * 셀 배경색이 빨간색 계열인지 판별 (바이럴 차단 / 자동 덮어쓰기 보호)
+ * 셀 배경색이 빨간색 계열인지 판별 (중요 데이터 보호 / 자동 덮어쓰기 영구 방지 / 블랙리스트)
  */
 function isRedColor(hex) {
   if (!hex || typeof hex !== 'string') return false;
   hex = hex.trim().toLowerCase();
   if (hex === '#ffffff' || hex === '#fff' || hex === 'white') return false;
-  if (hex === '#fffde7' || hex === '#e8f5e9' || hex === '#e1f5fe') return false; // 노랑/초록/하늘색 제외
+  if (hex === '#fffde7' || hex === '#e8f5e9' || hex === '#e1f5fe' || hex === '#ede7f6') return false; // 노랑/초록/하늘/보라 제외
 
-  // 구글 시트 기본 팔레트 및 웹 표준 레드 계열
   const standardReds = [
     '#ff0000', '#ea4335', '#f44336', '#e53935', '#d32f2f', '#c62828', '#b71c1c',
     '#ff8a80', '#ff5252', '#ff1744', '#d50000', '#f4c7c3', '#ea9999', '#e06666',
@@ -337,7 +341,59 @@ function isRedColor(hex) {
 }
 
 /**
- * 빨간색으로 표시된 바이럴 광고 의심 상품명 블랙리스트 추출
+ * 셀 배경색이 파란색 계열인지 판별 (바이럴 광고/수동 검토 대기 항목 분리)
+ */
+function isBlueColor(hex) {
+  if (!hex || typeof hex !== 'string') return false;
+  hex = hex.trim().toLowerCase();
+  if (hex === '#ffffff' || hex === '#fff' || hex === 'white') return false;
+  if (hex === '#fffde7' || hex === '#e8f5e9' || hex === '#ede7f6') return false; // 노랑/초록/보라 제외
+
+  // 단순 신규 자동완성 표시용 연하늘색(#e1f5fe)은 제외
+  if (hex === '#e1f5fe') return false;
+
+  const standardBlues = [
+    '#2196f3', '#1e88e5', '#1976d2', '#1565c0', '#0d47a1',
+    '#90caf9', '#64b5f6', '#42a5f5', '#29b6f6', '#00b0ff',
+    '#0091ea', '#e3f2fd', '#bbdefb', '#b3e5fc', '#81d4fa',
+    '#4fc3f7', '#00e5ff', '#00b8d4', '#1890ff', '#108ee9'
+  ];
+  if (standardBlues.indexOf(hex) !== -1) return true;
+
+  if (hex.startsWith('#')) hex = hex.substring(1);
+  if (hex.length === 3) {
+    hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+  }
+  if (hex.length !== 6) return false;
+
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+
+  if (isNaN(r) || isNaN(g) || isNaN(b)) return false;
+
+  // 파란색 성분이 확연히 우세한지 판정
+  if (b >= 180 && r <= 180 && (b - r >= 25) && (b - g >= 15)) return true;
+  if (b >= 150 && (b > r * 1.3) && (b > g * 1.1)) return true;
+
+  return false;
+}
+
+/**
+ * 바이럴 광고 키워드 포함 여부 판별
+ */
+function isViralAdKeyword(text) {
+  if (!text || typeof text !== 'string') return false;
+  const lower = text.toLowerCase();
+  const viralKeywords = [
+    '광고', '협찬', '바이럴', '파트너스', '체험단', '대행', '홍보',
+    '지원받아', '소정의', '대가지급', '원고료', '스폰서', 'ad', 'promoted'
+  ];
+  return viralKeywords.some(kw => lower.indexOf(kw) !== -1);
+}
+
+/**
+ * 빨간색(중요 보존/블랙리스트) 및 파란색(바이럴 검토 대기)으로 표시된 품목 추출
  */
 function getBlacklistedProducts(ss) {
   const blacklist = [];
@@ -353,7 +409,7 @@ function getBlacklistedProducts(ss) {
 
     for (let r = 0; r < values.length; r++) {
       for (let c = 0; c < values[r].length; c++) {
-        if (isRedColor(bgs[r][c])) {
+        if (isRedColor(bgs[r][c]) || isBlueColor(bgs[r][c])) {
           const txt = String(values[r][c] || '').trim();
           if (txt && blacklist.indexOf(txt) === -1) {
             blacklist.push(txt);
@@ -402,28 +458,29 @@ function ensureRowIntegrity(ss) {
 
       const keyword = cleanKeyword(rawTitle);
 
-      // 맘카페 1위 (비어있고 빨간색이 아닌 경우만 자동 채움)
-      if (!String(values[i][7] || '').trim() && !isRedColor(bgs[i][7])) {
-        values[i][7] = fetchMomCafeMention(keyword, blacklist);
-        bgs[i][7] = '#E1F5FE';
+      // 맘카페 1위 (비어있고 빨간색/파란색이 아닌 경우만 자동 채움)
+      if (!String(values[i][7] || '').trim() && !isRedColor(bgs[i][7]) && !isBlueColor(bgs[i][7])) {
+        const momVal = fetchMomCafeMention(keyword, blacklist);
+        values[i][7] = momVal;
+        bgs[i][7] = isViralAdKeyword(momVal) ? '#BBDEFB' : '#E1F5FE';
         modified = true;
       }
 
-      // 쿠팡 TOP 1~3 (비어있고 빨간색이 아닌 경우만 자동 채움)
+      // 쿠팡 TOP 1~3 (비어있고 빨간색/파란색이 아닌 경우만 자동 채움)
       const coupang = fetchCoupangTop3(keyword, blacklist);
-      if (!String(values[i][8] || '').trim() && !isRedColor(bgs[i][8])) {
+      if (!String(values[i][8] || '').trim() && !isRedColor(bgs[i][8]) && !isBlueColor(bgs[i][8])) {
         values[i][8] = coupang.top1;
-        bgs[i][8] = '#E1F5FE';
+        bgs[i][8] = isViralAdKeyword(coupang.top1) ? '#BBDEFB' : '#E1F5FE';
         modified = true;
       }
-      if (!String(values[i][9] || '').trim() && !isRedColor(bgs[i][9])) {
+      if (!String(values[i][9] || '').trim() && !isRedColor(bgs[i][9]) && !isBlueColor(bgs[i][9])) {
         values[i][9] = coupang.top2;
-        bgs[i][9] = '#E1F5FE';
+        bgs[i][9] = isViralAdKeyword(coupang.top2) ? '#BBDEFB' : '#E1F5FE';
         modified = true;
       }
-      if (!String(values[i][10] || '').trim() && !isRedColor(bgs[i][10])) {
+      if (!String(values[i][10] || '').trim() && !isRedColor(bgs[i][10]) && !isBlueColor(bgs[i][10])) {
         values[i][10] = coupang.top3;
-        bgs[i][10] = '#E1F5FE';
+        bgs[i][10] = isViralAdKeyword(coupang.top3) ? '#BBDEFB' : '#E1F5FE';
         modified = true;
       }
     }
@@ -458,26 +515,27 @@ function ensureRowIntegrity(ss) {
 
       const keyword = cleanKeyword(rawTitle);
 
-      if (!String(values[i][7] || '').trim() && !isRedColor(bgs[i][7])) {
-        values[i][7] = fetchMomCafeMention(keyword, blacklist);
-        bgs[i][7] = '#E1F5FE';
+      if (!String(values[i][7] || '').trim() && !isRedColor(bgs[i][7]) && !isBlueColor(bgs[i][7])) {
+        const momVal = fetchMomCafeMention(keyword, blacklist);
+        values[i][7] = momVal;
+        bgs[i][7] = isViralAdKeyword(momVal) ? '#BBDEFB' : '#E1F5FE';
         modified = true;
       }
 
       const coupang = fetchCoupangTop3(keyword, blacklist);
-      if (!String(values[i][8] || '').trim() && !isRedColor(bgs[i][8])) {
+      if (!String(values[i][8] || '').trim() && !isRedColor(bgs[i][8]) && !isBlueColor(bgs[i][8])) {
         values[i][8] = coupang.top1;
-        bgs[i][8] = '#E1F5FE';
+        bgs[i][8] = isViralAdKeyword(coupang.top1) ? '#BBDEFB' : '#E1F5FE';
         modified = true;
       }
-      if (!String(values[i][9] || '').trim() && !isRedColor(bgs[i][9])) {
+      if (!String(values[i][9] || '').trim() && !isRedColor(bgs[i][9]) && !isBlueColor(bgs[i][9])) {
         values[i][9] = coupang.top2;
-        bgs[i][9] = '#E1F5FE';
+        bgs[i][9] = isViralAdKeyword(coupang.top2) ? '#BBDEFB' : '#E1F5FE';
         modified = true;
       }
-      if (!String(values[i][10] || '').trim() && !isRedColor(bgs[i][10])) {
+      if (!String(values[i][10] || '').trim() && !isRedColor(bgs[i][10]) && !isBlueColor(bgs[i][10])) {
         values[i][10] = coupang.top3;
-        bgs[i][10] = '#E1F5FE';
+        bgs[i][10] = isViralAdKeyword(coupang.top3) ? '#BBDEFB' : '#E1F5FE';
         modified = true;
       }
     }
@@ -534,7 +592,7 @@ function ensureRowIntegrity(ss) {
 }
 
 // ------------------------------------------------------------------------------
-// 6. [파이프라인 1] 맘카페 언급 데이터 수집 (매주 월요일 06:00, 빨간색 셀 완전 보호)
+// 6. [파이프라인 1] 맘카페 언급 데이터 수집 (매주 월요일 06:00, 빨간색/파란색 셀 보존)
 // ------------------------------------------------------------------------------
 function updateMomCafeWeeklyData() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -548,11 +606,11 @@ function updateMomCafeWeeklyData() {
   if (sheetBaby) updatedCount += processSheetMomCafeSearch(sheetBaby, 4, 8);
 
   const logMsg = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm") + 
-                 ' - [맘카페 수집 완료] 총 ' + updatedCount + '개 항목 업데이트 (빨간색 잠금 셀 제외/보존 완료)';
+                 ' - [맘카페 수집 완료] 총 ' + updatedCount + '개 항목 업데이트 (🔴빨간색 💙파란색 지정 셀 보존 완료)';
   PropertiesService.getScriptProperties().setProperty('LAST_MOMCAFE_LOG', logMsg);
 
   try {
-    SpreadsheetApp.getUi().alert('☕ [맘카페 최다 언급] 수집이 완료되었습니다!\n\n• 연노란색: 새로 수집된 추천 상품\n• 빨간색: 사용자 잠금 설정으로 자동 보존된 품목\n\n검토 후 [어플에 즉시 반영하기]를 눌러주세요.');
+    SpreadsheetApp.getUi().alert('☕ [맘카페 최다 언급] 수집이 완료되었습니다!\n\n• 연노란색: 새로 수집된 추천 상품\n• 🔴 빨간색: 사용자가 보호한 중요 품목\n• 💙 파란색: 바이럴/광고 의심 검토 분리 품목\n\n검토 후 [어플에 즉시 반영하기]를 눌러주세요.');
   } catch(e) {
     console.log(logMsg);
   }
@@ -574,13 +632,14 @@ function processSheetMomCafeSearch(sheet, titleCol, momcafeCol) {
     const rawTitle = String(values[i][titleCol - 1]).trim();
     if (!rawTitle) continue;
 
-    // 빨간색 채우기 셀(또는 행) 감지 시 자동 덮어쓰기 완전 방지 (보존)
+    // 빨간색(중요 보존) 및 파란색(바이럴 검토 대기) 채우기 셀(또는 행) 감지 시 자동 덮어쓰기 방지
     const cellBg = bgs[i][momcafeCol - 1];
     const rowBg = bgs[i][0];
     const titleBg = bgs[i][titleCol - 1];
 
-    if (isRedColor(cellBg) || isRedColor(rowBg) || isRedColor(titleBg)) {
-      continue; // 사용자가 빨간색으로 고정한 셀은 수집 데이터로 덮어쓰지 않음!
+    if (isRedColor(cellBg) || isRedColor(rowBg) || isRedColor(titleBg) ||
+        isBlueColor(cellBg) || isBlueColor(rowBg) || isBlueColor(titleBg)) {
+      continue;
     }
 
     const keyword = cleanKeyword(rawTitle);
@@ -588,7 +647,8 @@ function processSheetMomCafeSearch(sheet, titleCol, momcafeCol) {
 
     if (momcafeItem) {
       sheet.getRange(i + 2, momcafeCol).setValue(momcafeItem);
-      sheet.getRange(i + 2, momcafeCol).setBackground('#FFFDE7'); // 검토용 연노랑
+      const isViral = isViralAdKeyword(momcafeItem);
+      sheet.getRange(i + 2, momcafeCol).setBackground(isViral ? '#BBDEFB' : '#FFFDE7');
       count++;
     }
   }
@@ -596,7 +656,7 @@ function processSheetMomCafeSearch(sheet, titleCol, momcafeCol) {
 }
 
 // ------------------------------------------------------------------------------
-// 7. [파이프라인 2] 쿠팡 실시간 TOP 3 수집 (매일 06:00, 빨간색 셀 완전 보호)
+// 7. [파이프라인 2] 쿠팡 실시간 TOP 3 수집 (매일 06:00, 빨간색/파란색 셀 보존)
 // ------------------------------------------------------------------------------
 function updateCoupangDailyTop3() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -610,11 +670,11 @@ function updateCoupangDailyTop3() {
   if (sheetBaby) updatedCount += processSheetCoupangSearch(sheetBaby, 4, 9, 10, 11);
 
   const logMsg = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm") + 
-                 ' - [쿠팡 TOP3 수집 완료] 총 ' + updatedCount + '개 품목 랭킹 갱신 (빨간색 잠금 셀 제외/보존 완료)';
+                 ' - [쿠팡 TOP3 수집 완료] 총 ' + updatedCount + '개 품목 랭킹 갱신 (🔴빨간색 💙파란색 지정 셀 보존 완료)';
   PropertiesService.getScriptProperties().setProperty('LAST_COUPANG_LOG', logMsg);
 
   try {
-    SpreadsheetApp.getUi().alert('📦 [쿠팡 실시간 랭킹 TOP 3] 수집이 완료되었습니다!\n\n• 연초록색: 새로 수집된 랭킹\n• 빨간색: 사용자 잠금 설정으로 자동 보존된 품목\n\n확인 후 [어플에 즉시 반영하기]를 눌러주세요.');
+    SpreadsheetApp.getUi().alert('📦 [쿠팡 실시간 랭킹 TOP 3] 수집이 완료되었습니다!\n\n• 연초록색: 새로 수집된 랭킹\n• 🔴 빨간색: 중요 영구 보존 품목\n• 💙 파란색: 바이럴/광고 검토 분리 품목\n\n확인 후 [어플에 즉시 반영하기]를 눌러주세요.');
   } catch(e) {
     console.log(logMsg);
   }
@@ -639,8 +699,8 @@ function processSheetCoupangSearch(sheet, titleCol, top1Col, top2Col, top3Col) {
     const rowBg = bgs[i][0];
     const titleBg = bgs[i][titleCol - 1];
 
-    // 행 전체나 품목명이 빨간색이면 TOP 1~3 전체 수집 제외
-    if (isRedColor(rowBg) || isRedColor(titleBg)) {
+    // 행 전체나 품목명이 빨간색/파란색이면 TOP 1~3 전체 수집 제외 (보존)
+    if (isRedColor(rowBg) || isRedColor(titleBg) || isBlueColor(rowBg) || isBlueColor(titleBg)) {
       continue;
     }
 
@@ -648,17 +708,17 @@ function processSheetCoupangSearch(sheet, titleCol, top1Col, top2Col, top3Col) {
     const coupangTop3 = fetchCoupangTop3(keyword, blacklist);
 
     if (coupangTop3) {
-      if (!isRedColor(bgs[i][top1Col - 1])) {
+      if (!isRedColor(bgs[i][top1Col - 1]) && !isBlueColor(bgs[i][top1Col - 1])) {
         sheet.getRange(i + 2, top1Col).setValue(coupangTop3.top1);
-        sheet.getRange(i + 2, top1Col).setBackground('#E8F5E9');
+        sheet.getRange(i + 2, top1Col).setBackground(isViralAdKeyword(coupangTop3.top1) ? '#BBDEFB' : '#E8F5E9');
       }
-      if (!isRedColor(bgs[i][top2Col - 1])) {
+      if (!isRedColor(bgs[i][top2Col - 1]) && !isBlueColor(bgs[i][top2Col - 1])) {
         sheet.getRange(i + 2, top2Col).setValue(coupangTop3.top2);
-        sheet.getRange(i + 2, top2Col).setBackground('#E8F5E9');
+        sheet.getRange(i + 2, top2Col).setBackground(isViralAdKeyword(coupangTop3.top2) ? '#BBDEFB' : '#E8F5E9');
       }
-      if (!isRedColor(bgs[i][top3Col - 1])) {
+      if (!isRedColor(bgs[i][top3Col - 1]) && !isBlueColor(bgs[i][top3Col - 1])) {
         sheet.getRange(i + 2, top3Col).setValue(coupangTop3.top3);
-        sheet.getRange(i + 2, top3Col).setBackground('#E8F5E9');
+        sheet.getRange(i + 2, top3Col).setBackground(isViralAdKeyword(coupangTop3.top3) ? '#BBDEFB' : '#E8F5E9');
       }
       count++;
     }
@@ -829,7 +889,7 @@ function fetchCoupangTop3(keyword, blacklist) {
 }
 
 // ------------------------------------------------------------------------------
-// 9. 하이라이트 배경색 초기화 (※ 빨간색 셀은 100% 영구 보존!)
+// 9. 하이라이트 배경색 초기화 (※ 🔴빨간색 및 💙파란색 셀은 100% 영구 보존!)
 // ------------------------------------------------------------------------------
 function clearPendingHighlights(ss, targetSheetName) {
   const sheetNames = targetSheetName ? [targetSheetName] : ['출산가방 체크리스트', '육아용품 체크리스트'];
@@ -846,8 +906,9 @@ function clearPendingHighlights(ss, targetSheetName) {
       for (let c = 0; c < backgrounds[r].length; c++) {
         const bg = String(backgrounds[r][c] || '').toLowerCase();
         // 연노랑(#FFFDE7), 연초록(#E8F5E9), 연하늘(#E1F5FE), 연보라(#EDE7F6)만 흰색으로 복구
-        // 빨간색(isRedColor)은 절대 건드리지 않고 그대로 보존!
-        if (bg === '#fffde7' || bg === '#e8f5e9' || bg === '#e1f5fe' || bg === '#ede7f6') {
+        // 🔴빨간색(isRedColor) 및 💙파란색(isBlueColor)은 수동 확인 대상이므로 건드리지 않고 그대로 보존!
+        if (!isRedColor(bg) && !isBlueColor(bg) &&
+            (bg === '#fffde7' || bg === '#e8f5e9' || bg === '#e1f5fe' || bg === '#ede7f6')) {
           backgrounds[r][c] = '#ffffff';
           modified = true;
         }
@@ -891,7 +952,7 @@ function setupAllTriggers() {
     '⏰ 스케줄러 자동 등록 완료!',
     '1. ☕ 맘카페 언급 수집: 매주 월요일 새벽 06:00 실행\n' +
     '2. 📦 쿠팡 TOP3 수집: 매일 새벽 06:00 실행\n\n' +
-    '🛡️ 빨간색으로 표시해둔 셀은 자동 수집 시 절대 덮어쓰지 않고 안전하게 보존됩니다!\n' +
+    '🛡️ 🔴빨간색(중요 보존) 및 💙파란색(바이럴 검토 대기)으로 표시해둔 셀은 자동 수집 시 절대 덮어쓰지 않고 안전하게 보존됩니다!\n' +
     '컴퓨터를 켜두지 않아도 구글 클라우드가 정해진 시각에 자동 실행됩니다.',
     ui.ButtonSet.OK
   );
@@ -1015,7 +1076,7 @@ function logUserActivity(ss, data) {
 }
 
 // ------------------------------------------------------------------------------
-// 13. [맞춤 추천 관리 엔진] 시트(🎯 맞춤_추천_설정) 기반 동적 가방 설정
+// 13. [맞춤 추천 관리 엔진 및 파싱 함수] 시트 기반 데이터 파싱 (파란색 셀 어플 배포 자동 제외)
 // ------------------------------------------------------------------------------
 function getItemTitleMap(ss) {
   const titleMap = {};
@@ -1104,7 +1165,6 @@ function getOrCreateRecommendationSheet(ss) {
       sheet.appendRow(r);
     });
   } else {
-    // 3열 이하인 구버전 구조 자동 업그레이드
     const firstHeader = String(sheet.getRange(1, 2).getValue() || '').trim();
     if (firstHeader.indexOf('목록') !== -1 || sheet.getLastColumn() <= 3) {
       const oldValues = sheet.getDataRange().getValues();
@@ -1194,7 +1254,7 @@ function getRecommendationRules(ss) {
   return rules;
 }
 
-// 4개 시트 전체 데이터 추출 (새 행 무결성 보정 포함)
+// 4개 시트 전체 데이터 추출 (파란색 셀 바이럴 광고 어플 반영 자동 분리)
 function getAllSheetsData(ss) {
   ensureRowIntegrity(ss);
 
@@ -1214,19 +1274,49 @@ function getAllSheetsData(ss) {
   };
 }
 
+/**
+ * 시트 데이터를 어플 객체 배열로 변환
+ * (※ 💙파란색 지정 행/품목은 사용자가 직접 흰색 배경으로 수정하기 전까지 어플에 반영되지 않도록 자동 제외/분리)
+ */
 function parseSheetToObjects(sheet, keys) {
   if (!sheet) return [];
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return [];
 
-  const values = sheet.getRange(2, 1, lastRow - 1, keys.length).getValues();
-  return values.map(function(row) {
+  const lastCol = keys.length;
+  const range = sheet.getRange(2, 1, lastRow - 1, lastCol);
+  const values = range.getValues();
+  const bgs = range.getBackgrounds();
+
+  const result = [];
+  for (let r = 0; r < values.length; r++) {
+    const rowBg = String(bgs[r][0] || '').toLowerCase();
+    const titleColIdx = keys.indexOf('title') !== -1 ? keys.indexOf('title') : 3;
+    const titleBg = String(bgs[r][titleColIdx] || '').toLowerCase();
+
+    // 1. 행 전체나 품목명 셀이 파란색(바이럴 광고 수동 검토 대기)이면 어플에 절대 반영하지 않고 완전 분리!
+    if (isBlueColor(rowBg) || isBlueColor(titleBg)) {
+      continue;
+    }
+
     const obj = {};
     for (let c = 0; c < keys.length; c++) {
-      obj[keys[c]] = String(row[c] || '').trim();
+      const cellBg = String(bgs[r][c] || '').toLowerCase();
+      // 2. 개별 셀이 파란색(바이럴/광고 대기)이면, 해당 개별 항목만 수동 검토 승인 전까지 어플 배포 데이터에서 제외 (빈 값 처리)
+      if (isBlueColor(cellBg)) {
+        obj[keys[c]] = '';
+      } else {
+        obj[keys[c]] = String(values[r][c] || '').trim();
+      }
     }
-    return obj;
-  });
+
+    // 파란색 제외 후 의미 있는 데이터가 남은 경우만 앱 목록에 추가
+    if (obj.title || obj.id) {
+      result.push(obj);
+    }
+  }
+
+  return result;
 }
 
 // ------------------------------------------------------------------------------
@@ -1243,11 +1333,12 @@ function showGuideDialog() {
     '• 마지막 어플 반영 시각: ' + lastUpdate + '\n\n' +
     '• 맘카페 최근 수집: ' + momLog + '\n' +
     '• 쿠팡 최근 수집: ' + coupangLog + '\n\n' +
-    '🛡️ 신기능 안내:\n' +
-    '1. 📊 사용자_활동_통계: 앱 종료 시 산모들의 실제 가방 데이터가 실시간 자동 수집됩니다.\n' +
-    '2. 🎯 맞춤 추천 설정 갱신: 수집된 통계를 바탕으로 [맞춤_추천_설정] 시트 하단에 추천 품목이 보라색 글씨로 갱신됩니다.\n' +
-    '3. 🚀 시트별 반영: 원하는 시트만 골라서 어플에 개별 반영하거나 전체 반영할 수 있습니다.\n' +
-    '4. 🛑 빨간색 셀: 자동 수집 시 절대 덮어쓰지 않고 영구 보존됩니다.',
+    '🛡️ 색상별 기능 가이드:\n' +
+    '1. 🔴 빨간색 셀: 중요 정보 영구 잠금 및 보호 (자동 수집 시 절대 덮어쓰지 않음)\n' +
+    '2. 💙 파란색 셀: 바이럴/광고 의심 항목 자동 분리 (직접 흰색 배경으로 바꾼 것만 어플 반영)\n' +
+    '3. 💜 연보라색 셀: 사용자 추가 신규 등록 품목 강조\n' +
+    '4. 💛/💚 연노랑/연초록 셀: 새로 수집된 맘카페/쿠팡 추천 랭킹\n\n' +
+    '💡 사용 팁: 수집된 바이럴 광고 의심 제품은 자동으로 파란색으로 칠해지며 어플 배포에서 분리됩니다. 확인 후 직접 셀 배경색을 흰색으로 바꾸시면 어플에 정상 반영됩니다.',
     ui.ButtonSet.OK
   );
 }
@@ -1343,7 +1434,6 @@ function analyzeAndUpdateRecommendations(ss, isSilent) {
   const titleMap = getItemTitleMap(ss);
   const now = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm");
 
-  // 기존 하단 통계 추천 섹션 감지
   const currentValues = recSheet.getDataRange().getValues();
   let statsStartRow = -1;
 
@@ -1355,20 +1445,17 @@ function analyzeAndUpdateRecommendations(ss, isSilent) {
     }
   }
 
-  // 기존 하단 통계 추천 행이 이미 존재하면 해당 행부터 초기화 후 새로 재작성
   if (statsStartRow !== -1 && recSheet.getLastRow() >= statsStartRow) {
     const numRowsToDelete = recSheet.getLastRow() - statsStartRow + 1;
     recSheet.deleteRows(statsStartRow, numRowsToDelete);
   }
 
-  recSheet.appendRow(['']); // 구분 빈 행
+  recSheet.appendRow(['']);
 
-  // 통계 기반 추천 구분 헤더 행 작성
   const sepText = '📊 [통계 기반 추천 후보 (자동 갱신: ' + now + ')] - 아래 보라색 품목을 검토 후 상단 추천 행으로 자유롭게 복사하세요.';
   const sepRowIdx = recSheet.appendRow([sepText]).getLastRow();
   recSheet.getRange(sepRowIdx, 1, 1, 17).setBackground('#EDE7F6').setFontColor('#4A148C').setFontWeight('bold');
 
-  // 통계 추천 작성할 5개 카테고리
   const statsCategories = ['제왕절개', '자연분만', '조리원이용', '자택조리', '공통산모'];
   const newRowNumbers = [];
 
@@ -1379,13 +1466,12 @@ function analyzeAndUpdateRecommendations(ss, isSilent) {
     newRowNumbers.push(addedRowIdx);
   });
 
-  // 하단 통계 추천 행 전체에 보라색 글자 색상 (#7B1FA2) 및 은은한 백그라운드 적용
   newRowNumbers.forEach(function(rIdx) {
     const maxCol = recSheet.getLastColumn();
     const rowRange = recSheet.getRange(rIdx, 1, 1, maxCol);
-    rowRange.setFontColor('#7B1FA2'); // 보라색 글자
+    rowRange.setFontColor('#7B1FA2');
     rowRange.setFontWeight('bold');
-    rowRange.setBackground('#FAF5FF'); // 연보라 채우기
+    rowRange.setBackground('#FAF5FF');
   });
 
   if (!isSilent) {
@@ -1404,7 +1490,7 @@ function analyzeAndUpdateRecommendations(ss, isSilent) {
 }
 
 // ------------------------------------------------------------------------------
-// 💜 [사용자 추가 품목 연보라색 강조 및 검토 상태 갱신]
+// 16. [사용자 추가 품목 연보라색 강조 도구]
 // ------------------------------------------------------------------------------
 function highlightCustomUserAddedItems() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
