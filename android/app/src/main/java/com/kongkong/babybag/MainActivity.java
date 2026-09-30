@@ -104,13 +104,13 @@ public class MainActivity extends Activity {
                     new AlertDialog.Builder(MainActivity.this)
                             .setTitle("앱 종료")
                             .setMessage("꽁꽁 출산가방 앱을 종료하시겠습니까?")
-                            .setPositiveButton("종료", new DialogInterface.OnClickListener() {
+                            .setPositiveButton("네", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
                                     finish();
                                 }
                             })
-                            .setNegativeButton("취소", null)
+                            .setNegativeButton("아니오", null)
                             .show();
                 }
             });

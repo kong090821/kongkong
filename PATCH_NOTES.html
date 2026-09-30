@@ -321,7 +321,19 @@
     <div class="section-card">
       <h2>📜 2. 최신 변경 및 패치 이력 (Patch Logs)</h2>
 
-      <!-- 2026-09-30 (v1.1.2) -->
+      <!-- 2026-09-30 (v1.1.3) -->
+      <div class="patch-block">
+        <div class="patch-date">🗓️ 2026-09-30</div>
+        <div class="patch-version">패치 버전 1.1.3</div>
+
+        <div class="patch-group">
+          <div class="patch-group-title">📱 서브 화면 백버튼 안전 가드 & 메인 화면 [네/아니오] 종료 팝업 연동</div>
+          <ul>
+            <li><strong>[Navigation Guard] 서브 화면 백버튼 절대 종료 방지:</strong> 출산가방, 육아용품, 할일, 혜택, 내 가방 등 서브 화면을 이용 중일 때는 백스택 유실 여부와 상관없이 뒤로가기 클릭 시 절대 앱이 종료되지 않고 무조건 홈 화면(dashboardScreen)으로 이전 이동하도록 <code>getCurrentVisibleScreenId()</code> 안전 가드 강화.</li>
+            <li><strong>[Exit Dialog] 메인 화면 [네/아니오] 팝업:</strong> 최상위 메인 화면(dashboardScreen)에서 뒤로가기 클릭 시에만 "꽁꽁 출산가방 앱을 종료하시겠습니까?" 팝업을 띄우고, <code>[네]</code> 선택 시 앱 종료, <code>[아니오]</code> 선택 시 팝업 닫기로 직관적 선택지 제공.</li>
+          </ul>
+        </div>
+      </div>
       <div class="patch-block">
         <div class="patch-date">🗓️ 2026-09-30</div>
         <div class="patch-version">패치 버전 1.1.2</div>

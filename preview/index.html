@@ -7282,13 +7282,30 @@
       else if (screenId === 'myBagScreen') { currentMyBagFeatureTab = null; updateSavedBadges(); renderMyBagIntegratedView(); }
     }
 
+    function getCurrentVisibleScreenId() {
+      const allScreens = [
+        'dashboardScreen', 'maternityBagChecklistScreen', 'babyItemsChecklistScreen',
+        'todoChecklistScreen', 'benefitsCategoryScreen', 'nationalBenefitsScreen',
+        'regionalBenefitsScreen', 'personalBenefitsScreen', 'myBagScreen',
+        'savedMaternityBagScreen', 'savedBabySuppliesScreen', 'savedTodoScreen',
+        'savedBenefitsScreen', 'onboardingScreen', 'loginScreen'
+      ];
+      for (const sId of allScreens) {
+        const el = document.getElementById(sId);
+        if (el && el.style.display === 'flex') {
+          return sId;
+        }
+      }
+      return 'dashboardScreen';
+    }
+
     function goBackScreen() {
       if (window.handleHardwareBackPress) {
         window.handleHardwareBackPress();
       }
     }
 
-    // 안드로이드 하드웨어/소프트웨어 뒤로가기 버튼 핸들러 (탑시트/모달 닫기 -> 화면 백스택 pop -> 메인 화면 앱 종료 확인)
+    // 안드로이드 하드웨어/소프트웨어 뒤로가기 버튼 핸들러
     window.handleHardwareBackPress = function() {
       // 1. 선배맘 추천 TopSheet 드로어가 열려있으면 먼저 닫기
       const topSheet = document.getElementById('topSheetContainer');
@@ -7314,15 +7331,25 @@
         }
       }
 
-      // 3. 화면 백스택(screenHistory) 탐색 및 이전 화면으로 이동
-      if (screenHistory.length > 1) {
-        screenHistory.pop(); // 현재 최상위 화면 제거
-        const prevScreen = screenHistory[screenHistory.length - 1];
-        goToScreen(prevScreen, false); // 이전 화면으로 히스토리 추가 없이 이동
+      // 3. 현재 화면이 홈(dashboardScreen)이나 로그인 화면이 아닌 서브 화면(가방, 품목, 혜택 등)인 경우
+      const currentScreen = getCurrentVisibleScreenId();
+      if (currentScreen !== 'dashboardScreen' && currentScreen !== 'loginScreen') {
+        if (screenHistory.length > 1) {
+          screenHistory.pop(); // 현재 화면 제거
+          const prevScreen = screenHistory[screenHistory.length - 1];
+          if (prevScreen && prevScreen !== currentScreen) {
+            goToScreen(prevScreen, false);
+          } else {
+            goToScreen('dashboardScreen', false);
+          }
+        } else {
+          // 백스택이 유실되었거나 1개만 있어도 서브 화면이면 절대 종료되지 않고 홈 화면으로 이동
+          goToScreen('dashboardScreen', false);
+        }
         return true;
       }
 
-      // 4. 더 이상 뒤로 갈 화면이 없는 최상단(메인) 화면일 경우에만 안드로이드 앱 종료 팝업 동작
+      // 4. 최상위 홈 화면(dashboardScreen 또는 loginScreen)에서만 뒤로가기 클릭 시 앱 종료 확인 팝업
       if (window.AndroidInterface && window.AndroidInterface.exitApp) {
         window.AndroidInterface.exitApp();
       } else {
