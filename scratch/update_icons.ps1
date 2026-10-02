@@ -1,7 +1,7 @@
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 Add-Type -AssemblyName System.Drawing
 
-$srcImageFile = "C:\Users\cbe\.gemini\antigravity\brain\366b3fd4-bcac-486b-aa63-6469bad6905e\baby_bag_icon_1790916873443.jpg"
+$srcImageFile = "C:\Users\cbe\.gemini\antigravity\brain\366b3fd4-bcac-486b-aa63-6469bad6905e\sparkle_eyes_icon_1790930132167.jpg"
 
 if (-not (Test-Path $srcImageFile)) {
     Write-Host "Error: Source image not found at $srcImageFile" -ForegroundColor Red
