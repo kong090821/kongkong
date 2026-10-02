@@ -22,9 +22,13 @@ $buildDir = "build_temp"
 if (Test-Path $buildDir) { Remove-Item $buildDir -Recurse -Force }
 New-Item -ItemType Directory -Path "$buildDir\compiled_res", "$buildDir\gen", "$buildDir\classes", "$buildDir\dex", "dist" -Force | Out-Null
 
-Write-Host "0. Syncing root index.html to assets..."
+Write-Host "0. Syncing root index.html & master_data.js to assets..."
 Copy-Item "index.html" "android/app/src/main/assets/index.html" -Force
 Copy-Item "index.html" "preview/index.html" -Force
+if (Test-Path "master_data.js") {
+    Copy-Item "master_data.js" "android/app/src/main/assets/master_data.js" -Force
+    Copy-Item "master_data.js" "preview/master_data.js" -Force
+}
 
 Write-Host "1. Compiling Android Resources..."
 & $aapt2 compile --dir "android/app/src/main/res" -o "$buildDir/compiled_res.zip"
@@ -34,8 +38,8 @@ Write-Host "2. Linking Resources & Generating R.java (APK & Proto format)..."
     --manifest "android/app/src/main/AndroidManifest.xml" `
     --min-sdk-version 24 `
     --target-sdk-version 36 `
-    --version-code 13 `
-    --version-name "1.1.3" `
+    --version-code 14 `
+    --version-name "1.1.4" `
     --java "$buildDir/gen" `
     -o "$buildDir/unaligned_res.apk" `
     -A "android/app/src/main/assets" `
@@ -46,8 +50,8 @@ Write-Host "2. Linking Resources & Generating R.java (APK & Proto format)..."
     --manifest "android/app/src/main/AndroidManifest.xml" `
     --min-sdk-version 24 `
     --target-sdk-version 36 `
-    --version-code 13 `
-    --version-name "1.1.3" `
+    --version-code 14 `
+    --version-name "1.1.4" `
     --proto-format `
     -o "$buildDir/base_proto.zip" `
     -A "android/app/src/main/assets" `

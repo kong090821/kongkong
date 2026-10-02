@@ -3153,13 +3153,14 @@
       { id: "m_feed_7", title: "젖병 세제 & 젖병 솔 (1세트)", tabCategory: "산모 용품", section: "수유 용품", locationTags: ["#조리원"] },
 
       // [개인 위생 & 스킨케어]
-      { id: "m_sk_1", title: "산모 세면도구 세트 (1세트)", tabCategory: "산모 용품", section: "개인 위생 & 스킨케어", locationTags: ["#병원", "#조리원"], note: "(샴푸·바디워시·칫솔치약 등)" },
+      { id: "m_sk_1", title: "산모 세면용품 세트 (1세트)", tabCategory: "산모 용품", section: "개인 위생 & 스킨케어", locationTags: ["#병원", "#조리원"], note: "(샴푸·바디워시·칫솔치약 등)" },
       { id: "m_sk_2", title: "기초화장·보습 세트 (1세트)", tabCategory: "산모 용품", section: "개인 위생 & 스킨케어", locationTags: ["#병원", "#조리원"], note: "(스킨·로션·립밤·핸드크림)" },
       { id: "m_sk_3", title: "헤어 케어 도구 세트 (1세트)", tabCategory: "산모 용품", section: "개인 위생 & 스킨케어", locationTags: ["#병원", "#조리원"], note: "(드라이기·머리빗·머리끈 등)" },
-      { id: "m_sk_4", title: "드라이샴푸 (1개)", tabCategory: "산모 용품", section: "개인 위생 & 스킨케어", locationTags: ["#병원"], note: "(입원 중 샤워 불가 시 추천)" }
+      { id: "m_sk_4", title: "드라이샴푸 (1개)", tabCategory: "산모 용품", section: "개인 위생 & 스킨케어", locationTags: ["#병원"], note: "(입원 중 샤워 불가 시 추천)" },
+      { id: "m_sk_5", title: "엄마용 영양제 (비타민, 철분 등)", tabCategory: "산모 용품", section: "개인 위생 & 스킨케어", locationTags: ["#병원", "#조리원"], note: "(산후 회복·철분·비타민D·유산균)" }
     ];
 
-    // ================= 2번 탭: 신생아 용품 (11개 항목 전수 등록) =================
+    // ================= 2번 탭: 신생아 용품 =================
     const babyTabItems = [
       // [의류 & 착용품 (퇴원 및 모자동실용)]
       { id: "b_cloth_1", title: "배냇저고리 / 배냇수트 (1~2개)", tabCategory: "신생아 용품", section: "의류 & 착용품 (퇴원 및 모자동실용)", locationTags: ["#퇴원퇴소"], note: "(세탁 완료 필수)" },
@@ -3173,13 +3174,15 @@
       { id: "b_care_3", title: "아기 로션 / 아기 크림 (1개)", tabCategory: "신생아 용품", section: "위생 & 케어 용품", locationTags: ["#조리원"] },
       { id: "b_care_4", title: "아기 영양제 (1개)", tabCategory: "신생아 용품", section: "위생 & 케어 용품", locationTags: ["#병원", "#조리원"], note: "(비타민D·유산균)" },
       { id: "b_care_5", title: "신생아 손톱깎이 세트 (1세트)", tabCategory: "신생아 용품", section: "위생 & 케어 용품", locationTags: ["#조리원"] },
-      { id: "b_care_6", title: "모자동실 촬영 소품 (필요시)", tabCategory: "신생아 용품", section: "위생 & 케어 용품", locationTags: ["#조리원"], note: "(디데이달력·초점책·인형)" },
+      { id: "b_care_6a", title: "디데이달력 (모자동실 성장 촬영용)", tabCategory: "신생아 용품", section: "위생 & 케어 용품", locationTags: ["#조리원"], note: "(모자동실 기념사진 및 성장 기록)" },
+      { id: "b_care_6b", title: "초점책 (모자동실 흑백/컬러)", tabCategory: "신생아 용품", section: "위생 & 케어 용품", locationTags: ["#조리원"], note: "(신생아 시각 발달 놀이용)" },
+      { id: "b_care_7", title: "수유등 (모자동실/조리원 밤 수유용)", tabCategory: "신생아 용품", section: "위생 & 케어 용품", locationTags: ["#병원", "#조리원"], note: "(조도 조절 가능한 수유 무드등)" },
 
       // [이동 및 안전 용품]
       { id: "b_safe_1", title: "신생아 카시트 (1개)", tabCategory: "신생아 용품", section: "이동 및 안전 용품", locationTags: ["#퇴원퇴소"], note: "(자차 이동 시 법적 필수 품목)" }
     ];
 
-    // ================= 3번 탭: 보호자 & 공통 (15개 항목 전수 등록) =================
+    // ================= 3번 탭: 보호자 & 공통 =================
     const guardianTabItems = [
       // [필수 서류 & 자금]
       { id: "g_doc_1", title: "산모수첩 & 신분증 (1세트)", tabCategory: "보호자 & 공통", section: "필수 서류 & 자금", locationTags: ["#병원"] },
@@ -3187,19 +3190,21 @@
 
       // [보호자(남편) 전용 용품]
       { id: "g_dad_1", title: "남편 세면도구 & 여벌옷 (1세트)", tabCategory: "보호자 & 공통", section: "보호자(남편) 전용 용품", locationTags: ["#병원", "#조리원"] },
-      { id: "g_dad_2", title: "남편용 침구류 (1세트)", tabCategory: "보호자 & 공통", section: "보호자(남편) 전용 용품", locationTags: ["#병원"], note: "(병원 제공 여부 확인 필요)" },
+      { id: "g_dad_2", title: "아빠용 침구류 (이불·베개)", tabCategory: "보호자 & 공통", section: "보호자(남편) 전용 용품", locationTags: ["#병원"], note: "(병원 제공 여부 확인 필요)" },
       { id: "g_dad_3", title: "남편용 슬리퍼 (1켤레)", tabCategory: "보호자 & 공통", section: "보호자(남편) 전용 용품", locationTags: ["#병원", "#조리원"] },
 
       // [공통 생활용품 & 전자기기]
-      { id: "g_life_1", title: "텀블러 & 빨대 세트 (1세트)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"], note: "(누워서 마시는 꺾인 빨대)" },
+      { id: "g_life_1", title: "텀블러 (보온/보냉용)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"], note: "(손잡이형/빨대 호환)" },
+      { id: "g_life_straw", title: "주름빨대 (구부러지는 꺾임 빨대)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"], note: "(누워서 수분 섭취 시 필수)" },
       { id: "g_life_2", title: "종이컵 & 보리차/붓기차 (1세트)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"] },
       { id: "g_life_3", title: "일회용 수세미 & 수저 (1세트)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"], note: "(텀블러 세척 및 식사 보조용)" },
-      { id: "g_life_4", title: "충전기 & 멀티탭 (1세트)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"] },
+      { id: "g_life_4", title: "휴대폰 충전기 (긴 케이블 권장)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"], note: "(침대 콘센트 거리 대비 2m 이상)" },
+      { id: "g_life_multi", title: "멀티탭 (3~5구, 긴 줄)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"], note: "(산모 및 보호자 기기 동시 충전)" },
       { id: "g_life_5", title: "거치대 & 미니선풍기 (1세트)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"] },
       { id: "g_life_6", title: "미니 가습기 (1개)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"], note: "(건조한 병실 대비)" },
       { id: "g_life_7", title: "필기도구 (1세트)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"], note: "(가위·네임펜·일반펜 / 모유기록용)" },
-      { id: "g_life_8", title: "산모 영양제 (1세트)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"], note: "(철분·칼슘·마그네슘 등)" },
-      { id: "g_life_9", title: "보호자 마스크 (1팩)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"] },
+      { id: "g_life_9", title: "일회용마스크 (KF94/비말 차단, 1팩)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"], note: "(병원·조리원 방역 및 면회용)" },
+      { id: "g_life_sanitizer", title: "손세정제 (휴대용 손소독제)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"], note: "(신생아 접촉 전 손 소독)" },
       { id: "g_life_10", title: "접이식 보조가방 / 에코백 (1~2개)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#퇴원퇴소"], note: "(퇴원 선물 및 늘어난 짐 수거용)" }
     ];
 
@@ -3805,7 +3810,7 @@
 
     let isBenefitsDeleteMode = false;
 
-    let selectedCategoryFilter = "산모 용품";
+    let selectedCategoryFilter = "전체";
     let selectedCategoryFilterBaby = "전체";
     let selectedCategoryFilterTodo = "전체";
     let selectedCategoryFilterBenefits = "전체";
@@ -5404,7 +5409,7 @@
         let items = [...savedMat];
         let chipsHTML = '';
         if (showCatFilter) {
-          const categories = ["산모 용품", "신생아 용품", "보호자 & 공통", "전체"];
+          const categories = ["전체", "산모 용품", "신생아 용품", "보호자 & 공통"];
           chipsHTML = `<div class="cat-filter-chips" style="margin-bottom:8px;">` + categories.map(cat => {
             const cSaved = cat === "전체" ? savedMat : savedMat.filter(i => i.tabCategory === cat);
             const cComp = cSaved.filter(i => completedBagItemIds.has(i.id));
@@ -5474,7 +5479,7 @@
         let items = [...savedBaby];
         let chipsHTML = '';
         if (showCatFilter) {
-          const categories = ["1. 먹이기 (수유 & 이유식)", "2. 재우기 & 쉬기 (수면 & 공간·놀이)", "3. 씻기 & 케어 (위생·건강 & 의류)", "4. 외출 & 이동", "전체"];
+          const categories = ["전체", "1. 먹이기 (수유 & 이유식)", "2. 재우기 & 쉬기 (수면 & 공간·놀이)", "3. 씻기 & 케어 (위생·건강 & 의류)", "4. 외출 & 이동"];
           const catShortMap = { "1. 먹이기 (수유 & 이유식)": "1. 먹이기", "2. 재우기 & 쉬기 (수면 & 공간·놀이)": "2. 재우기/쉬기", "3. 씻기 & 케어 (위생·건강 & 의류)": "3. 씻기/케어", "4. 외출 & 이동": "4. 외출/이동", "전체": "전체" };
           chipsHTML = `<div class="cat-filter-chips" style="margin-bottom:8px;">` + categories.map(cat => {
             const cSaved = cat === "전체" ? savedBaby : savedBaby.filter(i => i.tabCategory === cat);
@@ -5547,7 +5552,7 @@
         let items = [...savedTodo];
         let chipsHTML = '';
         if (showCatFilter) {
-          const categories = ["1. 출산 전 (준비기)", "2. 병원 (입원 및 분만기)", "3. 조리원 (회복 및 행정 처리기)", "4. 가정 (집 복귀 및 초기 육아기)", "전체"];
+          const categories = ["전체", "1. 출산 전 (준비기)", "2. 병원 (입원 및 분만기)", "3. 조리원 (회복 및 행정 처리기)", "4. 가정 (집 복귀 및 초기 육아기)"];
           const catShortMap = { "1. 출산 전 (준비기)": "1. 출산 전", "2. 병원 (입원 및 분만기)": "2. 병원", "3. 조리원 (회복 및 행정 처리기)": "3. 조리원", "4. 가정 (집 복귀 및 초기 육아기)": "4. 가정", "전체": "전체" };
           chipsHTML = `<div class="cat-filter-chips" style="margin-bottom:8px;">` + categories.map(cat => {
             const cSaved = cat === "전체" ? savedTodo : savedTodo.filter(i => i.tabCategory === cat);
@@ -5757,7 +5762,7 @@
       if (!container) return;
 
       const all = [...maternityBagItemsData, ...babyBagItemsData, ...guardianBagItemsData];
-      const categories = ["산모 용품", "신생아 용품", "보호자 & 공통", "전체"];
+      const categories = ["전체", "산모 용품", "신생아 용품", "보호자 & 공통"];
 
       const chipsEl = document.getElementById('catFilterChips');
       if (chipsEl) {
@@ -5886,11 +5891,11 @@
       if (!container) return;
 
       const categories = [
+        "전체",
         "1. 먹이기 (수유 & 이유식)",
         "2. 재우기 & 쉬기 (수면 & 공간·놀이)",
         "3. 씻기 & 케어 (위생·건강 & 의류)",
-        "4. 외출 & 이동",
-        "전체"
+        "4. 외출 & 이동"
       ];
       const catShortMap = {
         "1. 먹이기 (수유 & 이유식)": "1. 먹이기",
@@ -6019,11 +6024,11 @@
       if (!container) return;
 
       const categories = [
+        "전체",
         "1. 출산 전 (준비기)",
         "2. 병원 (입원 및 분만기)",
         "3. 조리원 (회복 및 행정 처리기)",
-        "4. 가정 (집 복귀 및 초기 육아기)",
-        "전체"
+        "4. 가정 (집 복귀 및 초기 육아기)"
       ];
       const catShortMap = {
         "1. 출산 전 (준비기)": "1. 출산 전",
