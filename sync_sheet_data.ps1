@@ -23,9 +23,24 @@ if (Test-Path $configPath) {
 
             $response = Invoke-RestMethod -Uri $cloudUrl -Method Get -TimeoutSec 15
             if ($response -and $response.data) {
-                $masterData = $response.data
-                $syncedFromCloud = $true
-                Write-Host "[OK] Successfully retrieved live data from Google Sheets Cloud! (Updated: $($response.lastUpdated))" -ForegroundColor Green
+                $useCloud = $true
+                if (Test-Path $excelPath) {
+                    $localTime = (Get-Item $excelPath).LastWriteTime
+                    if ($response.lastUpdated) {
+                        try {
+                            $cloudTime = [datetime]::ParseExact($response.lastUpdated, "yyyy-MM-dd HH:mm:ss", $null)
+                            if ($localTime -gt $cloudTime) {
+                                Write-Host "[Notice] 로컬 엑셀($localTime)이 클라우드($cloudTime)보다 최신입니다. 로컬 엑셀 데이터를 우선 반영합니다." -ForegroundColor Yellow
+                                $useCloud = $false
+                            }
+                        } catch {}
+                    }
+                }
+                if ($useCloud) {
+                    $masterData = $response.data
+                    $syncedFromCloud = $true
+                    Write-Host "[OK] Successfully retrieved live data from Google Sheets Cloud! (Updated: $($response.lastUpdated))" -ForegroundColor Green
+                }
             }
         }
     } catch {

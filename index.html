@@ -2831,6 +2831,7 @@
           </div>
           <div class="filter-chips-row">
             <div class="filter-chip active" id="todoChip_all" onclick="setTodoFilter('전체')">전체</div>
+            <div class="filter-chip" id="todoChip_vaccine" onclick="setTodoFilter('💉예방접종')">💉 예방접종</div>
             <div class="filter-chip" id="todoChip_dad" onclick="setTodoFilter('#아빠')">#아빠</div>
             <div class="filter-chip" id="todoChip_mom" onclick="setTodoFilter('#엄마')">#엄마</div>
             <div class="filter-chip" id="todoChip_couple" onclick="setTodoFilter('#부부')">#부부</div>
@@ -4937,7 +4938,7 @@
     function setTodoFilter(tag) {
       filterTodoTag = tag;
       document.querySelectorAll('#todoChecklistScreen .filter-chip').forEach(c => {
-        c.classList.toggle('active', c.textContent.trim().startsWith(tag) || (tag === '👜담김' && c.textContent.includes('담긴것')));
+        c.classList.toggle('active', c.textContent.trim().startsWith(tag) || (tag === '👜담김' && c.textContent.includes('담긴것')) || (tag === '💉예방접종' && c.textContent.includes('예방접종')));
       });
       renderTodoItemList();
     }
@@ -5004,6 +5005,8 @@
       if (filterTodoTag && filterTodoTag !== "전체") {
         if (filterTodoTag === "👜담김") {
           data = data.filter(i => savedTodoIds.has(i.id));
+        } else if (filterTodoTag === "💉예방접종") {
+          data = data.filter(i => (i.title && i.title.includes('예방접종')) || (i.tip && i.tip.includes('접종')));
         } else if (filterTodoTag.startsWith("#")) {
           data = data.filter(i => i.roleTag === filterTodoTag);
         }

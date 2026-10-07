@@ -217,7 +217,7 @@
       <div class="meta-grid">
         <div class="meta-item"><span>앱 명칭:</span> 꽁꽁 출산가방</div>
         <div class="meta-item"><span>패키지명:</span> <code>com.kongkong.babybag</code></div>
-        <div class="meta-item"><span>현재 버전:</span> <strong>v1.1.6 (코드: 16)</strong></div>
+        <div class="meta-item"><span>현재 버전:</span> <strong>v1.1.7 (코드: 17)</strong></div>
         <div class="meta-item"><span>최종 수정일:</span> 2026년 10월 7일</div>
       </div>
     </div>
@@ -250,7 +250,7 @@
             <tr>
               <td><strong>시기별 할일 체크리스트</strong></td>
               <td>• 임신 초기 (1~12주)<br>• 임신 중기 (13~27주)<br>• 임신 후기 (28주~)<br>• 출산·조리원·출산 후</td>
-              <td>• 주차별 필수 검사 및 준비 사항 타임라인<br>• 👨‍👩‍👧‍👦 <strong>보호자(아빠) 전담 역할 태그</strong> (출생신고, 첫만남이용권, 카시트 설치 등) 제공</td>
+              <td>• 주차별 필수 검사 및 준비 사항 타임라인<br>• 👨‍👩‍👧‍👦 <strong>보호자(아빠) 전담 역할 태그</strong> (출생신고, 첫만남이용권, 카시트 설치 등) 제공<br>• 💉 <strong>임산부 & 신생아 필수 예방접종 가이드</strong> 수록</td>
             </tr>
             <tr>
               <td><strong>출산 혜택 정리</strong></td>
@@ -265,7 +265,7 @@
       <ul>
         <li><strong>100% 클린 비회원 안심 모드:</strong> 로그인 절차 없이 <code>비회원으로 시작하기</code>로 1초 만에 실행되며, 모든 데이터는 기기 내부(<code>localStorage</code>)에 안전 저장.</li>
         <li><strong>개인화 온보딩:</strong> 출산예정일(실시간 D-Day 연산), 별명(개인 맞춤 인사말), 분만법, 조리원, 지역에 맞춘 스마트 추천.</li>
-        <li><strong>구글 시트 실시간 동기화:</strong> 앱 재설치 없이 마스터 데이터 실시간 갱신 및 신규 바이럴 데이터 파란색 셀(<code>#BBDEFB</code>) 자동 하이라이트.</li>
+        <li><strong>구글 시트 실시간 동기화:</strong> 앱 재설치 없이 마스터 데이터 실시간 갱신 및 지능형 타임스탬프 비교로 데이터 무결성 보장.</li>
         <li><strong>안드로이드 13~15 최적화:</strong> 제스처 및 3버튼 내비게이션 바 완벽 가로채기(앱 임의 종료 원천 차단).</li>
       </ul>
     </div>
@@ -273,6 +273,21 @@
     <!-- 2. 최신 변경 및 패치 이력 -->
     <div class="section-card">
       <h2>📜 2. 최신 변경 및 패치 이력 (Patch Logs)</h2>
+
+      <!-- 2026-10-07 (v1.1.7) -->
+      <div class="patch-block">
+        <div class="patch-date">🗓️ 2026-10-07</div>
+        <div class="patch-version">패치 버전 1.1.7 (버전 코드: 17)</div>
+
+        <div class="patch-group">
+          <div class="patch-group-title">💉 시기별 필수 예방접종(임산부·영유아) 체크리스트 신설 및 전용 필터칩 구축</div>
+          <ul>
+            <li><strong>[콘텐츠/의료] 임산부 및 신생아 핵심 7대 백신 접종 가이드 탑재:</strong> 백일해(Tdap), 인플루엔자(독감), 신생아 B형 간염(1차·2차), BCG(결핵), 5종 혼합백신(DTaP·IPV·Hib·PCV), 로타바이러스 등 임신 28주부터 생후 2개월까지의 핵심 백신 일정 및 보건소/해열제 대비 실전 팁 수록.</li>
+            <li><strong>[UI/UX] 💉 #예방접종 전용 퀵 필터칩 신설:</strong> <code>시기별 할일 체크리스트</code> 상단 필터칩 바에 <code>[💉 예방접종]</code> 칩을 추가하여 단 한 번의 터치로 백신 일정만 선별 조회 가능.</li>
+            <li><strong>[데이터/동기화] 지능형 타임스탬프 기반 양방향 무결성 동기화:</strong> <code>출산준비물_통합데이터.xlsx</code>(총 46개 할일), <code>data_export.json</code>, <code>master_data.js</code> 전체 동기화 및 <code>sync_sheet_data.ps1</code> 최신 데이터 우선 비교 로직 탑재.</li>
+          </ul>
+        </div>
+      </div>
 
       <!-- 2026-10-07 (v1.1.6) -->
       <div class="patch-block">
