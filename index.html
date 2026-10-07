@@ -957,7 +957,8 @@
       overflow: hidden;
       text-overflow: ellipsis;
       max-width: 100%;
-      text-align: center;
+      text-align: left;
+      box-sizing: border-box;
     }
     .benefit-eligibility-box strong { color: var(--primary); }
 
@@ -3632,9 +3633,7 @@
       { id: "per_8", title: "공무원 단체보험 / 실손보험 병원 진료비 신청", desc: "임신·출산 수술비, 누적 병원 진료비 실손보험 및 단체보험 청구", eligibility: "공무원 단체보험 / 개인 실손 가입자", badge: "보험 청구", timing: "수술/출산 후", place: "공무원연금공단 / 보험사" },
       { id: "per_9", title: "연말정산 - 출산·입양 세액공제 (30만~70만 원)", desc: "해당 연도 출생아 첫째 30만 원, 둘째 50만 원, 셋째 이상 70만 원 세액공제", eligibility: "근로소득자 및 종합소득자", badge: "세액공제", timing: "연말정산 시기", place: "국세청 홈택스" },
       { id: "per_10", title: "연말정산 - 산후조리원비 의료비 세액공제 (최대 200만 원)", desc: "산후조리원 결제금액 출생아당 200만 원 한도 의료비 세액공제 (총급여 7천만 원 이하)", eligibility: "총급여 7,000만 원 이하 근로자", badge: "의료비 공제", timing: "조리원비 결제 시", place: "국세청 홈택스 / 조리원 영수증" },
-      { id: "per_11", title: "연말정산 - 신생아 인적공제 (부양가족 150만 원)", desc: "출생아를 부양가족 기본공제 대상자로 등록하여 소득공제 적용", eligibility: "근로소득자", badge: "인적공제", timing: "연말정산 시기", place: "국세청 홈택스" },
-      // 병원/기타 맞춤 혜택
-      { id: "per_12", title: "트리니움 / 이용 병원 후기 작성 혜택", desc: "트리니움 여성병원 등 이용 산부인과/조리원 후기 작성 시 상품권 및 기프트 제공", eligibility: "해당 병원/조리원 이용자", badge: "병원 혜택", timing: "퇴원/퇴소 후", place: "병원/조리원 공식 카페·블로그" }
+      { id: "per_11", title: "연말정산 - 신생아 인적공제 (부양가족 150만 원)", desc: "출생아를 부양가족 기본공제 대상자로 등록하여 소득공제 적용", eligibility: "근로소득자", badge: "인적공제", timing: "연말정산 시기", place: "국세청 홈택스" }
     ];
 
     // =========================================================================
@@ -5229,12 +5228,14 @@
               <span class="benefit-badge">${item.badge || '혜택'}</span>
             </div>
             <div class="benefit-desc">${item.desc}</div>
-            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;">
+            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:4px; width:100%; justify-content:flex-start;">
               ${item.timing ? `<div class="benefit-eligibility-box" style="background:#fff3e0; color:#e65100;">⏱️ <strong>시기:</strong> ${item.timing}</div>` : ''}
               ${item.place ? `<div class="benefit-eligibility-box" style="background:#e8f5e9; color:#2e7d32;">📍 <strong>장소/방법:</strong> ${item.place}</div>` : ''}
             </div>
-            <div class="benefit-eligibility-box" style="margin-top:4px;">
-              <strong>자격/대상:</strong> ${item.eligibility}
+            <div style="display:flex; width:100%; justify-content:flex-start; margin-top:4px;">
+              <div class="benefit-eligibility-box" title="${item.eligibility || ''}">
+                <strong>자격/대상:</strong> ${item.eligibility}
+              </div>
             </div>
           </div>
           <div class="benefit-check-col ${isSaved ? 'checked' : ''}">
