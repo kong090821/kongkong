@@ -1,4 +1,4 @@
-# Full preview synchronization script
+﻿# Full preview synchronization script
 $enc = [System.Text.Encoding]::UTF8
 
 Write-Host "Syncing root index.html to preview/index.html and assets..."

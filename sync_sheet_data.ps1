@@ -64,12 +64,17 @@ if (-not $syncedFromCloud) {
         return $rows
     }
 
+    $defaultCoupangUrl = "https://link.coupang.com/a/hDXnz86Thk"
+
     # 1. 출산가방
     $s1 = $wb.Sheets.Item("출산가방 체크리스트")
-    $bagRows = Parse-SheetRows $s1 11
+    $bagRows = Parse-SheetRows $s1 14
     $bagList = @()
     foreach ($row in $bagRows) {
         if (-not $row[0]) { continue }
+        $top1Url = if ($row.Count -ge 12 -and $row[11] -and $row[11].Trim()) { $row[11].Trim() } else { $defaultCoupangUrl }
+        $top2Url = if ($row.Count -ge 13 -and $row[12] -and $row[12].Trim()) { $row[12].Trim() } else { $defaultCoupangUrl }
+        $top3Url = if ($row.Count -ge 14 -and $row[13] -and $row[13].Trim()) { $row[13].Trim() } else { $defaultCoupangUrl }
         $bagList += @{
             id = $row[0]
             tabCategory = $row[1]
@@ -82,15 +87,21 @@ if (-not $syncedFromCloud) {
             top1 = $row[8]
             top2 = $row[9]
             top3 = $row[10]
+            top1_url = $top1Url
+            top2_url = $top2Url
+            top3_url = $top3Url
         }
     }
 
     # 2. 육아용품
     $s2 = $wb.Sheets.Item("육아용품 체크리스트")
-    $babyRows = Parse-SheetRows $s2 11
+    $babyRows = Parse-SheetRows $s2 14
     $babyList = @()
     foreach ($row in $babyRows) {
         if (-not $row[0]) { continue }
+        $top1Url = if ($row.Count -ge 12 -and $row[11] -and $row[11].Trim()) { $row[11].Trim() } else { $defaultCoupangUrl }
+        $top2Url = if ($row.Count -ge 13 -and $row[12] -and $row[12].Trim()) { $row[12].Trim() } else { $defaultCoupangUrl }
+        $top3Url = if ($row.Count -ge 14 -and $row[13] -and $row[13].Trim()) { $row[13].Trim() } else { $defaultCoupangUrl }
         $babyList += @{
             id = $row[0]
             category = $row[1]
@@ -103,6 +114,9 @@ if (-not $syncedFromCloud) {
             top1 = $row[8]
             top2 = $row[9]
             top3 = $row[10]
+            top1_url = $top1Url
+            top2_url = $top2Url
+            top3_url = $top3Url
         }
     }
 
@@ -149,6 +163,23 @@ if (-not $syncedFromCloud) {
         babySupplies = $babyList
         todos = $todoList
         benefits = $benefitList
+    }
+}
+
+# 2.5 Ensure top1_url, top2_url, top3_url exist
+$defaultCoupangUrl = "https://link.coupang.com/a/hDXnz86Thk"
+if ($masterData.maternityBag) {
+    foreach ($item in $masterData.maternityBag) {
+        if (-not $item.top1_url) { $item | Add-Member -NotePropertyName "top1_url" -NotePropertyValue $defaultCoupangUrl -Force }
+        if (-not $item.top2_url) { $item | Add-Member -NotePropertyName "top2_url" -NotePropertyValue $defaultCoupangUrl -Force }
+        if (-not $item.top3_url) { $item | Add-Member -NotePropertyName "top3_url" -NotePropertyValue $defaultCoupangUrl -Force }
+    }
+}
+if ($masterData.babySupplies) {
+    foreach ($item in $masterData.babySupplies) {
+        if (-not $item.top1_url) { $item | Add-Member -NotePropertyName "top1_url" -NotePropertyValue $defaultCoupangUrl -Force }
+        if (-not $item.top2_url) { $item | Add-Member -NotePropertyName "top2_url" -NotePropertyValue $defaultCoupangUrl -Force }
+        if (-not $item.top3_url) { $item | Add-Member -NotePropertyName "top3_url" -NotePropertyValue $defaultCoupangUrl -Force }
     }
 }
 

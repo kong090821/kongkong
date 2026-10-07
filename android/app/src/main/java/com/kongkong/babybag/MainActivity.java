@@ -6,6 +6,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.KeyEvent;
@@ -108,6 +109,18 @@ public class MainActivity extends Activity {
         mWebView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                if (request != null && request.getUrl() != null) {
+                    String url = request.getUrl().toString();
+                    if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("market://")) {
+                        try {
+                            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                            startActivity(intent);
+                            return true;
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
                 return false;
             }
         });
@@ -177,6 +190,23 @@ public class MainActivity extends Activity {
                                 android.print.PrintDocumentAdapter printAdapter = mWebView.createPrintDocumentAdapter(documentName != null ? documentName : "꽁꽁출산가방");
                                 printManager.print(documentName != null ? documentName : "꽁꽁출산가방_체크리스트", printAdapter, new android.print.PrintAttributes.Builder().build());
                             }
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void openExternalLink(final String url) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        if (url != null && !url.isEmpty()) {
+                            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                            startActivity(intent);
                         }
                     } catch (Exception e) {
                         e.printStackTrace();

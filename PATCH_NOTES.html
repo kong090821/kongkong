@@ -217,8 +217,8 @@
       <div class="meta-grid">
         <div class="meta-item"><span>앱 명칭:</span> 꽁꽁 출산가방</div>
         <div class="meta-item"><span>패키지명:</span> <code>com.kongkong.babybag</code></div>
-        <div class="meta-item"><span>현재 버전:</span> <strong>v1.1.4 (코드: 14)</strong></div>
-        <div class="meta-item"><span>최종 수정일:</span> 2026년 10월 2일</div>
+        <div class="meta-item"><span>현재 버전:</span> <strong>v1.1.6 (코드: 16)</strong></div>
+        <div class="meta-item"><span>최종 수정일:</span> 2026년 10월 7일</div>
       </div>
     </div>
 
@@ -273,6 +273,38 @@
     <!-- 2. 최신 변경 및 패치 이력 -->
     <div class="section-card">
       <h2>📜 2. 최신 변경 및 패치 이력 (Patch Logs)</h2>
+
+      <!-- 2026-10-07 (v1.1.6) -->
+      <div class="patch-block">
+        <div class="patch-date">🗓️ 2026-10-07</div>
+        <div class="patch-version">패치 버전 1.1.6 (버전 코드: 16)</div>
+
+        <div class="patch-group">
+          <div class="patch-group-title">🔗 쿠팡 파트너스 수익 링크 연동 및 구글 시트 수동 관리 파이프라인 구축</div>
+          <ul>
+            <li><strong>[수익화/연동] 쿠팡 파트너스 기본 링크 및 품목별 개별 링크 연동:</strong> 기본 파트너스 수익 링크(<code>https://link.coupang.com/a/hDXnz86Thk</code>)를 전 품목의 기본 구매/최저가 확인 링크로 설정. 관리자가 구글 스프레드시트 또는 엑셀에서 특정 상품별로 생성한 단축 링크(<code>top1_url</code>, <code>top2_url</code>, <code>top3_url</code>)를 입력하면 해당 링크가 우선 적용되고, 미입력 품목은 기본 파트너스 링크로 안전하게 자동 연결되는 스마트 Fallback 구조 구축.</li>
+            <li><strong>[스프레드시트/DB] 구글 시트 & 엑셀 L, M, N열 컬럼 확장:</strong> <code>출산가방 체크리스트</code> 및 <code>육아용품 체크리스트</code>에 <code>쿠팡 1위 링크 (선택)</code>, <code>쿠팡 2위 링크 (선택)</code>, <code>쿠팡 3위 링크 (선택)</code> 열 추가. <code>출산준비물_통합데이터.xlsx</code>, <code>sync_sheet_data.ps1</code>, <code>master_data.js</code>, <code>data_export.json</code> 전체 데이터 파이프라인 동기화 완료.</li>
+            <li><strong>[구글 앱스 스크립트] 쿠팡 파트너스 전용 반영 버튼 추가:</strong> <code>[🍼 꽁꽁 출산가방 관리]</code> 상단 메뉴에 <code>[🔗 [쿠팡 파트너스] 수동 입력 링크 어플에 즉시 반영]</code> 신규 기능 추가. 버튼 클릭 시 수동 입력된 링크 개수 검증과 함께 어플 및 웹 프리뷰에 실시간 배포.</li>
+            <li><strong>[안드로이드] 인텐트 기반 외부 브라우저/쿠팡 앱 다이렉트 호출:</strong> 안드로이드 WebView 내에서 외부 링크 클릭 시 내부 웹뷰 화면이 덮어씌워지지 않도록 <code>Intent.ACTION_VIEW</code> 및 <code>openExternalLink</code> 네이티브 브릿지 적용. 쿠팡 앱이 설치된 스마트폰에서는 쿠팡 앱으로 즉시 이동하여 사용자 전환율 및 구매 편의성 극대화.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 2026-10-07 (v1.1.5) -->
+      <div class="patch-block">
+        <div class="patch-date">🗓️ 2026-10-07</div>
+        <div class="patch-version">패치 버전 1.1.5 (버전 코드: 15)</div>
+
+        <div class="patch-group">
+          <div class="patch-group-title">📤 내 가방 체크리스트 이미지·PDF·텍스트 공유 기능 완성 & 수수료 문구 개정</div>
+          <ul>
+            <li><strong>[UI/UX] 최우선 진입점 일원화:</strong> 상단바 우측 <code>[📤 공유]</code> 버튼 단일 진입점으로 통합 개편하고, 드롭다운을 통해 4대 가방 및 전체 종합본 선택 기능 지원.</li>
+            <li><strong>[기능] 📷 고해상도 영수증/인포그래픽 스타일 이미지(PNG) 생성 & 카톡 공유:</strong> HTML5 Canvas 기반 2x 고해상도 체크리스트 카드 이미지 생성 및 다운로드/카카오톡 공유 연동.</li>
+            <li><strong>[기능] 📄 A4 인쇄용 PDF 출력/저장 연동:</strong> A4 규격에 맞춘 2단 체크박스 인쇄 레이아웃 구현 및 시스템 인쇄/PDF 저장 연동.</li>
+            <li><strong>[문구] 쿠팡 파트너스 공정위 대가지급 고지 문구 개정:</strong> 슬라이드 팝업 하단에 공정위 고지 공식 문구(<code>위 링크는 쿠팡 파트너스 활동의 일환으로, 구매 시 일정액의 수수료를 제공받습니다.</code>) 적용.</li>
+          </ul>
+        </div>
+      </div>
 
       <!-- 2026-10-02 (v1.1.4) -->
       <div class="patch-block">

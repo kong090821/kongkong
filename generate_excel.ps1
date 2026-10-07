@@ -37,7 +37,7 @@ function Format-CustomRow($sheet, $rowNum, $colCount) {
 Write-Host "Creating Sheet 1: 출산가방 체크리스트..."
 $sheet1 = $workbook.Sheets.Item(1)
 $sheet1.Name = "출산가방 체크리스트"
-$headers1 = @("ID", "구분(탭)", "상세분류", "품목명", "권장수량", "장소태그", "비고", "맘카페 언급 1위", "선배맘 추천 TOP1", "선배맘 추천 TOP2", "선배맘 추천 TOP3")
+$headers1 = @("ID", "구분(탭)", "상세분류", "품목명", "권장수량", "장소태그", "비고", "맘카페 언급 1위", "선배맘 추천 TOP1", "선배맘 추천 TOP2", "선배맘 추천 TOP3", "쿠팡 1위 링크(선택)", "쿠팡 2위 링크(선택)", "쿠팡 3위 링크(선택)")
 for ($c = 0; $c -lt $headers1.Length; $c++) {
     $sheet1.Cells.Item(1, $c + 1) = $headers1[$c]
 }
@@ -56,6 +56,9 @@ foreach ($item in $data.maternityBag) {
     $sheet1.Cells.Item($r, 9) = [string]$item.top1
     $sheet1.Cells.Item($r, 10) = [string]$item.top2
     $sheet1.Cells.Item($r, 11) = [string]$item.top3
+    $sheet1.Cells.Item($r, 12) = if ($item.top1_url -and $item.top1_url -ne "https://link.coupang.com/a/hDXnz86Thk") { [string]$item.top1_url } else { "" }
+    $sheet1.Cells.Item($r, 13) = if ($item.top2_url -and $item.top2_url -ne "https://link.coupang.com/a/hDXnz86Thk") { [string]$item.top2_url } else { "" }
+    $sheet1.Cells.Item($r, 14) = if ($item.top3_url -and $item.top3_url -ne "https://link.coupang.com/a/hDXnz86Thk") { [string]$item.top3_url } else { "" }
     if ([string]$item.id -like "custom_*" -or [string]$item.id -like "*_custom_*" -or $item.isCustom -eq $true) {
         Format-CustomRow $sheet1 $r $headers1.Length
     }
@@ -67,7 +70,7 @@ $sheet1.Columns.AutoFit()
 Write-Host "Creating Sheet 2: 육아용품 체크리스트..."
 $sheet2 = $workbook.Sheets.Add([System.Reflection.Missing]::Value, $sheet1)
 $sheet2.Name = "육아용품 체크리스트"
-$headers2 = @("ID", "카테고리", "소분류", "용품명", "사용시기", "구매형태(새제품/당근)", "상세설명", "맘카페 언급 1위", "선배맘 추천 TOP1", "선배맘 추천 TOP2", "선배맘 추천 TOP3")
+$headers2 = @("ID", "카테고리", "소분류", "용품명", "사용시기", "구매형태(새제품/당근)", "상세설명", "맘카페 언급 1위", "선배맘 추천 TOP1", "선배맘 추천 TOP2", "선배맘 추천 TOP3", "쿠팡 1위 링크(선택)", "쿠팡 2위 링크(선택)", "쿠팡 3위 링크(선택)")
 for ($c = 0; $c -lt $headers2.Length; $c++) {
     $sheet2.Cells.Item(1, $c + 1) = $headers2[$c]
 }
@@ -86,6 +89,9 @@ foreach ($item in $data.babySupplies) {
     $sheet2.Cells.Item($r, 9) = [string]$item.top1
     $sheet2.Cells.Item($r, 10) = [string]$item.top2
     $sheet2.Cells.Item($r, 11) = [string]$item.top3
+    $sheet2.Cells.Item($r, 12) = if ($item.top1_url -and $item.top1_url -ne "https://link.coupang.com/a/hDXnz86Thk") { [string]$item.top1_url } else { "" }
+    $sheet2.Cells.Item($r, 13) = if ($item.top2_url -and $item.top2_url -ne "https://link.coupang.com/a/hDXnz86Thk") { [string]$item.top2_url } else { "" }
+    $sheet2.Cells.Item($r, 14) = if ($item.top3_url -and $item.top3_url -ne "https://link.coupang.com/a/hDXnz86Thk") { [string]$item.top3_url } else { "" }
     if ([string]$item.id -like "custom_*" -or [string]$item.id -like "*_custom_*" -or $item.isCustom -eq $true) {
         Format-CustomRow $sheet2 $r $headers2.Length
     }

@@ -4339,6 +4339,18 @@
       return `${cleanTitle} 국민 추천템`;
     }
 
+    const DEFAULT_COUPANG_URL = 'https://link.coupang.com/a/hDXnz86Thk';
+
+    function openProductLink(event, url) {
+      if (event) event.stopPropagation();
+      const targetUrl = (url && url.trim()) ? url.trim() : DEFAULT_COUPANG_URL;
+      if (window.Android && typeof window.Android.openExternalLink === 'function') {
+        if (event) event.preventDefault();
+        window.Android.openExternalLink(targetUrl);
+        return false;
+      }
+    }
+
     function getTop3Recommendations(itemTitle) {
       const cleanTitle = (itemTitle || "").replace(/\(.*?\)/g, '').replace(/[0-9]+.*?[개팩벌세트장]/g, '').trim();
 
@@ -4350,7 +4362,7 @@
             badgeClass: "rank-" + (idx + 1),
             brandAndName: item.brandAndName,
             feature: item.feature,
-            url: `https://search.shopping.naver.com/search/all?query=${encodeURIComponent(item.brandAndName)}`
+            url: (item.url && item.url.trim()) ? item.url.trim() : DEFAULT_COUPANG_URL
           }));
         }
       }
@@ -4376,7 +4388,7 @@
         badgeClass: "rank-" + (idx + 1),
         brandAndName: item.brandAndName,
         feature: item.feature,
-        url: `https://search.shopping.naver.com/search/all?query=${encodeURIComponent(cleanTitle + ' 추천')}`
+        url: DEFAULT_COUPANG_URL
       }));
     }
 
@@ -4402,9 +4414,30 @@
       let list;
       if (targetItem && (targetItem.top1 || targetItem.top2 || targetItem.top3)) {
         list = [];
-        if (targetItem.top1) list.push({ rank: 1, rankBadge: "🥇 1위", badgeClass: "rank-1", brandAndName: targetItem.top1, feature: "• 쿠팡 실구매 판매량 1위 베스트셀러", url: `https://search.shopping.naver.com/search/all?query=${encodeURIComponent(targetItem.top1)}` });
-        if (targetItem.top2) list.push({ rank: 2, rankBadge: "🥈 2위", badgeClass: "rank-2", brandAndName: targetItem.top2, feature: "• 선배맘 실사용 평점 최상위 추천템", url: `https://search.shopping.naver.com/search/all?query=${encodeURIComponent(targetItem.top2)}` });
-        if (targetItem.top3) list.push({ rank: 3, rankBadge: "🥉 3위", badgeClass: "rank-3", brandAndName: targetItem.top3, feature: "• 가성비 및 실속 만족도 우수 아이템", url: `https://search.shopping.naver.com/search/all?query=${encodeURIComponent(targetItem.top3)}` });
+        if (targetItem.top1) list.push({
+          rank: 1,
+          rankBadge: "🥇 1위",
+          badgeClass: "rank-1",
+          brandAndName: targetItem.top1,
+          feature: "• 쿠팡 실구매 판매량 1위 베스트셀러",
+          url: (targetItem.top1_url && String(targetItem.top1_url).trim()) ? String(targetItem.top1_url).trim() : DEFAULT_COUPANG_URL
+        });
+        if (targetItem.top2) list.push({
+          rank: 2,
+          rankBadge: "🥈 2위",
+          badgeClass: "rank-2",
+          brandAndName: targetItem.top2,
+          feature: "• 선배맘 실사용 평점 최상위 추천템",
+          url: (targetItem.top2_url && String(targetItem.top2_url).trim()) ? String(targetItem.top2_url).trim() : DEFAULT_COUPANG_URL
+        });
+        if (targetItem.top3) list.push({
+          rank: 3,
+          rankBadge: "🥉 3위",
+          badgeClass: "rank-3",
+          brandAndName: targetItem.top3,
+          feature: "• 가성비 및 실속 만족도 우수 아이템",
+          url: (targetItem.top3_url && String(targetItem.top3_url).trim()) ? String(targetItem.top3_url).trim() : DEFAULT_COUPANG_URL
+        });
       } else {
         list = getTop3Recommendations(itemTitle);
       }
@@ -4441,7 +4474,7 @@
                   </div>
                 `}
               </div>
-              <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="btn-buy-link" onclick="event.stopPropagation()">
+              <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="btn-buy-link" onclick="openProductLink(event, '${item.url}')">
                 최저가 확인 &gt;
               </a>
             </div>

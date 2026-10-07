@@ -32,6 +32,8 @@ function onOpen() {
   ui.createMenu('🍼 꽁꽁 출산가방 관리')
     .addItem('🚀 [전체 일괄 반영] 모든 시트 어플에 즉시 반영', 'syncToApp')
     .addSeparator()
+    .addItem('🔗 [쿠팡 파트너스] 수동 입력 링크 어플에 즉시 반영', 'syncCoupangLinksToApp')
+    .addSeparator()
     .addItem('🎒 [시트별 반영] 1. 출산가방 체크리스트만 반영', 'syncMaternityBagOnly')
     .addItem('🍼 [시트별 반영] 2. 육아용품 체크리스트만 반영', 'syncBabySuppliesOnly')
     .addItem('⏰ [시트별 반영] 3. 시기별 할일만 반영', 'syncTodosOnly')
@@ -106,6 +108,53 @@ function syncToApp() {
 }
 
 // ------------------------------------------------------------------------------
+// [쿠팡 파트너스 수동 입력 링크 어플 반영]
+// ------------------------------------------------------------------------------
+function syncCoupangLinksToApp() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  const DEFAULT_COUPANG_URL = 'https://link.coupang.com/a/hDXnz86Thk';
+
+  try {
+    ensureRowIntegrity(ss);
+    const data = getAllSheetsData(ss);
+    const now = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm:ss");
+
+    PropertiesService.getScriptProperties().setProperty('LAST_UPDATED', now);
+    PropertiesService.getScriptProperties().setProperty('APP_DATA_CACHE', JSON.stringify(data));
+
+    let customMaternityLinks = 0;
+    (data.maternityBag || []).forEach(function(item) {
+      if ((item.top1_url && item.top1_url !== DEFAULT_COUPANG_URL) ||
+          (item.top2_url && item.top2_url !== DEFAULT_COUPANG_URL) ||
+          (item.top3_url && item.top3_url !== DEFAULT_COUPANG_URL)) {
+        customMaternityLinks++;
+      }
+    });
+
+    let customBabyLinks = 0;
+    (data.babySupplies || []).forEach(function(item) {
+      if ((item.top1_url && item.top1_url !== DEFAULT_COUPANG_URL) ||
+          (item.top2_url && item.top2_url !== DEFAULT_COUPANG_URL) ||
+          (item.top3_url && item.top3_url !== DEFAULT_COUPANG_URL)) {
+        customBabyLinks++;
+      }
+    });
+
+    const msg = '• 갱신 일시: ' + now + '\n' +
+                '• 출산가방 수동 등록 품목: ' + customMaternityLinks + '개\n' +
+                '• 육아용품 수동 등록 품목: ' + customBabyLinks + '개\n' +
+                '• 기본 연결 링크: ' + DEFAULT_COUPANG_URL + '\n\n' +
+                '✅ 구글 시트에서 수동으로 입력하신 쿠팡 파트너스 링크가 어플에 성공적으로 반영되었습니다!\n' +
+                '※ 링크를 입력하지 않은 모든 품목은 회원님의 기본 쿠팡 링크로 자동 연결됩니다.';
+
+    ui.alert('🔗 쿠팡 파트너스 링크 반영 완료', msg, ui.ButtonSet.OK);
+  } catch (err) {
+    ui.alert('❌ 쿠팡 링크 반영 중 오류 발생: ' + err.toString());
+  }
+}
+
+// ------------------------------------------------------------------------------
 // [각 시트별 개별 반영 함수들]
 // ------------------------------------------------------------------------------
 
@@ -113,11 +162,17 @@ function syncToApp() {
 function syncMaternityBagOnly() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const ui = SpreadsheetApp.getUi();
+  const DEFAULT_COUPANG_URL = 'https://link.coupang.com/a/hDXnz86Thk';
   try {
     ensureRowIntegrity(ss);
     const bagData = parseSheetToObjects(ss.getSheetByName('출산가방 체크리스트'), [
-      'id', 'tabCategory', 'section', 'title', 'recommendedQty', 'locationTags', 'note', 'momcafe1st', 'top1', 'top2', 'top3'
-    ]);
+      'id', 'tabCategory', 'section', 'title', 'recommendedQty', 'locationTags', 'note', 'momcafe1st', 'top1', 'top2', 'top3', 'top1_url', 'top2_url', 'top3_url'
+    ]).map(function(item) {
+      item.top1_url = (item.top1_url && String(item.top1_url).trim()) ? String(item.top1_url).trim() : DEFAULT_COUPANG_URL;
+      item.top2_url = (item.top2_url && String(item.top2_url).trim()) ? String(item.top2_url).trim() : DEFAULT_COUPANG_URL;
+      item.top3_url = (item.top3_url && String(item.top3_url).trim()) ? String(item.top3_url).trim() : DEFAULT_COUPANG_URL;
+      return item;
+    });
     const fullData = getOrInitCachedData(ss);
     fullData.maternityBag = bagData;
     const now = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm:ss");
@@ -127,7 +182,7 @@ function syncMaternityBagOnly() {
     clearPendingHighlights(ss, '출산가방 체크리스트');
 
     ui.alert('🎒 출산가방 체크리스트 반영 완료',
-      '• 갱신 일시: ' + now + '\n• 반영 품목 수: ' + bagData.length + '개\n\n✅ 출산가방 체크리스트만 어플에 실시간 반영되었습니다!',
+      '• 갱신 일시: ' + now + '\n• 반영 품목 수: ' + bagData.length + '개\n\n✅ 출산가방 체크리스트 및 쿠팡 링크가 어플에 실시간 반영되었습니다!',
       ui.ButtonSet.OK
     );
   } catch(err) {
@@ -139,11 +194,17 @@ function syncMaternityBagOnly() {
 function syncBabySuppliesOnly() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const ui = SpreadsheetApp.getUi();
+  const DEFAULT_COUPANG_URL = 'https://link.coupang.com/a/hDXnz86Thk';
   try {
     ensureRowIntegrity(ss);
     const babyData = parseSheetToObjects(ss.getSheetByName('육아용품 체크리스트'), [
-      'id', 'category', 'section', 'title', 'period', 'purchaseTag', 'description', 'momcafe1st', 'top1', 'top2', 'top3'
-    ]);
+      'id', 'category', 'section', 'title', 'period', 'purchaseTag', 'description', 'momcafe1st', 'top1', 'top2', 'top3', 'top1_url', 'top2_url', 'top3_url'
+    ]).map(function(item) {
+      item.top1_url = (item.top1_url && String(item.top1_url).trim()) ? String(item.top1_url).trim() : DEFAULT_COUPANG_URL;
+      item.top2_url = (item.top2_url && String(item.top2_url).trim()) ? String(item.top2_url).trim() : DEFAULT_COUPANG_URL;
+      item.top3_url = (item.top3_url && String(item.top3_url).trim()) ? String(item.top3_url).trim() : DEFAULT_COUPANG_URL;
+      return item;
+    });
     const fullData = getOrInitCachedData(ss);
     fullData.babySupplies = babyData;
     const now = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm:ss");
@@ -153,7 +214,7 @@ function syncBabySuppliesOnly() {
     clearPendingHighlights(ss, '육아용품 체크리스트');
 
     ui.alert('🍼 육아용품 체크리스트 반영 완료',
-      '• 갱신 일시: ' + now + '\n• 반영 품목 수: ' + babyData.length + '개\n\n✅ 육아용품 체크리스트만 어플에 실시간 반영되었습니다!',
+      '• 갱신 일시: ' + now + '\n• 반영 품목 수: ' + babyData.length + '개\n\n✅ 육아용품 체크리스트 및 쿠팡 링크가 어플에 실시간 반영되었습니다!',
       ui.ButtonSet.OK
     );
   } catch(err) {
@@ -1261,14 +1322,29 @@ function getRecommendationRules(ss) {
 // 4개 시트 전체 데이터 추출 (파란색 셀 바이럴 광고 어플 반영 자동 분리)
 function getAllSheetsData(ss) {
   ensureRowIntegrity(ss);
+  const DEFAULT_COUPANG_URL = 'https://link.coupang.com/a/hDXnz86Thk';
+
+  const maternityList = parseSheetToObjects(ss.getSheetByName('출산가방 체크리스트'), [
+    'id', 'tabCategory', 'section', 'title', 'recommendedQty', 'locationTags', 'note', 'momcafe1st', 'top1', 'top2', 'top3', 'top1_url', 'top2_url', 'top3_url'
+  ]).map(function(item) {
+    item.top1_url = (item.top1_url && String(item.top1_url).trim()) ? String(item.top1_url).trim() : DEFAULT_COUPANG_URL;
+    item.top2_url = (item.top2_url && String(item.top2_url).trim()) ? String(item.top2_url).trim() : DEFAULT_COUPANG_URL;
+    item.top3_url = (item.top3_url && String(item.top3_url).trim()) ? String(item.top3_url).trim() : DEFAULT_COUPANG_URL;
+    return item;
+  });
+
+  const babyList = parseSheetToObjects(ss.getSheetByName('육아용품 체크리스트'), [
+    'id', 'category', 'section', 'title', 'period', 'purchaseTag', 'description', 'momcafe1st', 'top1', 'top2', 'top3', 'top1_url', 'top2_url', 'top3_url'
+  ]).map(function(item) {
+    item.top1_url = (item.top1_url && String(item.top1_url).trim()) ? String(item.top1_url).trim() : DEFAULT_COUPANG_URL;
+    item.top2_url = (item.top2_url && String(item.top2_url).trim()) ? String(item.top2_url).trim() : DEFAULT_COUPANG_URL;
+    item.top3_url = (item.top3_url && String(item.top3_url).trim()) ? String(item.top3_url).trim() : DEFAULT_COUPANG_URL;
+    return item;
+  });
 
   return {
-    maternityBag: parseSheetToObjects(ss.getSheetByName('출산가방 체크리스트'), [
-      'id', 'tabCategory', 'section', 'title', 'recommendedQty', 'locationTags', 'note', 'momcafe1st', 'top1', 'top2', 'top3'
-    ]),
-    babySupplies: parseSheetToObjects(ss.getSheetByName('육아용품 체크리스트'), [
-      'id', 'category', 'section', 'title', 'period', 'purchaseTag', 'description', 'momcafe1st', 'top1', 'top2', 'top3'
-    ]),
+    maternityBag: maternityList,
+    babySupplies: babyList,
     todos: parseSheetToObjects(ss.getSheetByName('시기별할일'), [
       'id', 'category', 'role', 'title', 'tip'
     ]),
@@ -1287,8 +1363,9 @@ function parseSheetToObjects(sheet, keys) {
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return [];
 
-  const lastCol = keys.length;
-  const range = sheet.getRange(2, 1, lastRow - 1, lastCol);
+  const sheetMaxCols = sheet.getMaxColumns();
+  const fetchCols = Math.min(sheetMaxCols, keys.length);
+  const range = sheet.getRange(2, 1, lastRow - 1, fetchCols);
   const values = range.getValues();
   const bgs = range.getBackgrounds();
 
@@ -1296,7 +1373,7 @@ function parseSheetToObjects(sheet, keys) {
   for (let r = 0; r < values.length; r++) {
     const rowBg = String(bgs[r][0] || '').toLowerCase();
     const titleColIdx = keys.indexOf('title') !== -1 ? keys.indexOf('title') : 3;
-    const titleBg = String(bgs[r][titleColIdx] || '').toLowerCase();
+    const titleBg = (titleColIdx < fetchCols) ? String(bgs[r][titleColIdx] || '').toLowerCase() : '';
 
     // 1. 행 전체나 품목명 셀이 파란색(바이럴 광고 수동 검토 대기)이면 어플에 절대 반영하지 않고 완전 분리!
     if (isBlueColor(rowBg) || isBlueColor(titleBg)) {
@@ -1305,12 +1382,16 @@ function parseSheetToObjects(sheet, keys) {
 
     const obj = {};
     for (let c = 0; c < keys.length; c++) {
-      const cellBg = String(bgs[r][c] || '').toLowerCase();
-      // 2. 개별 셀이 파란색(바이럴/광고 대기)이면, 해당 개별 항목만 수동 검토 승인 전까지 어플 배포 데이터에서 제외 (빈 값 처리)
-      if (isBlueColor(cellBg)) {
-        obj[keys[c]] = '';
+      if (c < fetchCols) {
+        const cellBg = String(bgs[r][c] || '').toLowerCase();
+        // 2. 개별 셀이 파란색(바이럴/광고 대기)이면, 해당 개별 항목만 수동 검토 승인 전까지 어플 배포 데이터에서 제외 (빈 값 처리)
+        if (isBlueColor(cellBg)) {
+          obj[keys[c]] = '';
+        } else {
+          obj[keys[c]] = String(values[r][c] || '').trim();
+        }
       } else {
-        obj[keys[c]] = String(values[r][c] || '').trim();
+        obj[keys[c]] = '';
       }
     }
 
