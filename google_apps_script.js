@@ -1,26 +1,35 @@
 /**
  * ==============================================================================
- * 🍼 [꽁꽁 출산가방] 구글 스프레드시트 완전 자동화 및 실시간 클라우드 연동 스크립트
+ * 🍼 [꽁꽁 출산가방 v1.1.5] 구글 스프레드시트 완전 자동화 및 실시간 클라우드 연동 스크립트
  * ==============================================================================
  * 
- * [주요 핵심 기능]
- * 1. 🆕 신규 행 자동 완성 & 어플 등록:
+ * [v1.1.5 주요 핵심 기능 및 파이프라인]
+ * 1. 🔗 쿠팡 파트너스 개별 수익 링크(L, M, N열) & 기본 링크 Fallback 스마트 연동:
+ *    - 구글 시트에서 수동 입력한 개별 상품 파트너스 링크(top1_url, top2_url, top3_url) 최우선 적용
+ *    - 미입력 품목은 선생님의 기본 쿠팡 파트너스 링크(https://link.coupang.com/a/hDXnz86Thk)로 100% 자동 연결
+ *    - 상단 메뉴 [🔗 쿠팡 파트너스 수동 입력 링크 어플에 즉시 반영] 버튼으로 실시간 원클릭 배포
+ * 
+ * 2. 💉 필수 예방접종(7종) & 📑 필수 보험(4종) 총 49개 할일 완벽 지원:
+ *    - 임산부·신생아 핵심 백신 7종(백일해, 독감, B형간염, BCG, 5종혼합, 로타바이러스)
+ *    - 태아보험 11주 전 가입, 퇴원 시 청구 서류 발급, 남아·여아 약관 정산 및 환급, 수술·입원 특약 청구
+ * 
+ * 3. 🆕 신규 행 자동 완성 & 어플 등록:
  *    - 새 행을 추가하고 품목명만 적어도, 고유 ID 자동 생성 및 맘카페 1위/쿠팡 TOP 1~3 자동 완성
  *    - [어플에 즉시 반영하기] 클릭 시 새로 추가한 행이 어플에 실시간으로 즉시 등록
  * 
- * 2. 🔴 빨간색 셀 잠금 & 중요 내용 보호:
+ * 4. 🔴 빨간색 셀 잠금 & 중요 내용 보호:
  *    - 사용자가 빨간색(채우기 색상)으로 칠해둔 셀은 중요 항목으로서 자동 수집 시 절대 덮어쓰지 않고 영구 보존!
  *    - 빨간색으로 지정된 상품은 '바이럴 광고 블랙리스트'로 인식되어 향후 자동 수집 추천에서도 자동 제외
  * 
- * 3. 💙 파란색 셀 분리 & 바이럴/광고 수동 검토 엔진:
+ * 5. 💙 파란색 셀 분리 & 바이럴/광고 수동 검토 엔진:
  *    - 데이터 수집 시 바이럴/광고 의심 상품은 파란색(채우기 색상: #BBDEFB) 배경으로 자동 분리!
  *    - 파란색 배경 셀/행은 자동 수집 시 덮어쓰이지 않으며, 사용자가 직접 배경색을 흰색으로 바꾸기 전까지 어플 배포에서 자동 제외!
  * 
- * 4. ☕ 맘카페 & 📦 쿠팡 분리 자동 수집 스케줄러:
+ * 6. ☕ 맘카페 & 📦 쿠팡 분리 자동 수집 스케줄러:
  *    - 맘카페 최다 언급: 매주 월요일 새벽 06:00 자동 수집 (검토: 연노랑 #FFFDE7 / 바이럴: 파란색 #BBDEFB)
  *    - 쿠팡 실시간 랭킹: 매일 새벽 06:00 자동 수집 (검토: 연초록 #E8F5E9 / 바이럴: 파란색 #BBDEFB)
  * 
- * 5. 🚀 실시간 어플 동기화:
+ * 7. 🚀 실시간 어플 동기화:
  *    - [최신 데이터를 어플에 즉시 반영하기] 클릭 시 모든 앱 사용자 및 웹 프리뷰에 실시간 배포
  */
 
@@ -89,11 +98,12 @@ function syncToApp() {
 
     clearPendingHighlights(ss);
 
-    let msg = '• 갱신 일시: ' + now + '\n' +
+    let msg = '• 배포 버전: 꽁꽁 출산가방 v1.1.5 (빌드 코드: 15)\n' +
+              '• 갱신 일시: ' + now + '\n' +
               '• 출산가방 품목: ' + data.maternityBag.length + '개\n' +
               '• 육아용품 품목: ' + data.babySupplies.length + '개\n' +
-              '• 시기별 할일: ' + data.todos.length + '개\n' +
-              '• 출산 혜택: ' + data.benefits.length + '개\n' +
+              '• 시기별 할일: ' + data.todos.length + '개 (💉예방접종 7종 & 📑보험 4종 포함)\n' +
+              '• 출산 혜택: ' + data.benefits.length + '개 (공용 혜택 정제 완료)\n' +
               '• 맞춤 추천 가방: 제왕/자연/조리원 규칙 동시 배포 완료\n';
     
     if (autoFilled > 0) {
@@ -141,7 +151,8 @@ function syncCoupangLinksToApp() {
       }
     });
 
-    const msg = '• 갱신 일시: ' + now + '\n' +
+    const msg = '• 배포 버전: 꽁꽁 출산가방 v1.1.5\n' +
+                '• 갱신 일시: ' + now + '\n' +
                 '• 출산가방 수동 등록 품목: ' + customMaternityLinks + '개\n' +
                 '• 육아용품 수동 등록 품목: ' + customBabyLinks + '개\n' +
                 '• 기본 연결 링크: ' + DEFAULT_COUPANG_URL + '\n\n' +
@@ -237,8 +248,8 @@ function syncTodosOnly() {
     PropertiesService.getScriptProperties().setProperty('LAST_UPDATED', now);
     PropertiesService.getScriptProperties().setProperty('APP_DATA_CACHE', JSON.stringify(fullData));
 
-    ui.alert('⏰ 시기별 할일 반영 완료',
-      '• 갱신 일시: ' + now + '\n• 반영 항목 수: ' + todosData.length + '개\n\n✅ 시기별 할일만 어플에 실시간 반영되었습니다!',
+    ui.alert('⏰ 시기별 할일 반영 완료 (v1.1.5)',
+      '• 갱신 일시: ' + now + '\n• 반영 항목 수: ' + todosData.length + '개 (💉예방접종 7종 & 📑태아보험 4종 포함)\n\n✅ 시기별 할일이 어플(v1.1.5)에 실시간 반영되었습니다!',
       ui.ButtonSet.OK
     );
   } catch(err) {
@@ -261,8 +272,8 @@ function syncBenefitsOnly() {
     PropertiesService.getScriptProperties().setProperty('LAST_UPDATED', now);
     PropertiesService.getScriptProperties().setProperty('APP_DATA_CACHE', JSON.stringify(fullData));
 
-    ui.alert('💰 출산 혜택 반영 완료',
-      '• 갱신 일시: ' + now + '\n• 반영 혜택 수: ' + benefitsData.length + '개\n\n✅ 출산 혜택만 어플에 실시간 반영되었습니다!',
+    ui.alert('💰 출산 혜택 반영 완료 (v1.1.5)',
+      '• 갱신 일시: ' + now + '\n• 반영 혜택 수: ' + benefitsData.length + '개 (공용 혜택 정제 완료)\n\n✅ 출산 혜택이 어플(v1.1.5)에 실시간 반영되었습니다!',
       ui.ButtonSet.OK
     );
   } catch(err) {
@@ -1053,7 +1064,10 @@ function doGet(e) {
 
   const result = {
     status: "success",
+    version: "1.1.5",
+    versionCode: 15,
     lastUpdated: lastUpdated,
+    updatedAt: lastUpdated,
     data: responseData,
     recommendations: recommendations
   };
@@ -1414,10 +1428,15 @@ function showGuideDialog() {
   const coupangLog = PropertiesService.getScriptProperties().getProperty('LAST_COUPANG_LOG') || '수집 이력 없음';
   
   ui.alert(
-    '📖 꽁꽁 출산가방 자동 수집 & 보호 상태',
+    '📖 꽁꽁 출산가방 v1.1.5 자동 수집 & 연동 가이드',
+    '• 현재 앱 버전: v1.1.5 (빌드 코드: 15)\n' +
     '• 마지막 어플 반영 시각: ' + lastUpdate + '\n\n' +
     '• 맘카페 최근 수집: ' + momLog + '\n' +
     '• 쿠팡 최근 수집: ' + coupangLog + '\n\n' +
+    '🔗 [쿠팡 파트너스 수익 링크 연동 안내]:\n' +
+    '• 출산가방 및 육아용품 시트 L, M, N열에 단축 링크 입력 시 개별 상품 링크 우선 적용\n' +
+    '• 미입력 품목은 선생님의 기본 쿠팡 파트너스 링크(https://link.coupang.com/a/hDXnz86Thk)로 자동 안전 연결\n' +
+    '• 입력 후 상단 메뉴 [🔗 쿠팡 파트너스 수동 입력 링크 어플에 즉시 반영] 클릭 시 실시간 배포\n\n' +
     '🛡️ 색상별 기능 가이드:\n' +
     '1. 🔴 빨간색 셀: 중요 정보 영구 잠금 및 보호 (자동 수집 시 절대 덮어쓰지 않음)\n' +
     '2. 💙 파란색 셀: 바이럴/광고 의심 항목 자동 분리 (직접 흰색 배경으로 바꾼 것만 어플 반영)\n' +
