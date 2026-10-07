@@ -3,7 +3,9 @@ package com.kongkong.babybag;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.KeyEvent;
@@ -140,6 +142,45 @@ public class MainActivity extends Activity {
                 @Override
                 public void run() {
                     finish();
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void shareText(final String text, final String title) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Intent sendIntent = new Intent();
+                        sendIntent.setAction(Intent.ACTION_SEND);
+                        sendIntent.putExtra(Intent.EXTRA_TEXT, text);
+                        sendIntent.setType("text/plain");
+                        Intent shareIntent = Intent.createChooser(sendIntent, title != null ? title : "체크리스트 공유");
+                        startActivity(shareIntent);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void printChecklist(final String documentName) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                            android.print.PrintManager printManager = (android.print.PrintManager) getSystemService(Context.PRINT_SERVICE);
+                            if (printManager != null && mWebView != null) {
+                                android.print.PrintDocumentAdapter printAdapter = mWebView.createPrintDocumentAdapter(documentName != null ? documentName : "꽁꽁출산가방");
+                                printManager.print(documentName != null ? documentName : "꽁꽁출산가방_체크리스트", printAdapter, new android.print.PrintAttributes.Builder().build());
+                            }
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             });
         }

@@ -5430,76 +5430,22 @@
     }
 
     // ==========================================
-    // 내 가방 체크리스트 공유 및 내보내기 로직
+    // 내 가방 체크리스트 공유 및 내보내기 로직 (v1.1.5)
     // ==========================================
     let currentShareTarget = 'mat'; // 'mat', 'baby', 'todo', 'ben', 'all'
-    let isSpecificShareMode = false;
 
-    function openMyBagShareModal(target = null) {
+    function openMyBagShareModal() {
       const modal = document.getElementById('myBagShareModal');
-      const dropdownSec = document.getElementById('shareDropdownSection');
-      const specificSec = document.getElementById('shareSpecificBadgeSection');
-      const titleEl = document.getElementById('myBagShareModalTitle');
-      const badgeNameEl = document.getElementById('shareSpecificBagName');
-      const badgeCountEl = document.getElementById('shareSpecificBagCount');
       const selectEl = document.getElementById('shareBagTargetSelect');
-
       if (!modal) return;
 
-      if (target && target !== 'global' && target !== 'all') {
-        // [보조 진입점]: 해당 가방 색깔 박스에서 클릭 -> 드롭다운 없이 공유 방법 3가지만 표시
-        isSpecificShareMode = true;
-        currentShareTarget = target;
-        if (dropdownSec) dropdownSec.style.display = 'none';
-        if (specificSec) specificSec.style.display = 'flex';
-
-        let bagName = '';
-        let bagCount = 0;
-        if (target === 'mat') {
-          bagName = '👜 1. 출산가방 준비물';
-          const allMat = [...maternityBagItemsData, ...babyBagItemsData, ...guardianBagItemsData];
-          bagCount = allMat.filter(i => savedBagItemIds.has(i.id)).length;
-          specificSec.style.background = '#FFF0EC';
-          specificSec.style.borderColor = '#FFD8CE';
-          if (badgeNameEl) badgeNameEl.style.color = '#FF6F59';
-        } else if (target === 'baby') {
-          bagName = '🍼 2. 육아용품 리스트';
-          bagCount = babySuppliesData.filter(i => savedBabySuppliesIds.has(i.id)).length;
-          specificSec.style.background = '#E8F5E9';
-          specificSec.style.borderColor = '#C8E6C9';
-          if (badgeNameEl) badgeNameEl.style.color = '#2E7D32';
-        } else if (target === 'todo') {
-          bagName = '📅 3. 시기별 할일 리스트';
-          bagCount = todoItemsData.filter(i => savedTodoIds.has(i.id)).length;
-          specificSec.style.background = '#EDE7F6';
-          specificSec.style.borderColor = '#D1C4E9';
-          if (badgeNameEl) badgeNameEl.style.color = '#7E57C2';
-        } else if (target === 'ben') {
-          bagName = '🎁 4. 출산 혜택 리스트';
-          bagCount = getAllBenefitsList().filter(i => savedBenefitIds.has(i.id)).length;
-          specificSec.style.background = '#FFF3E0';
-          specificSec.style.borderColor = '#FFE0B2';
-          if (badgeNameEl) badgeNameEl.style.color = '#E65100';
-        }
-
-        if (titleEl) titleEl.innerHTML = `<span>🌸</span> ${bagName} 공유`;
-        if (badgeNameEl) badgeNameEl.innerText = bagName;
-        if (badgeCountEl) badgeCountEl.innerText = `담긴 항목 ${bagCount}개`;
+      // 현재 보고 있는 상세 탭이 있으면 해당 탭을 기본 선택, 아니면 1번(mat) 선택
+      if (currentMyBagFeatureTab && ['mat', 'baby', 'todo', 'ben'].includes(currentMyBagFeatureTab)) {
+        if (selectEl) selectEl.value = currentMyBagFeatureTab;
+        currentShareTarget = currentMyBagFeatureTab;
       } else {
-        // [최우선 진입점]: 상단바 '내 가방' 제목 우측 공유 버튼 클릭 -> 드롭다운으로 4가지 가방 선택
-        isSpecificShareMode = false;
-        if (dropdownSec) dropdownSec.style.display = 'block';
-        if (specificSec) specificSec.style.display = 'none';
-        if (titleEl) titleEl.innerHTML = `<span>🌸</span> 내 가방 체크리스트 공유`;
-
-        // 현재 보고 있는 상세 탭이 있으면 해당 탭을 기본 선택, 아니면 1번(mat) 선택
-        if (currentMyBagFeatureTab && ['mat', 'baby', 'todo', 'ben'].includes(currentMyBagFeatureTab)) {
-          if (selectEl) selectEl.value = currentMyBagFeatureTab;
-          currentShareTarget = currentMyBagFeatureTab;
-        } else {
-          if (selectEl) selectEl.value = 'mat';
-          currentShareTarget = 'mat';
-        }
+        if (selectEl) selectEl.value = 'mat';
+        currentShareTarget = 'mat';
       }
 
       modal.style.display = 'flex';
@@ -5514,21 +5460,472 @@
       currentShareTarget = val;
     }
 
+    function getExportChecklistData(target) {
+      let title = "출산가방 준비물";
+      let icon = "👜";
+      const sections = [];
+      let totalCount = 0;
+      let compCount = 0;
+
+      if (target === 'mat' || target === 'all') {
+        const cats = ["산모 용품", "신생아 용품", "보호자 & 공통"];
+        const allMat = [...maternityBagItemsData, ...babyBagItemsData, ...guardianBagItemsData];
+        const savedMat = allMat.filter(i => savedBagItemIds.has(i.id));
+
+        cats.forEach(c => {
+          const cItems = savedMat.filter(i => i.tabCategory === c);
+          if (cItems.length > 0) {
+            sections.push({
+              categoryName: target === 'all' ? `👜 출산가방 - ${c}` : `👜 ${c}`,
+              items: cItems.map(i => ({
+                name: i.title || i.name,
+                detail: i.place ? `#${i.place}` : (i.category || ""),
+                isCompleted: completedBagItemIds.has(i.id)
+              }))
+            });
+          }
+        });
+        totalCount += savedMat.length;
+        compCount += savedMat.filter(i => completedBagItemIds.has(i.id)).length;
+        if (target === 'mat') {
+          title = "출산가방 준비물 리스트";
+          icon = "👜";
+        }
+      }
+
+      if (target === 'baby' || target === 'all') {
+        const cats = ["1. 수유·이유식", "2. 위생·목욕", "3. 침구·의류", "4. 외출·안전·가전"];
+        const savedBaby = babySuppliesData.filter(i => savedBabySuppliesIds.has(i.id));
+
+        cats.forEach(c => {
+          const cItems = savedBaby.filter(i => i.tabCategory === c);
+          if (cItems.length > 0) {
+            sections.push({
+              categoryName: target === 'all' ? `🍼 육아용품 - ${c.replace(/^\d+\.\s*/, '')}` : `🍼 ${c}`,
+              items: cItems.map(i => ({
+                name: i.title || i.name,
+                detail: i.purchaseTag ? `${i.purchaseTag}` : "",
+                isCompleted: completedBabySuppliesIds.has(i.id)
+              }))
+            });
+          }
+        });
+        totalCount += savedBaby.length;
+        compCount += savedBaby.filter(i => completedBabySuppliesIds.has(i.id)).length;
+        if (target === 'baby') {
+          title = "육아용품 준비 리스트";
+          icon = "🍼";
+        }
+      }
+
+      if (target === 'todo' || target === 'all') {
+        const cats = ["1. 임신 초기 (1~12주)", "2. 임신 중기 (13~27주)", "3. 임신 후기 (28주~)", "4. 출산·조리원·출산 후"];
+        const savedTodo = todoItemsData.filter(i => savedTodoIds.has(i.id));
+
+        cats.forEach(c => {
+          const cItems = savedTodo.filter(i => i.tabCategory === c);
+          if (cItems.length > 0) {
+            sections.push({
+              categoryName: target === 'all' ? `📅 할일 - ${c.replace(/^\d+\.\s*/, '')}` : `📅 ${c}`,
+              items: cItems.map(i => ({
+                name: i.title || i.name,
+                detail: i.roleTag ? `${i.roleTag}` : "",
+                isCompleted: completedTodoIds.has(i.id)
+              }))
+            });
+          }
+        });
+        totalCount += savedTodo.length;
+        compCount += savedTodo.filter(i => completedTodoIds.has(i.id)).length;
+        if (target === 'todo') {
+          title = "시기별 할일 체크리스트";
+          icon = "📅";
+        }
+      }
+
+      if (target === 'ben' || target === 'all') {
+        const allBenefits = getAllBenefitsList();
+        const savedBen = allBenefits.filter(i => savedBenefitIds.has(i.id));
+
+        if (savedBen.length > 0) {
+          sections.push({
+            categoryName: "🎁 출산 혜택 정리",
+            items: savedBen.map(i => ({
+              name: i.title || i.name,
+              detail: i.desc || i.badge || "",
+              isCompleted: completedBenefitIds.has(i.id)
+            }))
+          });
+        }
+        totalCount += savedBen.length;
+        compCount += savedBen.filter(i => completedBenefitIds.has(i.id)).length;
+        if (target === 'ben') {
+          title = "출산 혜택 맞춤 리스트";
+          icon = "🎁";
+        }
+      }
+
+      if (target === 'all') {
+        title = "내 가방 전체 종합 체크리스트";
+        icon = "🌸";
+      }
+
+      const pct = totalCount > 0 ? Math.round((compCount * 100) / totalCount) : 0;
+      return { title, icon, sections, totalCount, compCount, pct };
+    }
+
     function executeShareAction(type) {
-      let targetName = '';
-      if (currentShareTarget === 'mat') targetName = '1. 출산가방 준비물';
-      else if (currentShareTarget === 'baby') targetName = '2. 육아용품 리스트';
-      else if (currentShareTarget === 'todo') targetName = '3. 시기별 할일 리스트';
-      else if (currentShareTarget === 'ben') targetName = '4. 출산 혜택 리스트';
-      else targetName = '내 가방 전체 종합본';
+      if (type === 'text') shareChecklistText(currentShareTarget);
+      else if (type === 'image') shareChecklistImage(currentShareTarget);
+      else if (type === 'pdf') shareChecklistPdf(currentShareTarget);
+    }
 
-      let typeName = '';
-      if (type === 'image') typeName = '이미지(PNG) 변환 & 카톡 공유';
-      else if (type === 'pdf') typeName = 'A4 인쇄용 PDF 다운로드';
-      else if (type === 'text') typeName = '텍스트 복사 & 문자/카톡 공유';
+    function shareChecklistText(target) {
+      const data = getExportChecklistData(target);
+      if (data.totalCount === 0) {
+        alert("담긴 준비물이 없습니다. 먼저 가방에 준비물을 담아주세요!");
+        return;
+      }
 
-      alert(`[공유 준비 완료]\n\n• 선택된 가방: ${targetName}\n• 공유 방식: ${typeName}\n\n(※ 다음 단계에서 실제 이미지/PDF 생성 및 카톡 연동 기능이 구현될 예정입니다.)`);
+      const ddayInfo = (userProfile && userProfile.dueDate) ? calculateDDay(userProfile.dueDate) : null;
+      const ddayStr = ddayInfo && ddayInfo.ddayText ? ` (${ddayInfo.ddayText}, 예정일: ${userProfile.dueDate})` : '';
+      const dateStr = new Date().toLocaleDateString('ko-KR');
+
+      let text = `🍼 [꽁꽁 출산가방] ${data.title} 📋\n`;
+      if (ddayStr) text += `• 출산일정: ${ddayStr}\n`;
+      text += `• 준비 현황: 총 ${data.totalCount}개 중 ${data.compCount}개 완료 (${data.pct}%)\n`;
+      text += `• 작성일시: ${dateStr}\n\n`;
+
+      data.sections.forEach(sec => {
+        text += `[${sec.categoryName}]\n`;
+        sec.items.forEach(it => {
+          const check = it.isCompleted ? "☑️" : "⬜";
+          text += `${check} ${it.name}${it.detail ? ' (' + it.detail + ')' : ''}\n`;
+        });
+        text += `\n`;
+      });
+
+      text += `✨ 꽁꽁 출산가방 앱에서 실시간 체크 중 🌸`;
+
+      // 1. Android 네이티브 공유 확인
+      if (window.AndroidInterface && typeof window.AndroidInterface.shareText === 'function') {
+        window.AndroidInterface.shareText(text, `[꽁꽁 출산가방] ${data.title}`);
+        closeMyBagShareModal();
+        return;
+      }
+
+      // 2. Web Share API 확인
+      if (navigator.share) {
+        navigator.share({
+          title: `[꽁꽁 출산가방] ${data.title}`,
+          text: text
+        }).then(() => {
+          showToast('공유창이 열렸습니다 🌸');
+          closeMyBagShareModal();
+        }).catch(() => {
+          copyToClipboardFallback(text, "체크리스트가 클립보드에 복사되었습니다! 💬\n카카오톡이나 문자 대화창에 바로 '붙여넣기' 하세요.");
+          closeMyBagShareModal();
+        });
+        return;
+      }
+
+      // 3. 클립보드 복사 폴백
+      copyToClipboardFallback(text, "체크리스트가 클립보드에 복사되었습니다! 💬\n카카오톡이나 문자 대화창에 바로 '붙여넣기' 하세요.");
       closeMyBagShareModal();
+    }
+
+    function shareChecklistImage(target) {
+      const data = getExportChecklistData(target);
+      if (data.totalCount === 0) {
+        alert("담긴 준비물이 없습니다. 먼저 가방에 준비물을 담아주세요!");
+        return;
+      }
+      showToast("체크리스트 이미지를 생성하는 중입니다... 🎨");
+
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const width = 720;
+
+      let contentHeight = 0;
+      data.sections.forEach(sec => {
+        contentHeight += 48;
+        contentHeight += sec.items.length * 36;
+        contentHeight += 14;
+      });
+      const headerHeight = 220;
+      const footerHeight = 90;
+      const totalHeight = headerHeight + contentHeight + footerHeight + 40;
+
+      canvas.width = width;
+      canvas.height = totalHeight;
+
+      ctx.fillStyle = '#FFF8F6';
+      ctx.fillRect(0, 0, width, totalHeight);
+
+      const cardMargin = 20;
+      const cardWidth = width - (cardMargin * 2);
+      const cardHeight = totalHeight - (cardMargin * 2);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      ctx.roundRect(cardMargin, cardMargin, cardWidth, cardHeight, 20);
+      ctx.fill();
+      ctx.strokeStyle = '#FFE0D8';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      const grad = ctx.createLinearGradient(cardMargin, cardMargin, cardMargin + cardWidth, cardMargin + 130);
+      grad.addColorStop(0, '#FF6F59');
+      grad.addColorStop(1, '#FF8E53');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.roundRect(cardMargin, cardMargin, cardWidth, 130, [20, 20, 0, 0]);
+      ctx.fill();
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 15px sans-serif';
+      ctx.fillText('🍼 꽁꽁 출산가방 (KongKong Baby Bag)', cardMargin + 24, cardMargin + 36);
+
+      ctx.font = 'bold 24px sans-serif';
+      ctx.fillText(data.title, cardMargin + 24, cardMargin + 72);
+
+      let ddayStr = '';
+      if (userProfile && userProfile.dueDate) {
+        const ddayInfo = calculateDDay(userProfile.dueDate);
+        ddayStr = `${ddayInfo.ddayText} (예정일: ${userProfile.dueDate})`;
+      } else {
+        ddayStr = `작성일: ${new Date().toLocaleDateString('ko-KR')}`;
+      }
+      ctx.font = '13.5px sans-serif';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+      ctx.fillText(`• ${ddayStr}   • 완료율: ${data.pct}% (${data.compCount}/${data.totalCount}개)`, cardMargin + 24, cardMargin + 104);
+
+      const barY = cardMargin + 148;
+      ctx.fillStyle = '#F5F5F5';
+      ctx.beginPath();
+      ctx.roundRect(cardMargin + 24, barY, cardWidth - 48, 14, 7);
+      ctx.fill();
+
+      if (data.pct > 0) {
+        ctx.fillStyle = '#FF6F59';
+        ctx.beginPath();
+        ctx.roundRect(cardMargin + 24, barY, Math.max(14, (cardWidth - 48) * (data.pct / 100)), 14, 7);
+        ctx.fill();
+      }
+
+      let currentY = barY + 36;
+      data.sections.forEach(sec => {
+        ctx.fillStyle = '#FFF2EE';
+        ctx.beginPath();
+        ctx.roundRect(cardMargin + 24, currentY, cardWidth - 48, 32, 8);
+        ctx.fill();
+        ctx.strokeStyle = '#FFD8CE';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.fillStyle = '#FF6F59';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.fillText(`${sec.categoryName} (${sec.items.length}개)`, cardMargin + 36, currentY + 21);
+
+        currentY += 42;
+
+        sec.items.forEach(it => {
+          if (it.isCompleted) {
+            ctx.fillStyle = '#FF6F59';
+            ctx.beginPath();
+            ctx.arc(cardMargin + 38, currentY + 11, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 11px sans-serif';
+            ctx.fillText('✓', cardMargin + 34, currentY + 15);
+
+            ctx.fillStyle = '#888888';
+            ctx.font = '13.5px sans-serif';
+            const txt = it.name + (it.detail ? ` (${it.detail})` : '');
+            ctx.fillText(txt, cardMargin + 56, currentY + 16);
+          } else {
+            ctx.strokeStyle = '#CCCCCC';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.roundRect(cardMargin + 30, currentY + 3, 16, 16, 4);
+            ctx.stroke();
+
+            ctx.fillStyle = '#2C3E50';
+            ctx.font = 'bold 13.5px sans-serif';
+            const txt = it.name + (it.detail ? ` (${it.detail})` : '');
+            ctx.fillText(txt, cardMargin + 56, currentY + 16);
+          }
+
+          currentY += 34;
+        });
+
+        currentY += 14;
+      });
+
+      ctx.strokeStyle = '#EEEEEE';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cardMargin + 24, currentY + 8);
+      ctx.lineTo(cardMargin + cardWidth - 24, currentY + 8);
+      ctx.stroke();
+
+      ctx.fillStyle = '#999999';
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('🌸 사랑하는 우리 아기를 위한 설레는 준비 | 꽁꽁 출산가방', width / 2, currentY + 34);
+      ctx.textAlign = 'left';
+
+      const imgUrl = canvas.toDataURL('image/png');
+      const filename = `꽁꽁출산가방_${data.title.replace(/\s+/g, '_')}.png`;
+
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = imgUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      canvas.toBlob(blob => {
+        if (blob && navigator.canShare) {
+          try {
+            const file = new File([blob], filename, { type: 'image/png' });
+            if (navigator.canShare({ files: [file] })) {
+              navigator.share({
+                files: [file],
+                title: `[꽁꽁 출산가방] ${data.title}`,
+                text: `우리 아기 맞춤 출산 체크리스트입니다 🌸`
+              }).catch(() => {});
+            }
+          } catch (e) {}
+        }
+      }, 'image/png');
+
+      showToast('체크리스트 이미지가 저장되었습니다! 📷 갤러리나 파일에서 카톡으로 공유해보세요.');
+      closeMyBagShareModal();
+    }
+
+    function shareChecklistPdf(target) {
+      const data = getExportChecklistData(target);
+      if (data.totalCount === 0) {
+        alert("담긴 준비물이 없습니다. 먼저 가방에 준비물을 담아주세요!");
+        return;
+      }
+
+      showToast("A4 인쇄 및 PDF 저장 문서를 생성합니다... 📄");
+
+      if (window.AndroidInterface && typeof window.AndroidInterface.printChecklist === 'function') {
+        window.AndroidInterface.printChecklist(`꽁꽁출산가방_${data.title}`);
+        closeMyBagShareModal();
+        return;
+      }
+
+      let printFrame = document.getElementById('checklistPrintIframe');
+      if (!printFrame) {
+        printFrame = document.createElement('iframe');
+        printFrame.id = 'checklistPrintIframe';
+        printFrame.style.position = 'fixed';
+        printFrame.style.right = '0';
+        printFrame.style.bottom = '0';
+        printFrame.style.width = '0';
+        printFrame.style.height = '0';
+        printFrame.style.border = 'none';
+        document.body.appendChild(printFrame);
+      }
+
+      const ddayInfo = (userProfile && userProfile.dueDate) ? calculateDDay(userProfile.dueDate) : { ddayText: '', weeksText: '' };
+      const ddayStr = ddayInfo.ddayText ? `${ddayInfo.ddayText} (${userProfile.dueDate} 예정)` : '';
+      const dateStr = new Date().toLocaleDateString('ko-KR');
+
+      let sectionsHTML = '';
+      data.sections.forEach(sec => {
+        sectionsHTML += `
+          <div style="margin-bottom: 20px; page-break-inside: avoid;">
+            <h3 style="font-size: 14.5px; color: #FF6F59; border-bottom: 2px solid #FF6F59; padding-bottom: 4px; margin-bottom: 8px;">
+              ${sec.categoryName} (${sec.items.length}개)
+            </h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 12.5px;">
+              <thead>
+                <tr style="background: #F8F9FA; border-bottom: 1px solid #DDD;">
+                  <th style="width: 45px; padding: 6px; text-align: center;">상태</th>
+                  <th style="padding: 6px; text-align: left;">준비물 항목명</th>
+                  <th style="padding: 6px; text-align: left; color: #666;">세부설명 / 분류</th>
+                  <th style="width: 70px; padding: 6px; text-align: center;">확인 체크</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${sec.items.map(it => `
+                  <tr style="border-bottom: 1px solid #EEE;">
+                    <td style="text-align: center; padding: 6px 4px; color: ${it.isCompleted ? '#FF6F59' : '#888'}; font-weight: bold;">
+                      ${it.isCompleted ? '완료' : '준비'}
+                    </td>
+                    <td style="padding: 6px; font-weight: ${it.isCompleted ? 'normal' : 'bold'}; color: ${it.isCompleted ? '#888' : '#222'}; text-decoration: ${it.isCompleted ? 'line-through' : 'none'};">
+                      ${it.name}
+                    </td>
+                    <td style="padding: 6px; color: #666; font-size: 11.5px;">
+                      ${it.detail || '-'}
+                    </td>
+                    <td style="text-align: center; padding: 6px 4px;">
+                      <span style="display: inline-block; width: 14px; height: 14px; border: 1.5px solid #666; border-radius: 3px; vertical-align: middle;"></span>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      });
+
+      const printDoc = printFrame.contentWindow.document;
+      printDoc.open();
+      printDoc.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>꽁꽁 출산가방 - ${data.title}</title>
+          <style>
+            @page { size: A4 portrait; margin: 15mm; }
+            body { font-family: -apple-system, BlinkMacSystemFont, "Malgun Gothic", "맑은 고딕", sans-serif; color: #333; margin: 0; padding: 0; line-height: 1.5; }
+            @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+          </style>
+        </head>
+        <body>
+          <div style="border-bottom: 3px solid #FF6F59; padding-bottom: 10px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-end;">
+            <div>
+              <div style="font-size: 12px; font-weight: bold; color: #FF6F59;">🍼 꽁꽁 출산가방 (KongKong Baby Bag)</div>
+              <h1 style="font-size: 20px; margin: 4px 0 0 0; color: #222;">${data.title}</h1>
+            </div>
+            <div style="text-align: right; font-size: 12px; color: #666;">
+              ${ddayStr ? `<div><b>일정:</b> ${ddayStr}</div>` : ''}
+              <div><b>진행률:</b> ${data.compCount} / ${data.totalCount}개 완료 (${data.pct}%)</div>
+              <div><b>인쇄일:</b> ${dateStr}</div>
+            </div>
+          </div>
+          ${sectionsHTML}
+          <div style="margin-top: 24px; border-top: 1px solid #DDD; padding-top: 8px; font-size: 11px; color: #888; text-align: center;">
+            🌸 사랑하는 우리 아기를 위한 맞춤 출산 체크리스트 | 꽁꽁 출산가방
+          </div>
+        </body>
+        </html>
+      `);
+      printDoc.close();
+
+      setTimeout(() => {
+        printFrame.contentWindow.focus();
+        printFrame.contentWindow.print();
+        closeMyBagShareModal();
+      }, 350);
+    }
+
+    function copyToClipboardFallback(text, msg) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast(msg);
+        }).catch(() => {
+          prompt('체크리스트 텍스트를 복사하세요:', text);
+        });
+      } else {
+        prompt('체크리스트 텍스트를 복사하세요:', text);
+      }
     }
 
     function renderMyBagIntegratedView() {
@@ -5651,12 +6048,7 @@
 
         const progressBoxHTML = `
           <div class="mybag-feature-progress-box mat">
-            <div class="mybag-box-top-row">
-              <div class="mybag-box-pill">👜 내가 담은 출산가방 준비물</div>
-              <button class="btn-box-share" onclick="openMyBagShareModal('mat')" title="출산가방 준비물 공유하기">
-                <span>📤</span> 공유
-              </button>
-            </div>
+            <div class="mybag-box-pill">👜 내가 담은 출산가방 준비물</div>
             <div class="mybag-box-title">총 ${savedMat.length}개 담김 (${compMat.length}개 완료, ${matPct}%)</div>
             <div class="mybag-box-track">
               <div class="mybag-box-bar" style="width: ${matPct}%;"></div>
@@ -5727,12 +6119,7 @@
 
         const progressBoxHTML = `
           <div class="mybag-feature-progress-box baby">
-            <div class="mybag-box-top-row">
-              <div class="mybag-box-pill">🍼 내가 담은 육아용품</div>
-              <button class="btn-box-share" onclick="openMyBagShareModal('baby')" title="육아용품 리스트 공유하기">
-                <span>📤</span> 공유
-              </button>
-            </div>
+            <div class="mybag-box-pill">🍼 내가 담은 육아용품</div>
             <div class="mybag-box-title">총 ${savedBaby.length}개 담김 (${compBaby.length}개 완료, ${babyPct}%)</div>
             <div class="mybag-box-track">
               <div class="mybag-box-bar" style="width: ${babyPct}%;"></div>
@@ -5805,12 +6192,7 @@
 
         const progressBoxHTML = `
           <div class="mybag-feature-progress-box todo">
-            <div class="mybag-box-top-row">
-              <div class="mybag-box-pill">📅 내가 담은 시기별 할일</div>
-              <button class="btn-box-share" onclick="openMyBagShareModal('todo')" title="시기별 할일 리스트 공유하기">
-                <span>📤</span> 공유
-              </button>
-            </div>
+            <div class="mybag-box-pill">📅 내가 담은 시기별 할일</div>
             <div class="mybag-box-title">총 ${savedTodo.length}개 담김 (${compTodo.length}개 완료, ${todoPct}%)</div>
             <div class="mybag-box-track">
               <div class="mybag-box-bar" style="width: ${todoPct}%;"></div>
@@ -5885,12 +6267,7 @@
 
         const progressBoxHTML = `
           <div class="mybag-feature-progress-box ben">
-            <div class="mybag-box-top-row">
-              <div class="mybag-box-pill">🎁 내가 담은 출산 혜택</div>
-              <button class="btn-box-share" onclick="openMyBagShareModal('ben')" title="출산 혜택 리스트 공유하기">
-                <span>📤</span> 공유
-              </button>
-            </div>
+            <div class="mybag-box-pill">🎁 내가 담은 출산 혜택</div>
             <div class="mybag-box-title">총 ${savedBen.length}개 담김 (${compBen.length}개 완료, ${benPct}%)</div>
             <div class="mybag-box-track">
               <div class="mybag-box-bar" style="width: ${benPct}%;"></div>
@@ -7874,11 +8251,7 @@
         </select>
       </div>
 
-      <!-- 2) 보조 진입점(색깔 박스 공유) 전용: 대상 가방 뱃지 안내 영역 -->
-      <div id="shareSpecificBadgeSection" style="display: none; margin-bottom: 14px; background: #FFF0EC; border: 1px solid #FFD8CE; border-radius: 12px; padding: 10px 12px; align-items: center; justify-content: space-between;">
-        <div style="font-size: 13px; font-weight: 800; color: var(--primary);" id="shareSpecificBagName">👜 출산가방 준비물</div>
-        <div style="font-size: 11.5px; font-weight: 700; color: #666;" id="shareSpecificBagCount">담긴 항목 0개</div>
-      </div>
+
 
       <!-- 3) 공유 방법 3가지 버튼 목록 -->
       <div class="share-options-list" style="display: flex; flex-direction: column; gap: 9px; margin-bottom: 16px;">
