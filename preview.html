@@ -461,17 +461,25 @@
     }
     .profile-tags-row {
       display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 3px;
+      width: 100%;
+      margin-top: 4px;
+      overflow-x: hidden;
     }
     .profile-tag {
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 700;
-      padding: 2px 7px;
+      padding: 2px 5px;
       border-radius: 6px;
       background: #fff;
       border: 1px solid #ffe0b2;
       color: #e65100;
+      white-space: nowrap;
+      flex-shrink: 1;
+      text-align: center;
     }
     .guest-warning-badge {
       background: #ffebee;
@@ -657,9 +665,13 @@
 
     /* 대시보드 화면 */
     .sub-screen {
-      padding: 14px;
+      padding: 14px 14px calc(36px + env(safe-area-inset-bottom, 0px)) 14px;
       display: flex;
       flex-direction: column;
+    }
+
+    #dashboardScreen {
+      padding-bottom: calc(44px + env(safe-area-inset-bottom, 0px)) !important;
     }
 
     .dashboard-topbar {
@@ -667,11 +679,19 @@
       align-items: center;
       justify-content: space-between;
       margin-bottom: 10px;
+      position: relative;
+      min-height: 32px;
     }
     .topbar-title {
       font-size: 18px;
       font-weight: 800;
       color: var(--text-dark);
+      text-align: center;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      pointer-events: none;
+      white-space: nowrap;
     }
     .btn-back {
       background: none;
@@ -754,7 +774,7 @@
 
     .btn-my-bag {
       width: 100%;
-      padding: 13px;
+      padding: 14px 16px;
       background: linear-gradient(135deg, #ff6f59 0%, #ff8e72 100%);
       color: #fff;
       border: none;
@@ -767,6 +787,8 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
+      margin-top: 10px;
+      margin-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
     }
 
     .action-btn-row {
@@ -1783,6 +1805,129 @@
       color: #fff;
     }
 
+    /* 내 가방 공유 버튼 & 진입점 스타일 */
+    .btn-topbar-share {
+      background: #FFF0EC;
+      border: 1px solid #FFD8CE;
+      color: var(--primary);
+      font-size: 12.5px;
+      font-weight: 700;
+      border-radius: 16px;
+      padding: 4px 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      z-index: 2;
+    }
+    .btn-topbar-share:hover {
+      background: #FFE5DE;
+    }
+    .btn-topbar-share:active {
+      transform: scale(0.96);
+      background: #FFD5CB;
+    }
+
+    .mybag-box-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .mybag-box-top-row .mybag-box-pill {
+      margin-bottom: 0 !important;
+    }
+    .btn-box-share {
+      background: rgba(255, 255, 255, 0.28);
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      color: #FFFFFF;
+      font-size: 11.5px;
+      font-weight: 700;
+      border-radius: 14px;
+      padding: 3px 9px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    .btn-box-share:hover {
+      background: rgba(255, 255, 255, 0.38);
+    }
+    .btn-box-share:active {
+      transform: scale(0.95);
+      background: rgba(255, 255, 255, 0.48);
+    }
+
+    .btn-share-option {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: #FFFFFF;
+      border: 1.5px solid #E9ECEF;
+      border-radius: 14px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+    .btn-share-option:hover {
+      border-color: #FF6F59;
+      background: #FFF9F8;
+      transform: translateY(-1px);
+    }
+    .btn-share-option:active {
+      transform: scale(0.98);
+    }
+    .btn-share-option .opt-icon {
+      font-size: 20px;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+    .btn-share-option.img-opt .opt-icon { background: #FFF0EC; }
+    .btn-share-option.pdf-opt .opt-icon { background: #E8F5E9; }
+    .btn-share-option.text-opt .opt-icon { background: #EDE7F6; }
+
+    .btn-share-option .opt-text {
+      flex: 1;
+    }
+    .btn-share-option .opt-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #2C3E50;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-share-option .opt-tag {
+      font-size: 10px;
+      background: #FF6F59;
+      color: white;
+      padding: 1px 5px;
+      border-radius: 6px;
+      font-weight: 700;
+    }
+    .btn-share-option .opt-desc {
+      font-size: 11px;
+      color: #888;
+      margin-top: 2px;
+    }
+    .btn-share-option .opt-arrow {
+      font-size: 14px;
+      color: #BBB;
+      font-weight: 700;
+    }
+
     /* ==========================================
        선배맘 추천 TOP 3 카드 칩 & 탑시트(Top Sheet)
        ========================================== */
@@ -2190,6 +2335,7 @@
         border-radius: 0 !important;
         box-shadow: none !important;
         padding-top: max(28px, env(safe-area-inset-top)) !important;
+        padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
       }
     }
 
@@ -2210,6 +2356,7 @@
       border-radius: 0 !important;
       box-shadow: none !important;
       padding-top: max(28px, env(safe-area-inset-top)) !important;
+      padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
     }
   </style>
   <script>
@@ -2263,7 +2410,7 @@
 
     <div class="screen-container" id="screenContainer">
       
-      <!-- [1] 로그인 화면 -->
+      <!-- [1] 로그인 화면 (비회원 전용) -->
       <div id="loginScreen" class="screen">
         <div class="icon-wrapper" title="꽁꽁 출산가방 공식 앱 아이콘">
           <img src="ggong_icon.png" alt="꽁꽁 출산가방 앱 아이콘" class="app-icon-img" onerror="this.src='ggong_icon.jpg'" />
@@ -2273,48 +2420,16 @@
         <p class="app-subtitle">설레는 아기와의 만남, 꽁꽁 싸매어 완벽 준비해요</p>
 
         <div class="login-card">
-          <!-- 비회원으로 이용하기 버튼 우선 배치 -->
+          <!-- 비회원으로 이용하기 버튼 단일배치 -->
           <button id="btnGuestLogin" class="btn-guest-login" onclick="handleGuestLogin()">
-            <span>👶 비회원으로 이용하기</span>
+            <span>👶 출산가방 시작하기 (비회원)</span>
             <span>➔</span>
           </button>
           
-          <div class="guest-warning-notice" style="background: #FFF8F5; border: 1px solid #FFE0D6; border-radius: 12px; padding: 10px 14px; text-align: left; font-size: 12px; color: #555; line-height: 1.5; margin: 12px 0 16px;">
-            📱 <strong>비회원 로컬 저장 안내:</strong><br/>
-            비회원으로 시작 시 설문 및 출산가방 데이터는 <strong>사용자 휴대폰에만 안전하게 저장</strong>됩니다.<br/>
-            <span style="font-size: 11px; color: #888;">(※ 기기 변경이나 부부 연동은 지원되지 않습니다.)</span>
+          <div class="guest-warning-notice" style="background: #FFF8F5; border: 1px solid #FFE0D6; border-radius: 12px; padding: 12px 14px; text-align: left; font-size: 12px; color: #555; line-height: 1.5; margin-top: 14px;">
+            📱 <strong>로컬 안전 보관 안내:</strong><br/>
+            모든 설문 및 출산가방 체크 내역은 <strong>사용자 휴대폰에만 안전하게 자동 저장</strong>됩니다.
           </div>
-
-          <!-- 소셜 1초 간편 가입 구분선 -->
-          <div class="login-divider">
-            <span>또는 1초 간편 회원가입 / 시작</span>
-          </div>
-
-          <!-- 3개 소셜 동그란 로고 버튼 -->
-          <div class="social-btn-group">
-            <!-- 카카오 -->
-            <button class="social-round-btn kakao" onclick="handleSocialLogin('kakao')" title="카카오로 1초 시작하기">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="#381E1F">
-                <path d="M12 3C6.477 3 2 6.477 2 10.772c0 2.766 1.848 5.19 4.646 6.556l-.946 3.498c-.083.308.261.547.518.377l4.133-2.735c.536.071 1.085.109 1.649.109 5.523 0 10-3.477 10-7.805C22 6.477 17.523 3 12 3z"/>
-              </svg>
-            </button>
-            <!-- 네이버 -->
-            <button class="social-round-btn naver" onclick="handleSocialLogin('naver')" title="네이버로 1초 시작하기">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="#FFFFFF">
-                <path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z"/>
-              </svg>
-            </button>
-            <!-- 구글 -->
-            <button class="social-round-btn google" onclick="handleSocialLogin('google')" title="구글로 1초 시작하기">
-              <svg width="24" height="24" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
-                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.25 21.36 7.33 24 12 24z"/>
-                <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.16 0 9.94 0 12s.46 3.84 1.26 5.42l4.02-3.15z"/>
-                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.25 2.64 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
-              </svg>
-            </button>
-          </div>
-          <div class="social-caption">카카오 · 네이버 · 구글로 시작 시 클라우드 백업 & 부부 계정 공유 지원 🔒</div>
         </div>
 
         <div class="extra-links">
@@ -2337,23 +2452,34 @@
         <div class="welcome-bar" style="background:#fff6f3; border:1px solid #ffd4c7; margin-bottom:12px;">
           <div class="welcome-text">
             <h2>반가워요, <span id="surveyUserName">예비 부모님</span>! 👶</h2>
-            <p>5가지 질문에 답해주시면 딱 맞는 준비물과 혜택을 챙겨드려요.</p>
+            <p>6가지 질문에 답해주시면 딱 맞는 준비물과 혜택을 챙겨드려요.</p>
           </div>
         </div>
 
-        <!-- 1. 출산 예정일 -->
+        <!-- 1. 별명 (닉네임) -->
         <div class="survey-card">
           <div class="survey-question-title">
-            <span>📅</span> 1. 출산 예정일
+            <span>✏️</span> 1. 별명 (닉네임 / 예비 엄마·아빠 이름)
+          </div>
+          <input type="text" id="surveyNicknameInput" class="survey-date-input" placeholder="예: 꽁꽁이엄마, 진규아빠, 대전맘" style="font-size: 14px; font-weight: 700;" oninput="updateSurveyNickname(this.value)" />
+          <div style="font-size:11px; color:var(--text-muted); margin-top:6px;">
+            * 홈 화면 인삿말에 표시될 별명을 자유롭게 입력해 주세요.
+          </div>
+        </div>
+
+        <!-- 2. 출산 예정일 -->
+        <div class="survey-card">
+          <div class="survey-question-title">
+            <span>📅</span> 2. 출산 예정일
           </div>
           <input type="date" id="surveyDueDate" class="survey-date-input" onchange="updateDueDateBadge()" />
           <div id="surveyDueDateBadge" class="survey-date-badge">D-Day 계산 중...</div>
         </div>
 
-        <!-- 2. 아이 성별 -->
+        <!-- 3. 아이 성별 -->
         <div class="survey-card">
           <div class="survey-question-title">
-            <span>👶</span> 2. 아이 성별
+            <span>👶</span> 3. 아이 성별
           </div>
           <div class="survey-chips-row" id="surveyGenderChips">
             <div class="survey-chip active" onclick="selectSurveyChip('gender', '남아', this)">👦 남아</div>
@@ -2362,10 +2488,10 @@
           </div>
         </div>
 
-        <!-- 3. 거주지역 -->
+        <!-- 4. 거주지역 -->
         <div class="survey-card">
           <div class="survey-question-title">
-            <span>📍</span> 3. 거주지역 (지자체 혜택 연동)
+            <span>📍</span> 4. 거주지역 (지자체 혜택 연동)
           </div>
           <select id="surveyRegionSelect" class="survey-region-select" onchange="selectSurveyRegion(this.value)">
             <option value="서울" selected>서울특별시</option>
@@ -2391,10 +2517,10 @@
           </div>
         </div>
 
-        <!-- 4. 분만 방법 -->
+        <!-- 5. 분만 방법 -->
         <div class="survey-card">
           <div class="survey-question-title">
-            <span>🏥</span> 4. 분만 방법 (맞춤 준비물 연동)
+            <span>🏥</span> 5. 분만 방법 (맞춤 준비물 연동)
           </div>
           <div class="survey-chips-row" id="surveyBirthChips">
             <div class="survey-chip active" onclick="selectSurveyChip('birthType', '자연분만', this)">🌸 자연분만</div>
@@ -2406,10 +2532,10 @@
           </div>
         </div>
 
-        <!-- 5. 조리원 이용 여부 -->
+        <!-- 6. 조리원 이용 여부 -->
         <div class="survey-card">
           <div class="survey-question-title">
-            <span>🏢</span> 5. 산후조리원 이용 여부
+            <span>🏢</span> 6. 산후조리원 이용 여부
           </div>
           <div class="survey-chips-row" id="surveyCareChips">
             <div class="survey-chip active" onclick="selectSurveyChip('careCenter', '이용함', this)">🏢 조리원 이용함 (입소)</div>
@@ -2427,23 +2553,21 @@
         </button>
       </div>
 
-      <!-- [2] 대시보드 화면 (맞춤 아이콘: 캐리어, 젖병, 달력, 동전 + 글자 뱃지 제거) -->
+      <!-- [2] 대시보드 화면 -->
       <div id="dashboardScreen" class="screen sub-screen">
         <div class="dashboard-topbar">
-          <button class="btn-back" onclick="handleLogout()" title="로그아웃 / 처음으로">◀</button>
+          <button class="btn-back" onclick="handleLogout()" title="처음으로">◀</button>
           <div class="topbar-title">출산 준비 홈</div>
-          <button class="btn-topbar-logout" onclick="handleLogout()" title="로그아웃 및 계정 전환">로그아웃 ↩</button>
+          <button class="btn-topbar-logout" onclick="handleLogout()" title="초기 화면으로 이동">처음으로 ↩</button>
         </div>
 
         <!-- 맞춤 프로필 정보 카드 -->
         <div id="dashboardProfileCard" class="dashboard-profile-card">
           <div class="profile-top-row">
             <div class="profile-user-badge">
-              <span id="profileUserIcon">👶</span>
-              <span id="profileUserTitle" style="font-weight: 800; font-size: 15px; color: #2C3E50; white-space: nowrap;">예비 부모님</span>
+              <span style="font-weight: 800; font-size: 14.5px; color: #2C3E50; white-space: nowrap;">👶 출산 준비 프로필</span>
             </div>
             <div style="display: flex; gap: 4px; flex-wrap: nowrap;">
-              <button class="profile-edit-btn" onclick="openCoupleSyncModal()" id="btnHeaderCoupleSync" title="부부 계정 실시간 연동" style="background: #FFF0F5; color: #D81B60; border: 1px solid #F8BBD0; font-weight: 700; white-space: nowrap;">💑 부부 연동</button>
               <button class="profile-edit-btn" onclick="syncFromGoogleSheet(true)" title="최신 품목 데이터 실시간 업데이트" style="background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; font-weight: 600; white-space: nowrap;">🔄 품목 업데이트</button>
               <button class="profile-edit-btn" onclick="openOnboardingEdit()" style="white-space: nowrap;">설문 수정 ⚙️</button>
             </div>
@@ -2455,22 +2579,11 @@
             <span class="profile-tag" id="tagCareCenter">조리원</span>
             <span class="profile-tag" id="tagRegion">지역</span>
           </div>
-
-          <!-- 부부 연동 상태 바 -->
-          <div id="coupleSyncBanner" style="margin-top: 10px; padding: 7px 12px; background: #FFF5F7; border: 1px dashed #FFB6C1; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; font-size: 11.5px;">
-            <div style="display: flex; align-items: center; gap: 6px; overflow: hidden;">
-              <span style="font-size: 14px; flex-shrink: 0;">💑</span>
-              <span id="coupleSyncStatusText" style="color: #666; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">부부 계정을 연동하고 출산가방을 함께 챙겨보세요</span>
-            </div>
-            <button id="btnOpenCoupleSync" onclick="openCoupleSyncModal()" style="background: #FF6B8B; color: white; border: none; padding: 3px 9px; border-radius: 12px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; flex-shrink: 0; margin-left: 8px;">
-              연동 관리 ➔
-            </button>
-          </div>
         </div>
 
         <div class="welcome-bar">
           <div class="welcome-text">
-            <h2>반가워요, <span id="welcomeUserName">예비 엄마·아빠</span>! 👶</h2>
+            <h2>반가워요, <span id="welcomeUserName">예비 엄마·아빠</span> 님! 👶</h2>
             <p>설문 기반으로 준비물과 혜택이 담겼어요</p>
           </div>
           <!-- 캐리어 아이콘 -->
@@ -2568,9 +2681,11 @@
       <!-- [3] 내 가방 화면 -->
       <div id="myBagScreen" class="screen sub-screen">
         <div class="dashboard-topbar">
-          <button class="btn-back" onclick="goToScreen('dashboardScreen')" title="홈으로 돌아가기">◀</button>
+          <button class="btn-back" onclick="goBackScreen()" title="홈으로 돌아가기">◀</button>
           <div class="topbar-title">내 가방</div>
-          <div style="width: 32px;"></div>
+          <button class="btn-topbar-share" onclick="openMyBagShareModal('global')" title="체크리스트 공유 및 내보내기">
+            <span style="font-size: 13.5px;">📤</span> 공유
+          </button>
         </div>
 
         <!-- 내 가방 컨테이너: 1~4번 버튼 또는 선택된 기능의 상세 뷰 및 박스가 렌더링됨 -->
@@ -2580,7 +2695,7 @@
       <!-- [1] 1번 기능: 출산가방 체크리스트 화면 (3개 탭 & 반으로 분할된 추가/삭제 버튼) -->
       <div id="maternityBagChecklistScreen" class="screen sub-screen">
         <div class="dashboard-topbar">
-          <button class="btn-back" onclick="goToScreen('dashboardScreen')" title="뒤로가기">◀</button>
+          <button class="btn-back" onclick="goBackScreen()" title="뒤로가기">◀</button>
           <div class="topbar-title">출산가방 체크리스트</div>
           <div style="width: 32px;"></div>
         </div>
@@ -2633,7 +2748,7 @@
       <!-- [2] 2번 기능: 육아용품 체크리스트 화면 -->
       <div id="babyItemsChecklistScreen" class="screen sub-screen">
         <div class="dashboard-topbar">
-          <button class="btn-back" onclick="goToScreen('dashboardScreen')" title="뒤로가기">◀</button>
+          <button class="btn-back" onclick="goBackScreen()" title="뒤로가기">◀</button>
           <div class="topbar-title">육아용품 체크리스트</div>
           <div style="width: 32px;"></div>
         </div>
@@ -2690,7 +2805,7 @@
       <!-- [3] 3번 기능: 시기별 할일 체크리스트 화면 (4개 탭 & 반으로 분할된 추가/삭제 버튼) -->
       <div id="todoChecklistScreen" class="screen sub-screen">
         <div class="dashboard-topbar">
-          <button class="btn-back" onclick="goToScreen('dashboardScreen')" title="뒤로가기">◀</button>
+          <button class="btn-back" onclick="goBackScreen()" title="뒤로가기">◀</button>
           <div class="topbar-title">시기별 할일 체크리스트</div>
           <div style="width: 32px;"></div>
         </div>
@@ -2742,7 +2857,7 @@
       <!-- [4] 4번 기능: 출산 혜택 정리 화면 -->
       <div id="benefitsCategoryScreen" class="screen sub-screen">
         <div class="dashboard-topbar">
-          <button class="btn-back" onclick="goToScreen('dashboardScreen')" title="뒤로가기">◀</button>
+          <button class="btn-back" onclick="goBackScreen()" title="뒤로가기">◀</button>
           <div class="topbar-title">출산 혜택 정리</div>
           <div style="width: 32px;"></div>
         </div>
@@ -2802,7 +2917,7 @@
       <!-- 전국 공통 혜택 리스트 화면 -->
       <div id="nationalBenefitsScreen" class="screen sub-screen">
         <div class="dashboard-topbar">
-          <button class="btn-back" onclick="goToScreen('benefitsCategoryScreen')" title="뒤로가기">◀</button>
+          <button class="btn-back" onclick="goBackScreen()" title="뒤로가기">◀</button>
           <div class="topbar-title">전국 공통 혜택</div>
           <div style="width: 32px;"></div>
         </div>
@@ -2848,7 +2963,7 @@
       <!-- 지역별 혜택 리스트 화면 -->
       <div id="regionalBenefitsScreen" class="screen sub-screen">
         <div class="dashboard-topbar">
-          <button class="btn-back" onclick="goToScreen('benefitsCategoryScreen')" title="뒤로가기">◀</button>
+          <button class="btn-back" onclick="goBackScreen()" title="뒤로가기">◀</button>
           <div class="topbar-title">지역별 혜택</div>
           <div style="width: 32px;"></div>
         </div>
@@ -2894,7 +3009,7 @@
       <!-- 개인별 혜택 리스트 화면 -->
       <div id="personalBenefitsScreen" class="screen sub-screen">
         <div class="dashboard-topbar">
-          <button class="btn-back" onclick="goToScreen('benefitsCategoryScreen')" title="뒤로가기">◀</button>
+          <button class="btn-back" onclick="goBackScreen()" title="뒤로가기">◀</button>
           <div class="topbar-title">개인별 혜택</div>
           <div style="width: 32px;"></div>
         </div>
@@ -2939,7 +3054,7 @@
       <!-- 1. 저장한 출산가방 화면 -->
       <div id="savedMaternityBagScreen" class="screen sub-screen">
         <div class="dashboard-topbar">
-          <button class="btn-back" onclick="goToScreen('myBagScreen')" title="내 가방으로">◀</button>
+          <button class="btn-back" onclick="goBackScreen()" title="내 가방으로">◀</button>
           <div class="topbar-title">저장한 출산가방 준비물</div>
           <div style="width: 32px;"></div>
         </div>
@@ -2983,7 +3098,7 @@
       <!-- 2. 저장한 육아용품 화면 -->
       <div id="savedBabySuppliesScreen" class="screen sub-screen">
         <div class="dashboard-topbar">
-          <button class="btn-back" onclick="goToScreen('myBagScreen')" title="내 가방으로">◀</button>
+          <button class="btn-back" onclick="goBackScreen()" title="내 가방으로">◀</button>
           <div class="topbar-title">저장한 육아용품 리스트</div>
           <div style="width: 32px;"></div>
         </div>
@@ -3030,7 +3145,7 @@
       <!-- 3. 저장한 시기별 할일 화면 -->
       <div id="savedTodoScreen" class="screen sub-screen">
         <div class="dashboard-topbar">
-          <button class="btn-back" onclick="goToScreen('myBagScreen')" title="내 가방으로">◀</button>
+          <button class="btn-back" onclick="goBackScreen()" title="내 가방으로">◀</button>
           <div class="topbar-title">저장한 시기별 할일 리스트</div>
           <div style="width: 32px;"></div>
         </div>
@@ -3074,7 +3189,7 @@
       <!-- 4. 저장한 출산 혜택 화면 -->
       <div id="savedBenefitsScreen" class="screen sub-screen">
         <div class="dashboard-topbar">
-          <button class="btn-back" onclick="goToScreen('myBagScreen')" title="내 가방으로">◀</button>
+          <button class="btn-back" onclick="goBackScreen()" title="내 가방으로">◀</button>
           <div class="topbar-title">저장한 출산 혜택 리스트</div>
           <div style="width: 32px;"></div>
         </div>
@@ -3163,13 +3278,14 @@
       { id: "m_feed_7", title: "젖병 세제 & 젖병 솔 (1세트)", tabCategory: "산모 용품", section: "수유 용품", locationTags: ["#조리원"] },
 
       // [개인 위생 & 스킨케어]
-      { id: "m_sk_1", title: "산모 세면도구 세트 (1세트)", tabCategory: "산모 용품", section: "개인 위생 & 스킨케어", locationTags: ["#병원", "#조리원"], note: "(샴푸·바디워시·칫솔치약 등)" },
+      { id: "m_sk_1", title: "산모 세면용품 세트 (1세트)", tabCategory: "산모 용품", section: "개인 위생 & 스킨케어", locationTags: ["#병원", "#조리원"], note: "(샴푸·바디워시·칫솔치약 등)" },
       { id: "m_sk_2", title: "기초화장·보습 세트 (1세트)", tabCategory: "산모 용품", section: "개인 위생 & 스킨케어", locationTags: ["#병원", "#조리원"], note: "(스킨·로션·립밤·핸드크림)" },
       { id: "m_sk_3", title: "헤어 케어 도구 세트 (1세트)", tabCategory: "산모 용품", section: "개인 위생 & 스킨케어", locationTags: ["#병원", "#조리원"], note: "(드라이기·머리빗·머리끈 등)" },
-      { id: "m_sk_4", title: "드라이샴푸 (1개)", tabCategory: "산모 용품", section: "개인 위생 & 스킨케어", locationTags: ["#병원"], note: "(입원 중 샤워 불가 시 추천)" }
+      { id: "m_sk_4", title: "드라이샴푸 (1개)", tabCategory: "산모 용품", section: "개인 위생 & 스킨케어", locationTags: ["#병원"], note: "(입원 중 샤워 불가 시 추천)" },
+      { id: "m_sk_5", title: "엄마용 영양제 (비타민, 철분 등)", tabCategory: "산모 용품", section: "개인 위생 & 스킨케어", locationTags: ["#병원", "#조리원"], note: "(산후 회복·철분·비타민D·유산균)" }
     ];
 
-    // ================= 2번 탭: 신생아 용품 (11개 항목 전수 등록) =================
+    // ================= 2번 탭: 신생아 용품 =================
     const babyTabItems = [
       // [의류 & 착용품 (퇴원 및 모자동실용)]
       { id: "b_cloth_1", title: "배냇저고리 / 배냇수트 (1~2개)", tabCategory: "신생아 용품", section: "의류 & 착용품 (퇴원 및 모자동실용)", locationTags: ["#퇴원퇴소"], note: "(세탁 완료 필수)" },
@@ -3183,13 +3299,15 @@
       { id: "b_care_3", title: "아기 로션 / 아기 크림 (1개)", tabCategory: "신생아 용품", section: "위생 & 케어 용품", locationTags: ["#조리원"] },
       { id: "b_care_4", title: "아기 영양제 (1개)", tabCategory: "신생아 용품", section: "위생 & 케어 용품", locationTags: ["#병원", "#조리원"], note: "(비타민D·유산균)" },
       { id: "b_care_5", title: "신생아 손톱깎이 세트 (1세트)", tabCategory: "신생아 용품", section: "위생 & 케어 용품", locationTags: ["#조리원"] },
-      { id: "b_care_6", title: "모자동실 촬영 소품 (필요시)", tabCategory: "신생아 용품", section: "위생 & 케어 용품", locationTags: ["#조리원"], note: "(디데이달력·초점책·인형)" },
+      { id: "b_care_6a", title: "디데이달력 (모자동실 성장 촬영용)", tabCategory: "신생아 용품", section: "위생 & 케어 용품", locationTags: ["#조리원"], note: "(모자동실 기념사진 및 성장 기록)" },
+      { id: "b_care_6b", title: "초점책 (모자동실 흑백/컬러)", tabCategory: "신생아 용품", section: "위생 & 케어 용품", locationTags: ["#조리원"], note: "(신생아 시각 발달 놀이용)" },
+      { id: "b_care_7", title: "수유등 (모자동실/조리원 밤 수유용)", tabCategory: "신생아 용품", section: "위생 & 케어 용품", locationTags: ["#병원", "#조리원"], note: "(조도 조절 가능한 수유 무드등)" },
 
       // [이동 및 안전 용품]
       { id: "b_safe_1", title: "신생아 카시트 (1개)", tabCategory: "신생아 용품", section: "이동 및 안전 용품", locationTags: ["#퇴원퇴소"], note: "(자차 이동 시 법적 필수 품목)" }
     ];
 
-    // ================= 3번 탭: 보호자 & 공통 (15개 항목 전수 등록) =================
+    // ================= 3번 탭: 보호자 & 공통 =================
     const guardianTabItems = [
       // [필수 서류 & 자금]
       { id: "g_doc_1", title: "산모수첩 & 신분증 (1세트)", tabCategory: "보호자 & 공통", section: "필수 서류 & 자금", locationTags: ["#병원"] },
@@ -3197,19 +3315,21 @@
 
       // [보호자(남편) 전용 용품]
       { id: "g_dad_1", title: "남편 세면도구 & 여벌옷 (1세트)", tabCategory: "보호자 & 공통", section: "보호자(남편) 전용 용품", locationTags: ["#병원", "#조리원"] },
-      { id: "g_dad_2", title: "남편용 침구류 (1세트)", tabCategory: "보호자 & 공통", section: "보호자(남편) 전용 용품", locationTags: ["#병원"], note: "(병원 제공 여부 확인 필요)" },
+      { id: "g_dad_2", title: "아빠용 침구류 (이불·베개)", tabCategory: "보호자 & 공통", section: "보호자(남편) 전용 용품", locationTags: ["#병원"], note: "(병원 제공 여부 확인 필요)" },
       { id: "g_dad_3", title: "남편용 슬리퍼 (1켤레)", tabCategory: "보호자 & 공통", section: "보호자(남편) 전용 용품", locationTags: ["#병원", "#조리원"] },
 
       // [공통 생활용품 & 전자기기]
-      { id: "g_life_1", title: "텀블러 & 빨대 세트 (1세트)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"], note: "(누워서 마시는 꺾인 빨대)" },
+      { id: "g_life_1", title: "텀블러 (보온/보냉용)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"], note: "(손잡이형/빨대 호환)" },
+      { id: "g_life_straw", title: "주름빨대 (구부러지는 꺾임 빨대)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"], note: "(누워서 수분 섭취 시 필수)" },
       { id: "g_life_2", title: "종이컵 & 보리차/붓기차 (1세트)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"] },
       { id: "g_life_3", title: "일회용 수세미 & 수저 (1세트)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"], note: "(텀블러 세척 및 식사 보조용)" },
-      { id: "g_life_4", title: "충전기 & 멀티탭 (1세트)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"] },
+      { id: "g_life_4", title: "휴대폰 충전기 (긴 케이블 권장)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"], note: "(침대 콘센트 거리 대비 2m 이상)" },
+      { id: "g_life_multi", title: "멀티탭 (3~5구, 긴 줄)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"], note: "(산모 및 보호자 기기 동시 충전)" },
       { id: "g_life_5", title: "거치대 & 미니선풍기 (1세트)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"] },
       { id: "g_life_6", title: "미니 가습기 (1개)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"], note: "(건조한 병실 대비)" },
       { id: "g_life_7", title: "필기도구 (1세트)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"], note: "(가위·네임펜·일반펜 / 모유기록용)" },
-      { id: "g_life_8", title: "산모 영양제 (1세트)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"], note: "(철분·칼슘·마그네슘 등)" },
-      { id: "g_life_9", title: "보호자 마스크 (1팩)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"] },
+      { id: "g_life_9", title: "일회용마스크 (KF94/비말 차단, 1팩)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"], note: "(병원·조리원 방역 및 면회용)" },
+      { id: "g_life_sanitizer", title: "손세정제 (휴대용 손소독제)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#병원", "#조리원"], note: "(신생아 접촉 전 손 소독)" },
       { id: "g_life_10", title: "접이식 보조가방 / 에코백 (1~2개)", tabCategory: "보호자 & 공통", section: "공통 생활용품 & 전자기기", locationTags: ["#퇴원퇴소"], note: "(퇴원 선물 및 늘어난 짐 수거용)" }
     ];
 
@@ -3776,6 +3896,7 @@
     let isGuest = false;
 
     let userProfile = {
+      nickname: "예비 엄마·아빠",
       dueDate: "",
       gender: "남아",
       region: "서울",
@@ -3814,7 +3935,7 @@
 
     let isBenefitsDeleteMode = false;
 
-    let selectedCategoryFilter = "산모 용품";
+    let selectedCategoryFilter = "전체";
     let selectedCategoryFilterBaby = "전체";
     let selectedCategoryFilterTodo = "전체";
     let selectedCategoryFilterBenefits = "전체";
@@ -5308,6 +5429,108 @@
       renderMyBagIntegratedView();
     }
 
+    // ==========================================
+    // 내 가방 체크리스트 공유 및 내보내기 로직
+    // ==========================================
+    let currentShareTarget = 'mat'; // 'mat', 'baby', 'todo', 'ben', 'all'
+    let isSpecificShareMode = false;
+
+    function openMyBagShareModal(target = null) {
+      const modal = document.getElementById('myBagShareModal');
+      const dropdownSec = document.getElementById('shareDropdownSection');
+      const specificSec = document.getElementById('shareSpecificBadgeSection');
+      const titleEl = document.getElementById('myBagShareModalTitle');
+      const badgeNameEl = document.getElementById('shareSpecificBagName');
+      const badgeCountEl = document.getElementById('shareSpecificBagCount');
+      const selectEl = document.getElementById('shareBagTargetSelect');
+
+      if (!modal) return;
+
+      if (target && target !== 'global' && target !== 'all') {
+        // [보조 진입점]: 해당 가방 색깔 박스에서 클릭 -> 드롭다운 없이 공유 방법 3가지만 표시
+        isSpecificShareMode = true;
+        currentShareTarget = target;
+        if (dropdownSec) dropdownSec.style.display = 'none';
+        if (specificSec) specificSec.style.display = 'flex';
+
+        let bagName = '';
+        let bagCount = 0;
+        if (target === 'mat') {
+          bagName = '👜 1. 출산가방 준비물';
+          const allMat = [...maternityBagItemsData, ...babyBagItemsData, ...guardianBagItemsData];
+          bagCount = allMat.filter(i => savedBagItemIds.has(i.id)).length;
+          specificSec.style.background = '#FFF0EC';
+          specificSec.style.borderColor = '#FFD8CE';
+          if (badgeNameEl) badgeNameEl.style.color = '#FF6F59';
+        } else if (target === 'baby') {
+          bagName = '🍼 2. 육아용품 리스트';
+          bagCount = babySuppliesData.filter(i => savedBabySuppliesIds.has(i.id)).length;
+          specificSec.style.background = '#E8F5E9';
+          specificSec.style.borderColor = '#C8E6C9';
+          if (badgeNameEl) badgeNameEl.style.color = '#2E7D32';
+        } else if (target === 'todo') {
+          bagName = '📅 3. 시기별 할일 리스트';
+          bagCount = todoItemsData.filter(i => savedTodoIds.has(i.id)).length;
+          specificSec.style.background = '#EDE7F6';
+          specificSec.style.borderColor = '#D1C4E9';
+          if (badgeNameEl) badgeNameEl.style.color = '#7E57C2';
+        } else if (target === 'ben') {
+          bagName = '🎁 4. 출산 혜택 리스트';
+          bagCount = getAllBenefitsList().filter(i => savedBenefitIds.has(i.id)).length;
+          specificSec.style.background = '#FFF3E0';
+          specificSec.style.borderColor = '#FFE0B2';
+          if (badgeNameEl) badgeNameEl.style.color = '#E65100';
+        }
+
+        if (titleEl) titleEl.innerHTML = `<span>🌸</span> ${bagName} 공유`;
+        if (badgeNameEl) badgeNameEl.innerText = bagName;
+        if (badgeCountEl) badgeCountEl.innerText = `담긴 항목 ${bagCount}개`;
+      } else {
+        // [최우선 진입점]: 상단바 '내 가방' 제목 우측 공유 버튼 클릭 -> 드롭다운으로 4가지 가방 선택
+        isSpecificShareMode = false;
+        if (dropdownSec) dropdownSec.style.display = 'block';
+        if (specificSec) specificSec.style.display = 'none';
+        if (titleEl) titleEl.innerHTML = `<span>🌸</span> 내 가방 체크리스트 공유`;
+
+        // 현재 보고 있는 상세 탭이 있으면 해당 탭을 기본 선택, 아니면 1번(mat) 선택
+        if (currentMyBagFeatureTab && ['mat', 'baby', 'todo', 'ben'].includes(currentMyBagFeatureTab)) {
+          if (selectEl) selectEl.value = currentMyBagFeatureTab;
+          currentShareTarget = currentMyBagFeatureTab;
+        } else {
+          if (selectEl) selectEl.value = 'mat';
+          currentShareTarget = 'mat';
+        }
+      }
+
+      modal.style.display = 'flex';
+    }
+
+    function closeMyBagShareModal() {
+      const modal = document.getElementById('myBagShareModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function onShareTargetSelectChange(val) {
+      currentShareTarget = val;
+    }
+
+    function executeShareAction(type) {
+      let targetName = '';
+      if (currentShareTarget === 'mat') targetName = '1. 출산가방 준비물';
+      else if (currentShareTarget === 'baby') targetName = '2. 육아용품 리스트';
+      else if (currentShareTarget === 'todo') targetName = '3. 시기별 할일 리스트';
+      else if (currentShareTarget === 'ben') targetName = '4. 출산 혜택 리스트';
+      else targetName = '내 가방 전체 종합본';
+
+      let typeName = '';
+      if (type === 'image') typeName = '이미지(PNG) 변환 & 카톡 공유';
+      else if (type === 'pdf') typeName = 'A4 인쇄용 PDF 다운로드';
+      else if (type === 'text') typeName = '텍스트 복사 & 문자/카톡 공유';
+
+      alert(`[공유 준비 완료]\n\n• 선택된 가방: ${targetName}\n• 공유 방식: ${typeName}\n\n(※ 다음 단계에서 실제 이미지/PDF 생성 및 카톡 연동 기능이 구현될 예정입니다.)`);
+      closeMyBagShareModal();
+    }
+
     function renderMyBagIntegratedView() {
       const container = document.getElementById('myBagIntegratedContent');
       if (!container) return;
@@ -5413,7 +5636,7 @@
         let items = [...savedMat];
         let chipsHTML = '';
         if (showCatFilter) {
-          const categories = ["산모 용품", "신생아 용품", "보호자 & 공통", "전체"];
+          const categories = ["전체", "산모 용품", "신생아 용품", "보호자 & 공통"];
           chipsHTML = `<div class="cat-filter-chips" style="margin-bottom:8px;">` + categories.map(cat => {
             const cSaved = cat === "전체" ? savedMat : savedMat.filter(i => i.tabCategory === cat);
             const cComp = cSaved.filter(i => completedBagItemIds.has(i.id));
@@ -5428,7 +5651,12 @@
 
         const progressBoxHTML = `
           <div class="mybag-feature-progress-box mat">
-            <div class="mybag-box-pill">👜 내가 담은 출산가방 준비물</div>
+            <div class="mybag-box-top-row">
+              <div class="mybag-box-pill">👜 내가 담은 출산가방 준비물</div>
+              <button class="btn-box-share" onclick="openMyBagShareModal('mat')" title="출산가방 준비물 공유하기">
+                <span>📤</span> 공유
+              </button>
+            </div>
             <div class="mybag-box-title">총 ${savedMat.length}개 담김 (${compMat.length}개 완료, ${matPct}%)</div>
             <div class="mybag-box-track">
               <div class="mybag-box-bar" style="width: ${matPct}%;"></div>
@@ -5483,7 +5711,7 @@
         let items = [...savedBaby];
         let chipsHTML = '';
         if (showCatFilter) {
-          const categories = ["1. 먹이기 (수유 & 이유식)", "2. 재우기 & 쉬기 (수면 & 공간·놀이)", "3. 씻기 & 케어 (위생·건강 & 의류)", "4. 외출 & 이동", "전체"];
+          const categories = ["전체", "1. 먹이기 (수유 & 이유식)", "2. 재우기 & 쉬기 (수면 & 공간·놀이)", "3. 씻기 & 케어 (위생·건강 & 의류)", "4. 외출 & 이동"];
           const catShortMap = { "1. 먹이기 (수유 & 이유식)": "1. 먹이기", "2. 재우기 & 쉬기 (수면 & 공간·놀이)": "2. 재우기/쉬기", "3. 씻기 & 케어 (위생·건강 & 의류)": "3. 씻기/케어", "4. 외출 & 이동": "4. 외출/이동", "전체": "전체" };
           chipsHTML = `<div class="cat-filter-chips" style="margin-bottom:8px;">` + categories.map(cat => {
             const cSaved = cat === "전체" ? savedBaby : savedBaby.filter(i => i.tabCategory === cat);
@@ -5499,7 +5727,12 @@
 
         const progressBoxHTML = `
           <div class="mybag-feature-progress-box baby">
-            <div class="mybag-box-pill">🍼 내가 담은 육아용품</div>
+            <div class="mybag-box-top-row">
+              <div class="mybag-box-pill">🍼 내가 담은 육아용품</div>
+              <button class="btn-box-share" onclick="openMyBagShareModal('baby')" title="육아용품 리스트 공유하기">
+                <span>📤</span> 공유
+              </button>
+            </div>
             <div class="mybag-box-title">총 ${savedBaby.length}개 담김 (${compBaby.length}개 완료, ${babyPct}%)</div>
             <div class="mybag-box-track">
               <div class="mybag-box-bar" style="width: ${babyPct}%;"></div>
@@ -5556,7 +5789,7 @@
         let items = [...savedTodo];
         let chipsHTML = '';
         if (showCatFilter) {
-          const categories = ["1. 출산 전 (준비기)", "2. 병원 (입원 및 분만기)", "3. 조리원 (회복 및 행정 처리기)", "4. 가정 (집 복귀 및 초기 육아기)", "전체"];
+          const categories = ["전체", "1. 출산 전 (준비기)", "2. 병원 (입원 및 분만기)", "3. 조리원 (회복 및 행정 처리기)", "4. 가정 (집 복귀 및 초기 육아기)"];
           const catShortMap = { "1. 출산 전 (준비기)": "1. 출산 전", "2. 병원 (입원 및 분만기)": "2. 병원", "3. 조리원 (회복 및 행정 처리기)": "3. 조리원", "4. 가정 (집 복귀 및 초기 육아기)": "4. 가정", "전체": "전체" };
           chipsHTML = `<div class="cat-filter-chips" style="margin-bottom:8px;">` + categories.map(cat => {
             const cSaved = cat === "전체" ? savedTodo : savedTodo.filter(i => i.tabCategory === cat);
@@ -5572,7 +5805,12 @@
 
         const progressBoxHTML = `
           <div class="mybag-feature-progress-box todo">
-            <div class="mybag-box-pill">📅 내가 담은 시기별 할일</div>
+            <div class="mybag-box-top-row">
+              <div class="mybag-box-pill">📅 내가 담은 시기별 할일</div>
+              <button class="btn-box-share" onclick="openMyBagShareModal('todo')" title="시기별 할일 리스트 공유하기">
+                <span>📤</span> 공유
+              </button>
+            </div>
             <div class="mybag-box-title">총 ${savedTodo.length}개 담김 (${compTodo.length}개 완료, ${todoPct}%)</div>
             <div class="mybag-box-track">
               <div class="mybag-box-bar" style="width: ${todoPct}%;"></div>
@@ -5647,7 +5885,12 @@
 
         const progressBoxHTML = `
           <div class="mybag-feature-progress-box ben">
-            <div class="mybag-box-pill">🎁 내가 담은 출산 혜택</div>
+            <div class="mybag-box-top-row">
+              <div class="mybag-box-pill">🎁 내가 담은 출산 혜택</div>
+              <button class="btn-box-share" onclick="openMyBagShareModal('ben')" title="출산 혜택 리스트 공유하기">
+                <span>📤</span> 공유
+              </button>
+            </div>
             <div class="mybag-box-title">총 ${savedBen.length}개 담김 (${compBen.length}개 완료, ${benPct}%)</div>
             <div class="mybag-box-track">
               <div class="mybag-box-bar" style="width: ${benPct}%;"></div>
@@ -5766,7 +6009,7 @@
       if (!container) return;
 
       const all = [...maternityBagItemsData, ...babyBagItemsData, ...guardianBagItemsData];
-      const categories = ["산모 용품", "신생아 용품", "보호자 & 공통", "전체"];
+      const categories = ["전체", "산모 용품", "신생아 용품", "보호자 & 공통"];
 
       const chipsEl = document.getElementById('catFilterChips');
       if (chipsEl) {
@@ -5895,11 +6138,11 @@
       if (!container) return;
 
       const categories = [
+        "전체",
         "1. 먹이기 (수유 & 이유식)",
         "2. 재우기 & 쉬기 (수면 & 공간·놀이)",
         "3. 씻기 & 케어 (위생·건강 & 의류)",
-        "4. 외출 & 이동",
-        "전체"
+        "4. 외출 & 이동"
       ];
       const catShortMap = {
         "1. 먹이기 (수유 & 이유식)": "1. 먹이기",
@@ -6028,11 +6271,11 @@
       if (!container) return;
 
       const categories = [
+        "전체",
         "1. 출산 전 (준비기)",
         "2. 병원 (입원 및 분만기)",
         "3. 조리원 (회복 및 행정 처리기)",
-        "4. 가정 (집 복귀 및 초기 육아기)",
-        "전체"
+        "4. 가정 (집 복귀 및 초기 육아기)"
       ];
       const catShortMap = {
         "1. 출산 전 (준비기)": "1. 출산 전",
@@ -6238,6 +6481,12 @@
     // ==========================================
     // 로그인, 온보딩 설문 & 스마트 맞춤 추천 엔진
     // ==========================================
+    function updateSurveyNickname(val) {
+      userProfile.nickname = val ? val.trim() : "";
+      const nameEl = document.getElementById('surveyUserName');
+      if (nameEl) nameEl.textContent = userProfile.nickname || '예비 엄마·아빠';
+    }
+
     function initDefaultDueDate() {
       const today = new Date();
       // 기본값: 오늘로부터 90일 후 (약 3개월)
@@ -6419,7 +6668,9 @@
       initDefaultDueDate();
       showToast('👶 비회원으로 시작합니다. (휴대폰 로컬에 안전 저장)');
       const nameEl = document.getElementById('surveyUserName');
-      if (nameEl) nameEl.textContent = '비회원 손님';
+      if (nameEl) nameEl.textContent = userProfile.nickname || '예비 엄마·아빠';
+      const nickInp = document.getElementById('surveyNicknameInput');
+      if (nickInp) nickInp.value = userProfile.nickname || '';
       goToScreen('onboardingScreen');
     }
 
@@ -6478,13 +6729,8 @@
         oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${conf.clientId}&redirect_uri=${encodeURIComponent(currentUrl)}&response_type=token&scope=email%20profile&state=google_oauth`;
       }
 
-      // 로컬 file:// 모드 및 웹 모드 대응
       if (location.protocol === 'file:') {
-        const confirmWeb = confirm(`[${conf.name} 공식 로그인 인증]\n${conf.name} 공식 서버(https://${provider === 'naver' ? 'nid.naver.com' : (provider === 'kakao' ? 'kauth.kakao.com' : 'accounts.google.com')})로 이동하여 실제 계정과 비밀번호로 로그인하시겠습니까?`);
-        if (confirmWeb) {
-          window.open(oauthUrl, '_blank');
-          confirmOAuthLogin();
-        }
+        showToast(`🔒 [${conf.name} 로그인] 안드로이드 로컬 앱(file://) 특성상 개발자 콘솔의 키해시/앱키 등록 후 실제 SDK 인증이 동작합니다.`);
       } else {
         window.location.href = oauthUrl;
       }
@@ -6709,10 +6955,10 @@
     }
 
     function openOnboardingEdit() {
-      if (currentUser) {
-        const nameEl = document.getElementById('surveyUserName');
-        if (nameEl) nameEl.textContent = currentUser.name;
-      }
+      const nameEl = document.getElementById('surveyUserName');
+      if (nameEl) nameEl.textContent = userProfile.nickname || '예비 엄마·아빠';
+      const nickInp = document.getElementById('surveyNicknameInput');
+      if (nickInp) nickInp.value = userProfile.nickname || '';
       const inp = document.getElementById('surveyDueDate');
       if (inp && userProfile.dueDate) {
         inp.value = userProfile.dueDate;
@@ -7098,60 +7344,19 @@
     }
 
     function updateDashboardProfileUI() {
-      const userTitle = document.getElementById('profileUserTitle');
-      const guestBadge = document.getElementById('profileGuestBadge');
       const welcomeName = document.getElementById('welcomeUserName');
-      const icon = document.getElementById('profileUserIcon');
-      const coupleText = document.getElementById('coupleSyncStatusText');
-      const coupleBtn = document.getElementById('btnOpenCoupleSync');
+      const nick = (userProfile && userProfile.nickname && userProfile.nickname.trim()) ? userProfile.nickname.trim() : '예비 엄마·아빠';
+      if (welcomeName) welcomeName.textContent = nick;
 
-      if (guestBadge) guestBadge.style.display = 'none';
-
-      if (isGuest) {
-        if (userTitle) userTitle.textContent = '비회원';
-        if (welcomeName) welcomeName.textContent = '손님';
-        if (icon) icon.textContent = '👶';
-        if (coupleText) coupleText.innerHTML = '📱 <b>개인 안전 모드</b>';
-        if (coupleBtn) {
-          coupleBtn.textContent = '간편가입 후 연동 ➔';
-          coupleBtn.onclick = () => { handleLogout(); };
-        }
-      } else {
-        const pNames = { kakao: '카카오', naver: '네이버', google: '구글' };
-        const pStr = currentUser ? (pNames[currentUser.type] || currentUser.type) : '회원';
-        if (userTitle) userTitle.textContent = `${pStr}`;
-        if (welcomeName) welcomeName.textContent = `${pStr}님`;
-        if (icon) icon.textContent = (currentUser && currentUser.type === 'naver') ? '🟢' : '🌸';
-
-        if (!userProfile.coupleCode) {
-          userProfile.coupleCode = generateCoupleCode();
-          savePersistedData(currentUser.type);
-        }
-
-        if (userProfile.linkedCoupleCode) {
-          if (coupleText) coupleText.innerHTML = `💑 <b>배우자와 실시간 연동 중</b> (${userProfile.linkedCoupleCode})`;
-          if (coupleBtn) {
-            coupleBtn.textContent = '연동 관리';
-            coupleBtn.onclick = openCoupleSyncModal;
-          }
-        } else {
-          if (coupleText) coupleText.innerHTML = `🔒 클라우드 안전 백업 적용 (내 연동 코드: <b>${userProfile.coupleCode}</b>)`;
-          if (coupleBtn) {
-            coupleBtn.textContent = '부부 연동하기 ➔';
-            coupleBtn.onclick = openCoupleSyncModal;
-          }
-        }
-      }
-
-      const { ddayText, weeksText } = calculateDDay(userProfile.dueDate);
+      const { ddayText } = calculateDDay(userProfile.dueDate);
       const tagDue = document.getElementById('tagDueDate');
-      if (tagDue) tagDue.textContent = weeksText ? `${ddayText} (${weeksText})` : ddayText;
+      if (tagDue) tagDue.textContent = ddayText || 'D-Day';
 
       const tagGen = document.getElementById('tagGender');
       if (tagGen) tagGen.textContent = userProfile.gender === '남아' ? '👦 남아' : (userProfile.gender === '여아' ? '👧 여아' : '🤍 성별 미정');
 
       const tagBirth = document.getElementById('tagBirthType');
-      if (tagBirth) tagBirth.textContent = userProfile.birthType === '제왕절개' ? '🏥 제왕' : (userProfile.birthType === '자연분만' ? '🌸 자분' : '🤔 분만 미정');
+      if (tagBirth) tagBirth.textContent = userProfile.birthType === '제왕절개' ? '🏥 제왕' : (userProfile.birthType === '자연분만' ? '🌸 자분' : '🤔 미정');
 
       const tagCare = document.getElementById('tagCareCenter');
       if (tagCare) tagCare.textContent = userProfile.careCenter === '이용함' ? '🏢 조리원' : '🏡 자택';
@@ -7286,15 +7491,20 @@
       'benefitsCategoryScreen', 'nationalBenefitsScreen', 'regionalBenefitsScreen', 'personalBenefitsScreen'
     ];
 
-    let screenHistory = ['dashboardScreen'];
+    let currentActiveScreenId = 'loginScreen';
+    let screenHistory = ['loginScreen'];
 
     function goToScreen(screenId, pushHistory = true) {
+      currentActiveScreenId = screenId;
       if (screenId === 'dashboardScreen') {
         screenHistory = ['dashboardScreen'];
       } else if (screenId === 'loginScreen') {
         screenHistory = ['loginScreen'];
       } else if (pushHistory) {
-        if (screenHistory[screenHistory.length - 1] !== screenId) {
+        const existingIdx = screenHistory.indexOf(screenId);
+        if (existingIdx !== -1) {
+          screenHistory = screenHistory.slice(0, existingIdx + 1);
+        } else {
           screenHistory.push(screenId);
         }
       }
@@ -7326,41 +7536,69 @@
       else if (screenId === 'myBagScreen') { currentMyBagFeatureTab = null; updateSavedBadges(); renderMyBagIntegratedView(); }
     }
 
-    // 안드로이드 하드웨어 뒤로가기 버튼 핸들러 (모달 닫기 -> 이전 화면 이동 -> 앱 종료 확인)
+    function goBackScreen() {
+      if (window.handleHardwareBackPress) {
+        window.handleHardwareBackPress();
+      }
+    }
+
+    // 안드로이드 하드웨어/소프트웨어 뒤로가기 버튼 핸들러
     window.handleHardwareBackPress = function() {
-      // 1. 열려있는 모달이 있으면 먼저 모달 닫기
-      const modals = [
-        'oauthModal', 'coupleSyncModal', 'genericModal', 'itemDetailModal', 
-        'recommendationPromptModal', 'customItemModal'
-      ];
-      for (const mId of modals) {
-        const mEl = document.getElementById(mId);
-        if (mEl && (mEl.style.display === 'flex' || mEl.style.display === 'block')) {
-          if (mId === 'oauthModal') closeOAuthModal();
-          else if (mId === 'coupleSyncModal') closeCoupleSyncModal();
-          else if (mId === 'genericModal') closeGenericModal();
-          else mEl.style.display = 'none';
+      try {
+        // 1. 선배맘 추천 TopSheet 드로어가 열려있으면 먼저 닫기 (절대 앱 종료 안 됨)
+        const topSheet = document.getElementById('topSheetContainer');
+        if (topSheet && (topSheet.classList.contains('show') || topSheet.classList.contains('active'))) {
+          closeTopSheet();
           return true;
         }
-      }
 
-      // 2. 화면 스택에 이전 화면이 존재하면 이전 화면으로 이동
-      if (screenHistory.length > 1) {
-        screenHistory.pop(); // 현재 화면 제거
-        const prevScreen = screenHistory[screenHistory.length - 1];
-        goToScreen(prevScreen, false);
-        return true;
-      }
-
-      // 3. 메인 화면이거나 이전 스택이 없는 경우 안드로이드 종료 대화상자 호출
-      if (window.AndroidInterface && window.AndroidInterface.exitApp) {
-        window.AndroidInterface.exitApp();
-      } else {
-        if (confirm('꽁꽁 출산가방 앱을 종료하시겠습니까?')) {
-          if (window.AndroidInterface && window.AndroidInterface.closeApp) {
-            window.AndroidInterface.closeApp();
+        // 2. 열려있는 모든 모달 팝업 확인 및 닫기 (절대 앱 종료 안 됨)
+        const modals = [
+          'oauthModal', 'coupleSyncModal', 'genericModal', 'itemDetailModal', 
+          'recommendationPromptModal', 'customItemModal'
+        ];
+        for (const mId of modals) {
+          const mEl = document.getElementById(mId);
+          if (mEl && (mEl.style.display === 'flex' || mEl.style.display === 'block' || mEl.classList.contains('show'))) {
+            if (mId === 'oauthModal') closeOAuthModal();
+            else if (mId === 'coupleSyncModal') closeCoupleSyncModal();
+            else if (mId === 'genericModal') closeGenericModal();
+            else if (mId === 'recommendationPromptModal') closeRecommendationPromptModal();
+            else mEl.style.display = 'none';
+            return true;
           }
         }
+
+        // 3. 현재 화면이 최상위 홈(dashboardScreen)이나 로그인 화면이 아닌 서브 화면(가방, 품목, 혜택 등)인 경우
+        // -> 절대 앱이 종료되지 않고 무조건 이전 화면 또는 홈 화면으로 이동!
+        if (currentActiveScreenId !== 'dashboardScreen' && currentActiveScreenId !== 'loginScreen') {
+          if (screenHistory.length > 1) {
+            screenHistory.pop(); // 현재 화면 제거
+            const prevScreen = screenHistory[screenHistory.length - 1];
+            if (prevScreen && prevScreen !== currentActiveScreenId) {
+              goToScreen(prevScreen, false);
+            } else {
+              goToScreen('dashboardScreen', false);
+            }
+          } else {
+            // 백스택이 비어있어도 서브 화면이면 무조건 홈 화면으로 이동
+            goToScreen('dashboardScreen', false);
+          }
+          return true;
+        }
+
+        // 4. 최상위 홈 화면(dashboardScreen 또는 loginScreen)에서만 뒤로가기 클릭 시 종료 확인 팝업
+        if (window.AndroidInterface && window.AndroidInterface.exitApp) {
+          window.AndroidInterface.exitApp();
+        } else {
+          if (confirm('꽁꽁 출산가방 앱을 종료하시겠습니까?')) {
+            if (window.AndroidInterface && window.AndroidInterface.closeApp) {
+              window.AndroidInterface.closeApp();
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Back press error:', err);
       }
       return true;
     };
@@ -7602,6 +7840,82 @@
 
       <div style="margin-top: 16px; text-align: center;">
         <button onclick="closeCoupleSyncModal()" style="width: 100%; padding: 11px 0; background: #F1F3F5; color: #495057; border: none; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer;">
+          닫기
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 내 가방 체크리스트 공유 및 내보내기 모달 -->
+  <div id="myBagShareModal" class="modal-overlay" style="display: none;" onclick="if(event.target === this) closeMyBagShareModal()">
+    <div class="modal-card" style="max-width: 360px; padding: 22px 20px; border-radius: 24px; box-shadow: 0 16px 36px rgba(0,0,0,0.22); text-align: left;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h3 id="myBagShareModalTitle" style="font-size: 16.5px; font-weight: 800; color: #2C3E50; margin: 0; display: flex; align-items: center; gap: 6px;">
+          <span>🌸</span> 내 가방 체크리스트 공유
+        </h3>
+        <button onclick="closeMyBagShareModal()" style="border: none; background: none; font-size: 20px; color: #999; cursor: pointer; padding: 0 4px;">✕</button>
+      </div>
+
+      <p id="myBagShareModalSub" style="font-size: 12px; color: #666; line-height: 1.5; margin-bottom: 14px; word-break: keep-all;">
+        담아둔 체크리스트를 배우자나 가족에게 카톡으로 보내거나 파일로 저장합니다.
+      </p>
+
+      <!-- 1) 최우선 진입점(상단바 공유) 전용: 가방 선택 드롭다운 영역 -->
+      <div id="shareDropdownSection" style="margin-bottom: 14px; background: #F8F9FA; border: 1px solid #E9ECEF; border-radius: 12px; padding: 10px 12px;">
+        <label for="shareBagTargetSelect" style="display: block; font-size: 11.5px; font-weight: 700; color: #555; margin-bottom: 6px;">
+          내보낼 가방 선택
+        </label>
+        <select id="shareBagTargetSelect" onchange="onShareTargetSelectChange(this.value)" style="width: 100%; padding: 8px 10px; border: 1px solid #CED4DA; border-radius: 8px; font-size: 13px; font-weight: 700; color: #333; background: #FFF; outline: none; cursor: pointer;">
+          <option value="mat" selected>👜 1. 출산가방 준비물</option>
+          <option value="baby">🍼 2. 육아용품 리스트</option>
+          <option value="todo">📅 3. 시기별 할일 리스트</option>
+          <option value="ben">🎁 4. 출산 혜택 리스트</option>
+          <option value="all">✨ [전체 모아보기] 내 가방 종합본</option>
+        </select>
+      </div>
+
+      <!-- 2) 보조 진입점(색깔 박스 공유) 전용: 대상 가방 뱃지 안내 영역 -->
+      <div id="shareSpecificBadgeSection" style="display: none; margin-bottom: 14px; background: #FFF0EC; border: 1px solid #FFD8CE; border-radius: 12px; padding: 10px 12px; align-items: center; justify-content: space-between;">
+        <div style="font-size: 13px; font-weight: 800; color: var(--primary);" id="shareSpecificBagName">👜 출산가방 준비물</div>
+        <div style="font-size: 11.5px; font-weight: 700; color: #666;" id="shareSpecificBagCount">담긴 항목 0개</div>
+      </div>
+
+      <!-- 3) 공유 방법 3가지 버튼 목록 -->
+      <div class="share-options-list" style="display: flex; flex-direction: column; gap: 9px; margin-bottom: 16px;">
+        <!-- 옵션 1: 이미지 저장 & 카톡 공유 -->
+        <button class="btn-share-option img-opt" onclick="executeShareAction('image')">
+          <div class="opt-icon">📷</div>
+          <div class="opt-text">
+            <div class="opt-title">예쁜 이미지로 저장 & 카톡 공유 <span class="opt-tag">추천</span></div>
+            <div class="opt-desc">사진 앨범 저장 및 카카오톡 대화방 전송</div>
+          </div>
+          <div class="opt-arrow">➔</div>
+        </button>
+
+        <!-- 옵션 2: PDF 다운로드 -->
+        <button class="btn-share-option pdf-opt" onclick="executeShareAction('pdf')">
+          <div class="opt-icon">📄</div>
+          <div class="opt-text">
+            <div class="opt-title">A4 인쇄용 PDF 다운로드</div>
+            <div class="opt-desc">캐리어 부착 및 A4 용지 인쇄용 문서</div>
+          </div>
+          <div class="opt-arrow">➔</div>
+        </button>
+
+        <!-- 옵션 3: 텍스트 복사 & 문자/카톡 -->
+        <button class="btn-share-option text-opt" onclick="executeShareAction('text')">
+          <div class="opt-icon">💬</div>
+          <div class="opt-text">
+            <div class="opt-title">텍스트 복사 & 문자/카톡 보내기</div>
+            <div class="opt-desc">클립보드 복사 후 메시지로 바로 전송</div>
+          </div>
+          <div class="opt-arrow">➔</div>
+        </button>
+      </div>
+
+      <!-- 하단 닫기 버튼 -->
+      <div>
+        <button onclick="closeMyBagShareModal()" style="width: 100%; padding: 11px 0; background: #F1F3F5; color: #495057; border: none; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.2s;">
           닫기
         </button>
       </div>

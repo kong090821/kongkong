@@ -38,8 +38,8 @@ Write-Host "2. Linking Resources & Generating R.java (APK & Proto format)..."
     --manifest "android/app/src/main/AndroidManifest.xml" `
     --min-sdk-version 24 `
     --target-sdk-version 36 `
-    --version-code 14 `
-    --version-name "1.1.4" `
+    --version-code 15 `
+    --version-name "1.2.0" `
     --java "$buildDir/gen" `
     -o "$buildDir/unaligned_res.apk" `
     -A "android/app/src/main/assets" `
@@ -50,8 +50,8 @@ Write-Host "2. Linking Resources & Generating R.java (APK & Proto format)..."
     --manifest "android/app/src/main/AndroidManifest.xml" `
     --min-sdk-version 24 `
     --target-sdk-version 36 `
-    --version-code 14 `
-    --version-name "1.1.4" `
+    --version-code 15 `
+    --version-name "1.2.0" `
     --proto-format `
     -o "$buildDir/base_proto.zip" `
     -A "android/app/src/main/assets" `

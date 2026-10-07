@@ -1805,6 +1805,129 @@
       color: #fff;
     }
 
+    /* 내 가방 공유 버튼 & 진입점 스타일 */
+    .btn-topbar-share {
+      background: #FFF0EC;
+      border: 1px solid #FFD8CE;
+      color: var(--primary);
+      font-size: 12.5px;
+      font-weight: 700;
+      border-radius: 16px;
+      padding: 4px 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      z-index: 2;
+    }
+    .btn-topbar-share:hover {
+      background: #FFE5DE;
+    }
+    .btn-topbar-share:active {
+      transform: scale(0.96);
+      background: #FFD5CB;
+    }
+
+    .mybag-box-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .mybag-box-top-row .mybag-box-pill {
+      margin-bottom: 0 !important;
+    }
+    .btn-box-share {
+      background: rgba(255, 255, 255, 0.28);
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      color: #FFFFFF;
+      font-size: 11.5px;
+      font-weight: 700;
+      border-radius: 14px;
+      padding: 3px 9px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    .btn-box-share:hover {
+      background: rgba(255, 255, 255, 0.38);
+    }
+    .btn-box-share:active {
+      transform: scale(0.95);
+      background: rgba(255, 255, 255, 0.48);
+    }
+
+    .btn-share-option {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: #FFFFFF;
+      border: 1.5px solid #E9ECEF;
+      border-radius: 14px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+    .btn-share-option:hover {
+      border-color: #FF6F59;
+      background: #FFF9F8;
+      transform: translateY(-1px);
+    }
+    .btn-share-option:active {
+      transform: scale(0.98);
+    }
+    .btn-share-option .opt-icon {
+      font-size: 20px;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+    .btn-share-option.img-opt .opt-icon { background: #FFF0EC; }
+    .btn-share-option.pdf-opt .opt-icon { background: #E8F5E9; }
+    .btn-share-option.text-opt .opt-icon { background: #EDE7F6; }
+
+    .btn-share-option .opt-text {
+      flex: 1;
+    }
+    .btn-share-option .opt-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #2C3E50;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-share-option .opt-tag {
+      font-size: 10px;
+      background: #FF6F59;
+      color: white;
+      padding: 1px 5px;
+      border-radius: 6px;
+      font-weight: 700;
+    }
+    .btn-share-option .opt-desc {
+      font-size: 11px;
+      color: #888;
+      margin-top: 2px;
+    }
+    .btn-share-option .opt-arrow {
+      font-size: 14px;
+      color: #BBB;
+      font-weight: 700;
+    }
+
     /* ==========================================
        선배맘 추천 TOP 3 카드 칩 & 탑시트(Top Sheet)
        ========================================== */
@@ -2560,7 +2683,9 @@
         <div class="dashboard-topbar">
           <button class="btn-back" onclick="goBackScreen()" title="홈으로 돌아가기">◀</button>
           <div class="topbar-title">내 가방</div>
-          <div style="width: 32px;"></div>
+          <button class="btn-topbar-share" onclick="openMyBagShareModal('global')" title="체크리스트 공유 및 내보내기">
+            <span style="font-size: 13.5px;">📤</span> 공유
+          </button>
         </div>
 
         <!-- 내 가방 컨테이너: 1~4번 버튼 또는 선택된 기능의 상세 뷰 및 박스가 렌더링됨 -->
@@ -5304,6 +5429,108 @@
       renderMyBagIntegratedView();
     }
 
+    // ==========================================
+    // 내 가방 체크리스트 공유 및 내보내기 로직
+    // ==========================================
+    let currentShareTarget = 'mat'; // 'mat', 'baby', 'todo', 'ben', 'all'
+    let isSpecificShareMode = false;
+
+    function openMyBagShareModal(target = null) {
+      const modal = document.getElementById('myBagShareModal');
+      const dropdownSec = document.getElementById('shareDropdownSection');
+      const specificSec = document.getElementById('shareSpecificBadgeSection');
+      const titleEl = document.getElementById('myBagShareModalTitle');
+      const badgeNameEl = document.getElementById('shareSpecificBagName');
+      const badgeCountEl = document.getElementById('shareSpecificBagCount');
+      const selectEl = document.getElementById('shareBagTargetSelect');
+
+      if (!modal) return;
+
+      if (target && target !== 'global' && target !== 'all') {
+        // [보조 진입점]: 해당 가방 색깔 박스에서 클릭 -> 드롭다운 없이 공유 방법 3가지만 표시
+        isSpecificShareMode = true;
+        currentShareTarget = target;
+        if (dropdownSec) dropdownSec.style.display = 'none';
+        if (specificSec) specificSec.style.display = 'flex';
+
+        let bagName = '';
+        let bagCount = 0;
+        if (target === 'mat') {
+          bagName = '👜 1. 출산가방 준비물';
+          const allMat = [...maternityBagItemsData, ...babyBagItemsData, ...guardianBagItemsData];
+          bagCount = allMat.filter(i => savedBagItemIds.has(i.id)).length;
+          specificSec.style.background = '#FFF0EC';
+          specificSec.style.borderColor = '#FFD8CE';
+          if (badgeNameEl) badgeNameEl.style.color = '#FF6F59';
+        } else if (target === 'baby') {
+          bagName = '🍼 2. 육아용품 리스트';
+          bagCount = babySuppliesData.filter(i => savedBabySuppliesIds.has(i.id)).length;
+          specificSec.style.background = '#E8F5E9';
+          specificSec.style.borderColor = '#C8E6C9';
+          if (badgeNameEl) badgeNameEl.style.color = '#2E7D32';
+        } else if (target === 'todo') {
+          bagName = '📅 3. 시기별 할일 리스트';
+          bagCount = todoItemsData.filter(i => savedTodoIds.has(i.id)).length;
+          specificSec.style.background = '#EDE7F6';
+          specificSec.style.borderColor = '#D1C4E9';
+          if (badgeNameEl) badgeNameEl.style.color = '#7E57C2';
+        } else if (target === 'ben') {
+          bagName = '🎁 4. 출산 혜택 리스트';
+          bagCount = getAllBenefitsList().filter(i => savedBenefitIds.has(i.id)).length;
+          specificSec.style.background = '#FFF3E0';
+          specificSec.style.borderColor = '#FFE0B2';
+          if (badgeNameEl) badgeNameEl.style.color = '#E65100';
+        }
+
+        if (titleEl) titleEl.innerHTML = `<span>🌸</span> ${bagName} 공유`;
+        if (badgeNameEl) badgeNameEl.innerText = bagName;
+        if (badgeCountEl) badgeCountEl.innerText = `담긴 항목 ${bagCount}개`;
+      } else {
+        // [최우선 진입점]: 상단바 '내 가방' 제목 우측 공유 버튼 클릭 -> 드롭다운으로 4가지 가방 선택
+        isSpecificShareMode = false;
+        if (dropdownSec) dropdownSec.style.display = 'block';
+        if (specificSec) specificSec.style.display = 'none';
+        if (titleEl) titleEl.innerHTML = `<span>🌸</span> 내 가방 체크리스트 공유`;
+
+        // 현재 보고 있는 상세 탭이 있으면 해당 탭을 기본 선택, 아니면 1번(mat) 선택
+        if (currentMyBagFeatureTab && ['mat', 'baby', 'todo', 'ben'].includes(currentMyBagFeatureTab)) {
+          if (selectEl) selectEl.value = currentMyBagFeatureTab;
+          currentShareTarget = currentMyBagFeatureTab;
+        } else {
+          if (selectEl) selectEl.value = 'mat';
+          currentShareTarget = 'mat';
+        }
+      }
+
+      modal.style.display = 'flex';
+    }
+
+    function closeMyBagShareModal() {
+      const modal = document.getElementById('myBagShareModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function onShareTargetSelectChange(val) {
+      currentShareTarget = val;
+    }
+
+    function executeShareAction(type) {
+      let targetName = '';
+      if (currentShareTarget === 'mat') targetName = '1. 출산가방 준비물';
+      else if (currentShareTarget === 'baby') targetName = '2. 육아용품 리스트';
+      else if (currentShareTarget === 'todo') targetName = '3. 시기별 할일 리스트';
+      else if (currentShareTarget === 'ben') targetName = '4. 출산 혜택 리스트';
+      else targetName = '내 가방 전체 종합본';
+
+      let typeName = '';
+      if (type === 'image') typeName = '이미지(PNG) 변환 & 카톡 공유';
+      else if (type === 'pdf') typeName = 'A4 인쇄용 PDF 다운로드';
+      else if (type === 'text') typeName = '텍스트 복사 & 문자/카톡 공유';
+
+      alert(`[공유 준비 완료]\n\n• 선택된 가방: ${targetName}\n• 공유 방식: ${typeName}\n\n(※ 다음 단계에서 실제 이미지/PDF 생성 및 카톡 연동 기능이 구현될 예정입니다.)`);
+      closeMyBagShareModal();
+    }
+
     function renderMyBagIntegratedView() {
       const container = document.getElementById('myBagIntegratedContent');
       if (!container) return;
@@ -5424,7 +5651,12 @@
 
         const progressBoxHTML = `
           <div class="mybag-feature-progress-box mat">
-            <div class="mybag-box-pill">👜 내가 담은 출산가방 준비물</div>
+            <div class="mybag-box-top-row">
+              <div class="mybag-box-pill">👜 내가 담은 출산가방 준비물</div>
+              <button class="btn-box-share" onclick="openMyBagShareModal('mat')" title="출산가방 준비물 공유하기">
+                <span>📤</span> 공유
+              </button>
+            </div>
             <div class="mybag-box-title">총 ${savedMat.length}개 담김 (${compMat.length}개 완료, ${matPct}%)</div>
             <div class="mybag-box-track">
               <div class="mybag-box-bar" style="width: ${matPct}%;"></div>
@@ -5495,7 +5727,12 @@
 
         const progressBoxHTML = `
           <div class="mybag-feature-progress-box baby">
-            <div class="mybag-box-pill">🍼 내가 담은 육아용품</div>
+            <div class="mybag-box-top-row">
+              <div class="mybag-box-pill">🍼 내가 담은 육아용품</div>
+              <button class="btn-box-share" onclick="openMyBagShareModal('baby')" title="육아용품 리스트 공유하기">
+                <span>📤</span> 공유
+              </button>
+            </div>
             <div class="mybag-box-title">총 ${savedBaby.length}개 담김 (${compBaby.length}개 완료, ${babyPct}%)</div>
             <div class="mybag-box-track">
               <div class="mybag-box-bar" style="width: ${babyPct}%;"></div>
@@ -5568,7 +5805,12 @@
 
         const progressBoxHTML = `
           <div class="mybag-feature-progress-box todo">
-            <div class="mybag-box-pill">📅 내가 담은 시기별 할일</div>
+            <div class="mybag-box-top-row">
+              <div class="mybag-box-pill">📅 내가 담은 시기별 할일</div>
+              <button class="btn-box-share" onclick="openMyBagShareModal('todo')" title="시기별 할일 리스트 공유하기">
+                <span>📤</span> 공유
+              </button>
+            </div>
             <div class="mybag-box-title">총 ${savedTodo.length}개 담김 (${compTodo.length}개 완료, ${todoPct}%)</div>
             <div class="mybag-box-track">
               <div class="mybag-box-bar" style="width: ${todoPct}%;"></div>
@@ -5643,7 +5885,12 @@
 
         const progressBoxHTML = `
           <div class="mybag-feature-progress-box ben">
-            <div class="mybag-box-pill">🎁 내가 담은 출산 혜택</div>
+            <div class="mybag-box-top-row">
+              <div class="mybag-box-pill">🎁 내가 담은 출산 혜택</div>
+              <button class="btn-box-share" onclick="openMyBagShareModal('ben')" title="출산 혜택 리스트 공유하기">
+                <span>📤</span> 공유
+              </button>
+            </div>
             <div class="mybag-box-title">총 ${savedBen.length}개 담김 (${compBen.length}개 완료, ${benPct}%)</div>
             <div class="mybag-box-track">
               <div class="mybag-box-bar" style="width: ${benPct}%;"></div>
@@ -7593,6 +7840,82 @@
 
       <div style="margin-top: 16px; text-align: center;">
         <button onclick="closeCoupleSyncModal()" style="width: 100%; padding: 11px 0; background: #F1F3F5; color: #495057; border: none; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer;">
+          닫기
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 내 가방 체크리스트 공유 및 내보내기 모달 -->
+  <div id="myBagShareModal" class="modal-overlay" style="display: none;" onclick="if(event.target === this) closeMyBagShareModal()">
+    <div class="modal-card" style="max-width: 360px; padding: 22px 20px; border-radius: 24px; box-shadow: 0 16px 36px rgba(0,0,0,0.22); text-align: left;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h3 id="myBagShareModalTitle" style="font-size: 16.5px; font-weight: 800; color: #2C3E50; margin: 0; display: flex; align-items: center; gap: 6px;">
+          <span>🌸</span> 내 가방 체크리스트 공유
+        </h3>
+        <button onclick="closeMyBagShareModal()" style="border: none; background: none; font-size: 20px; color: #999; cursor: pointer; padding: 0 4px;">✕</button>
+      </div>
+
+      <p id="myBagShareModalSub" style="font-size: 12px; color: #666; line-height: 1.5; margin-bottom: 14px; word-break: keep-all;">
+        담아둔 체크리스트를 배우자나 가족에게 카톡으로 보내거나 파일로 저장합니다.
+      </p>
+
+      <!-- 1) 최우선 진입점(상단바 공유) 전용: 가방 선택 드롭다운 영역 -->
+      <div id="shareDropdownSection" style="margin-bottom: 14px; background: #F8F9FA; border: 1px solid #E9ECEF; border-radius: 12px; padding: 10px 12px;">
+        <label for="shareBagTargetSelect" style="display: block; font-size: 11.5px; font-weight: 700; color: #555; margin-bottom: 6px;">
+          내보낼 가방 선택
+        </label>
+        <select id="shareBagTargetSelect" onchange="onShareTargetSelectChange(this.value)" style="width: 100%; padding: 8px 10px; border: 1px solid #CED4DA; border-radius: 8px; font-size: 13px; font-weight: 700; color: #333; background: #FFF; outline: none; cursor: pointer;">
+          <option value="mat" selected>👜 1. 출산가방 준비물</option>
+          <option value="baby">🍼 2. 육아용품 리스트</option>
+          <option value="todo">📅 3. 시기별 할일 리스트</option>
+          <option value="ben">🎁 4. 출산 혜택 리스트</option>
+          <option value="all">✨ [전체 모아보기] 내 가방 종합본</option>
+        </select>
+      </div>
+
+      <!-- 2) 보조 진입점(색깔 박스 공유) 전용: 대상 가방 뱃지 안내 영역 -->
+      <div id="shareSpecificBadgeSection" style="display: none; margin-bottom: 14px; background: #FFF0EC; border: 1px solid #FFD8CE; border-radius: 12px; padding: 10px 12px; align-items: center; justify-content: space-between;">
+        <div style="font-size: 13px; font-weight: 800; color: var(--primary);" id="shareSpecificBagName">👜 출산가방 준비물</div>
+        <div style="font-size: 11.5px; font-weight: 700; color: #666;" id="shareSpecificBagCount">담긴 항목 0개</div>
+      </div>
+
+      <!-- 3) 공유 방법 3가지 버튼 목록 -->
+      <div class="share-options-list" style="display: flex; flex-direction: column; gap: 9px; margin-bottom: 16px;">
+        <!-- 옵션 1: 이미지 저장 & 카톡 공유 -->
+        <button class="btn-share-option img-opt" onclick="executeShareAction('image')">
+          <div class="opt-icon">📷</div>
+          <div class="opt-text">
+            <div class="opt-title">예쁜 이미지로 저장 & 카톡 공유 <span class="opt-tag">추천</span></div>
+            <div class="opt-desc">사진 앨범 저장 및 카카오톡 대화방 전송</div>
+          </div>
+          <div class="opt-arrow">➔</div>
+        </button>
+
+        <!-- 옵션 2: PDF 다운로드 -->
+        <button class="btn-share-option pdf-opt" onclick="executeShareAction('pdf')">
+          <div class="opt-icon">📄</div>
+          <div class="opt-text">
+            <div class="opt-title">A4 인쇄용 PDF 다운로드</div>
+            <div class="opt-desc">캐리어 부착 및 A4 용지 인쇄용 문서</div>
+          </div>
+          <div class="opt-arrow">➔</div>
+        </button>
+
+        <!-- 옵션 3: 텍스트 복사 & 문자/카톡 -->
+        <button class="btn-share-option text-opt" onclick="executeShareAction('text')">
+          <div class="opt-icon">💬</div>
+          <div class="opt-text">
+            <div class="opt-title">텍스트 복사 & 문자/카톡 보내기</div>
+            <div class="opt-desc">클립보드 복사 후 메시지로 바로 전송</div>
+          </div>
+          <div class="opt-arrow">➔</div>
+        </button>
+      </div>
+
+      <!-- 하단 닫기 버튼 -->
+      <div>
+        <button onclick="closeMyBagShareModal()" style="width: 100%; padding: 11px 0; background: #F1F3F5; color: #495057; border: none; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.2s;">
           닫기
         </button>
       </div>
