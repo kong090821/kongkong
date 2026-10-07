@@ -1,13 +1,52 @@
-$userSdk = "$env:LOCALAPPDATA\Android\Sdk"
-if (Test-Path $userSdk) {
-    $sdkDir = $userSdk
-} else {
-    $sdkDir = "C:\Users\user\AppData\Local\Android\Sdk"
+$sdkCandidates = @(
+    "$env:LOCALAPPDATA\Android\Sdk",
+    "C:\Users\user\AppData\Local\Android\Sdk",
+    "C:\Android\Sdk",
+    "D:\Android\Sdk"
+)
+$sdkDir = $null
+foreach ($cand in $sdkCandidates) {
+    if ($cand -and (Test-Path $cand)) {
+        $sdkDir = $cand
+        break
+    }
 }
-$buildToolsDir = "$sdkDir\build-tools\36.0.0"
-$platformDir = "$sdkDir\platforms\android-37.0"
+if (!$sdkDir) {
+    Write-Error "Android SDK not found!"
+    exit 1
+}
+
+if (Test-Path "$sdkDir\build-tools\36.0.0") {
+    $buildToolsDir = "$sdkDir\build-tools\36.0.0"
+} else {
+    $buildToolsDir = (Get-ChildItem "$sdkDir\build-tools" -Directory | Select-Object -Last 1).FullName
+}
+
+if (Test-Path "$sdkDir\platforms\android-36\android.jar") {
+    $platformDir = "$sdkDir\platforms\android-36"
+} elseif (Test-Path "$sdkDir\platforms\android-37.0\android.jar") {
+    $platformDir = "$sdkDir\platforms\android-37.0"
+} else {
+    $platformDir = (Get-ChildItem "$sdkDir\platforms" -Directory | Where-Object { Test-Path "$($_.FullName)\android.jar" } | Select-Object -Last 1).FullName
+}
 $androidJar = "$platformDir\android.jar"
-$jbr = "C:\Program Files\Android\Android Studio\jbr"
+
+$jdkCandidates = @(
+    "$env:LOCALAPPDATA\Java\jdk-17.0.12+7",
+    "C:\Program Files\Android\Android Studio\jbr",
+    "$env:JAVA_HOME"
+) + (Get-ChildItem "$env:LOCALAPPDATA\Java" -Directory -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName })
+$jbr = $null
+foreach ($cand in $jdkCandidates) {
+    if ($cand -and (Test-Path "$cand\bin\javac.exe")) {
+        $jbr = $cand
+        break
+    }
+}
+if (!$jbr) {
+    Write-Error "JDK not found!"
+    exit 1
+}
 
 $env:JAVA_HOME = $jbr
 $env:PATH = "$jbr\bin;$env:PATH"
