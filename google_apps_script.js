@@ -61,6 +61,8 @@ function onOpen() {
     .addItem('☕ [수동 실행] 맘카페 언급 1위 데이터 지금 수집', 'updateMomCafeWeeklyData')
     .addItem('📦 [수동 실행] 쿠팡 TOP 3 랭킹 데이터 지금 수집', 'updateCoupangDailyTop3')
     .addSeparator()
+    .addItem('📥 [원클릭 채우기] 최신 111종 할일 & 56종 혜택 시트에 자동 동기화', 'importMasterDataToSheets')
+    .addSeparator()
     .addItem('⏰ [자동화 설정] 월요 맘카페(06시) + 매일 쿠팡(06시) 스케줄러 등록', 'setupAllTriggers')
     .addItem('ℹ️ 연동 가이드 및 수집 상태 확인', 'showGuideDialog')
     .addToUi();
@@ -309,6 +311,114 @@ function syncRecommendationsOnly() {
   } catch(err) {
     ui.alert('❌ 맞춤 추천 반영 중 오류 발생: ' + err.toString());
   }
+}
+
+// ------------------------------------------------------------------------------
+// (6) 📥 [원클릭 자동 채우기] 최신 111종 할일 & 56종 혜택 시트에 자동 동기화
+// ------------------------------------------------------------------------------
+function importMasterDataToSheets() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+
+  const confirm = ui.alert(
+    '📥 최신 마스터 데이터 시트 동기화',
+    '어플의 최신 데이터(111종 할일 체크리스트 & 56종 출산 혜택)를 구글 스프레드시트의 [시기별할일] 및 [출산혜택정리] 시트에 자동으로 채워넣으시겠습니까?\n\n※ 기존 행이 최신 데이터로 깔끔하게 갱신되며, 어플 캐시까지 원클릭으로 동기화됩니다.',
+    ui.ButtonSet.YES_NO
+  );
+
+  if (confirm !== ui.Button.YES) return;
+
+  try {
+    const res = executeMasterDataImport(ss);
+    ui.alert(
+      '🎉 구글 스프레드시트 갱신 완료!',
+      '• 시기별 할일: ' + res.todosCount + '개 항목 채우기 완료\n' +
+      '• 출산 혜택: ' + res.benefitsCount + '개 항목 채우기 완료\n\n' +
+      '✅ 구글 시트에 최신 데이터가 완벽히 반영되었으며, 어플 캐시 동기화까지 100% 완료되었습니다!',
+      ui.ButtonSet.OK
+    );
+  } catch (err) {
+    ui.alert('❌ 데이터 동기화 중 오류가 발생했습니다: ' + err.toString());
+  }
+}
+
+/**
+ * 최신 GitHub data_export.json 데이터를 구글 시트에 주입하고 어플 캐시를 즉시 갱신
+ */
+function executeMasterDataImport(ss) {
+  const url = 'https://raw.githubusercontent.com/kong090821/kongkong/main/data_export.json';
+  const response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+  if (response.getResponseCode() !== 200) {
+    throw new Error('데이터 다운로드 실패 (HTTP ' + response.getResponseCode() + ')');
+  }
+
+  const json = JSON.parse(response.getContentText('UTF-8'));
+  let todosCount = 0;
+  let benefitsCount = 0;
+
+  // 1. 시기별할일 시트 갱신
+  if (json.todos && Array.isArray(json.todos) && json.todos.length > 0) {
+    let sheetTodos = ss.getSheetByName('시기별할일');
+    if (!sheetTodos) {
+      sheetTodos = ss.insertSheet('시기별할일');
+      sheetTodos.appendRow(['ID', '시기구분', '담당역할(#아빠/#엄마/#부부)', '할일제목', '상세팁/가이드']);
+      sheetTodos.getRange(1, 1, 1, 5).setBackground('#FFE0B2').setFontWeight('bold');
+    }
+
+    const lastRow = sheetTodos.getLastRow();
+    if (lastRow >= 2) {
+      sheetTodos.getRange(2, 1, lastRow - 1, sheetTodos.getLastColumn()).clearContent();
+    }
+
+    const todosRows = json.todos.map(function(t) {
+      return [
+        t.id || '',
+        t.category || t.tabCategory || '',
+        t.role || t.roleTag || '#부부',
+        t.title || '',
+        t.tip || ''
+      ];
+    });
+
+    sheetTodos.getRange(2, 1, todosRows.length, 5).setValues(todosRows);
+    todosCount = todosRows.length;
+  }
+
+  // 2. 출산혜택정리 시트 갱신
+  if (json.benefits && Array.isArray(json.benefits) && json.benefits.length > 0) {
+    let sheetBen = ss.getSheetByName('출산혜택정리');
+    if (!sheetBen) {
+      sheetBen = ss.insertSheet('출산혜택정리');
+      sheetBen.appendRow(['ID', '지역구분', '혜택명', '지원형태(바우처/현금)', '지원금액 및 내용', '신청자격', '신청시기', '신청처']);
+      sheetBen.getRange(1, 1, 1, 8).setBackground('#FFE0B2').setFontWeight('bold');
+    }
+
+    const lastRowBen = sheetBen.getLastRow();
+    if (lastRowBen >= 2) {
+      sheetBen.getRange(2, 1, lastRowBen - 1, sheetBen.getLastColumn()).clearContent();
+    }
+
+    const benRows = json.benefits.map(function(b) {
+      return [
+        b.id || '',
+        b.region || '',
+        b.title || '',
+        b.type || b.badge || '',
+        b.amount || b.desc || '',
+        b.eligibility || '',
+        b.timing || '',
+        b.place || ''
+      ];
+    });
+
+    sheetBen.getRange(2, 1, benRows.length, 8).setValues(benRows);
+    benefitsCount = benRows.length;
+  }
+
+  // 3. 앱 캐시 동기화도 즉시 수행
+  syncToApp();
+
+  return { todosCount: todosCount, benefitsCount: benefitsCount };
 }
 
 // ------------------------------------------------------------------------------
@@ -1097,6 +1207,18 @@ function doPost(e) {
     }
 
     if (postData) {
+      if (postData.action === 'importMasterData') {
+        const importRes = executeMasterDataImport(ss);
+        result = {
+          status: "success",
+          message: "Master data imported successfully",
+          todosCount: importRes.todosCount,
+          benefitsCount: importRes.benefitsCount
+        };
+        return ContentService.createTextOutput(JSON.stringify(result))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+
       logUserActivity(ss, postData);
 
       // 산모들이 어플 종료 시 또는 가방 변경 시, 수집된 데이터를 바탕으로 🎯 맞춤_추천_설정 시트의 후보 품목 자동 갱신!
