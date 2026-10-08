@@ -1,9 +1,9 @@
 /**
  * ==============================================================================
- * 🍼 [꽁꽁 출산가방 v1.1.6] 구글 스프레드시트 완전 자동화 및 실시간 클라우드 연동 스크립트
+ * 🍼 [꽁꽁 출산가방 v1.1.7] 구글 스프레드시트 완전 자동화 및 실시간 클라우드 연동 스크립트
  * ==============================================================================
  * 
- * [v1.1.6 주요 핵심 기능 및 파이프라인]
+ * [v1.1.7 주요 핵심 기능 및 파이프라인]
  * 1. 🔗 쿠팡 파트너스 개별 수익 링크(L, M, N열) & 기본 링크 Fallback 스마트 연동:
  *    - 구글 시트에서 수동 입력한 개별 상품 파트너스 링크(top1_url, top2_url, top3_url) 최우선 적용
  *    - 미입력 품목은 선생님의 기본 쿠팡 파트너스 링크(https://link.coupang.com/a/hDXnz86Thk)로 100% 자동 연결
@@ -12,6 +12,11 @@
  * 2. ⏰ 출산 전후 시기별·역할별 111개 체크리스트 전수 지원:
  *    - 임산부·신생아 필수 백신 7종 & 태아보험 전 과정 프로세스 4종
  *    - 분만실 촬영·탯줄 채취, 아기 첫 순간 영상, 신생아 등록·팔찌, 산모 밀착 간호/보행 부축, 회사/구독 일시중단 등 20개 신규 핵심 할일 완벽 탑재
+ * 
+ * 3. 💰 2026년 출산 혜택 총정리 가이드 전수 반영 (총 56종):
+ *    - 전국 공통 15종 (국민행복카드 100만, 산후도우미 바우처, 제왕절개 본인부담 0원 등)
+ *    - 개인 맞춤 18종 (우체국 엄마보험 무료, 신생아 특례 대출, 취득세 500만 감면, 혼인·출산 증여세 3억 비과세 등)
+ *    - 전국 17개 시·도 지자체 특화 혜택 23종 실시간 스마트 머지 지원
  * 
  * 3. 🆕 신규 행 자동 완성 & 어플 등록:
  *    - 새 행을 추가하고 품목명만 적어도, 고유 ID 자동 생성 및 맘카페 1위/쿠팡 TOP 1~3 자동 완성
@@ -98,12 +103,12 @@ function syncToApp() {
 
     clearPendingHighlights(ss);
 
-    let msg = '• 배포 버전: 꽁꽁 출산가방 v1.1.5 (빌드 코드: 15)\n' +
+    let msg = '• 배포 버전: 꽁꽁 출산가방 v1.1.7 (빌드 코드: 17)\n' +
               '• 갱신 일시: ' + now + '\n' +
               '• 출산가방 품목: ' + data.maternityBag.length + '개\n' +
               '• 육아용품 품목: ' + data.babySupplies.length + '개\n' +
-              '• 시기별 할일: ' + data.todos.length + '개 (💉예방접종 7종 & 📑보험 4종 포함)\n' +
-              '• 출산 혜택: ' + data.benefits.length + '개 (공용 혜택 정제 완료)\n' +
+              '• 시기별 할일: ' + data.todos.length + '개 (💉예방접종 7종 & 📑보험 4종 포함 총 111종)\n' +
+              '• 출산 혜택: ' + data.benefits.length + '개 (전국 15종, 개인 18종, 지자체 23종 전수 정제 완료)\n' +
               '• 맞춤 추천 가방: 제왕/자연/조리원 규칙 동시 배포 완료\n';
     
     if (autoFilled > 0) {
@@ -151,7 +156,7 @@ function syncCoupangLinksToApp() {
       }
     });
 
-    const msg = '• 배포 버전: 꽁꽁 출산가방 v1.1.5\n' +
+    const msg = '• 배포 버전: 꽁꽁 출산가방 v1.1.7\n' +
                 '• 갱신 일시: ' + now + '\n' +
                 '• 출산가방 수동 등록 품목: ' + customMaternityLinks + '개\n' +
                 '• 육아용품 수동 등록 품목: ' + customBabyLinks + '개\n' +
@@ -272,8 +277,8 @@ function syncBenefitsOnly() {
     PropertiesService.getScriptProperties().setProperty('LAST_UPDATED', now);
     PropertiesService.getScriptProperties().setProperty('APP_DATA_CACHE', JSON.stringify(fullData));
 
-    ui.alert('💰 출산 혜택 반영 완료 (v1.1.5)',
-      '• 갱신 일시: ' + now + '\n• 반영 혜택 수: ' + benefitsData.length + '개 (공용 혜택 정제 완료)\n\n✅ 출산 혜택이 어플(v1.1.5)에 실시간 반영되었습니다!',
+    ui.alert('💰 출산 혜택 반영 완료 (v1.1.7)',
+      '• 갱신 일시: ' + now + '\n• 반영 혜택 수: ' + benefitsData.length + '개 (전국 15종, 개인 18종 및 지자체 특화 혜택 전수 반영)\n\n✅ 출산 혜택이 어플(v1.1.7)에 실시간 반영되었습니다!',
       ui.ButtonSet.OK
     );
   } catch(err) {
@@ -1428,8 +1433,8 @@ function showGuideDialog() {
   const coupangLog = PropertiesService.getScriptProperties().getProperty('LAST_COUPANG_LOG') || '수집 이력 없음';
   
   ui.alert(
-    '📖 꽁꽁 출산가방 v1.1.5 자동 수집 & 연동 가이드',
-    '• 현재 앱 버전: v1.1.5 (빌드 코드: 15)\n' +
+    '📖 꽁꽁 출산가방 v1.1.7 자동 수집 & 연동 가이드',
+    '• 현재 앱 버전: v1.1.7 (빌드 코드: 17)\n' +
     '• 마지막 어플 반영 시각: ' + lastUpdate + '\n\n' +
     '• 맘카페 최근 수집: ' + momLog + '\n' +
     '• 쿠팡 최근 수집: ' + coupangLog + '\n\n' +
