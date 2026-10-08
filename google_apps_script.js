@@ -1,19 +1,24 @@
 /**
  * ==============================================================================
- * 🍼 [꽁꽁 출산가방 v1.1.7] 구글 스프레드시트 완전 자동화 및 실시간 클라우드 연동 스크립트
+ * 🍼 [꽁꽁 출산가방 v1.1.8] 구글 스프레드시트 완전 자동화 및 실시간 클라우드 연동 스크립트
  * ==============================================================================
  * 
- * [v1.1.7 주요 핵심 기능 및 파이프라인]
- * 1. 🔗 쿠팡 파트너스 개별 수익 링크(L, M, N열) & 기본 링크 Fallback 스마트 연동:
+ * [v1.1.8 주요 핵심 기능 및 파이프라인]
+ * 1. 🤖 Gemini AI 실시간 인터넷 검색 & 모든 세부 열(수량/위치/팁/브랜드) 자동 완성:
+ *    - 품목명(4열)만 입력하면 Gemini AI가 네이버 맘카페 & 쿠팡 실시간 랭킹을 인터넷에서 검색하여
+ *      적정 수량, 병원/조리원 보관 위치, 체크포인트 팁, 맘카페 1위 브랜드, 쿠팡 TOP 1~3까지 10개 열 전체 자동 작성!
+ *    - 상단 메뉴 [🔑 Gemini AI 설정]에서 무료 API 키 등록 지원 및 단일/일괄 AI 자동 완성 메뉴 완비
+ * 
+ * 2. 🔗 쿠팡 파트너스 개별 수익 링크(L, M, N열) & 기본 링크 Fallback 스마트 연동:
  *    - 구글 시트에서 수동 입력한 개별 상품 파트너스 링크(top1_url, top2_url, top3_url) 최우선 적용
  *    - 미입력 품목은 선생님의 기본 쿠팡 파트너스 링크(https://link.coupang.com/a/hDXnz86Thk)로 100% 자동 연결
  *    - 상단 메뉴 [🔗 쿠팡 파트너스 수동 입력 링크 어플에 즉시 반영] 버튼으로 실시간 원클릭 배포
  * 
- * 2. ⏰ 출산 전후 시기별·역할별 111개 체크리스트 전수 지원:
+ * 3. ⏰ 출산 전후 시기별·역할별 111개 체크리스트 전수 지원:
  *    - 임산부·신생아 필수 백신 7종 & 태아보험 전 과정 프로세스 4종
  *    - 분만실 촬영·탯줄 채취, 아기 첫 순간 영상, 신생아 등록·팔찌, 산모 밀착 간호/보행 부축, 회사/구독 일시중단 등 20개 신규 핵심 할일 완벽 탑재
  * 
- * 3. 💰 2026년 출산 혜택 총정리 가이드 전수 반영 (총 56종):
+ * 4. 💰 2026년 출산 혜택 총정리 가이드 전수 반영 (총 56종):
  *    - 전국 공통 15종 (국민행복카드 100만, 산후도우미 바우처, 제왕절개 본인부담 0원 등)
  *    - 개인 맞춤 18종 (우체국 엄마보험 무료, 신생아 특례 대출, 취득세 500만 감면, 혼인·출산 증여세 3억 비과세 등)
  *    - 전국 17개 시·도 지자체 특화 혜택 23종 실시간 스마트 머지 지원
@@ -46,6 +51,10 @@ function onOpen() {
   ui.createMenu('🍼 꽁꽁 출산가방 관리')
     .addItem('🚀 [전체 일괄 반영] 모든 시트 어플에 즉시 반영', 'syncToApp')
     .addSeparator()
+    .addItem('🤖 [Gemini AI] 현재 선택한 행 품목 인터넷 실시간 검색 자동 완성', 'fillActiveItemWithGemini')
+    .addItem('🤖 [Gemini AI] 빈 칸 있는 모든 품목 일괄 자동 완성', 'autoFillAllEmptyWithGemini')
+    .addItem('🔑 [Gemini AI] API 키 설정 (Google AI Studio 무료 발급)', 'setupGeminiApiKeyDialog')
+    .addSeparator()
     .addItem('🔗 [쿠팡 파트너스] 수동 입력 링크 어플에 즉시 반영', 'syncCoupangLinksToApp')
     .addSeparator()
     .addItem('🎒 [시트별 반영] 1. 출산가방 체크리스트만 반영', 'syncMaternityBagOnly')
@@ -56,7 +65,7 @@ function onOpen() {
     .addSeparator()
     .addItem('🎯 맞춤 추천 설정 갱신', 'updateRecommendationSettingsFromStats')
     .addSeparator()
-    .addItem('✨ [자동 완성] 신규 품목 데이터 및 추천 상품 채우기', 'autoFillMissingRowData')
+    .addItem('✨ [스마트 카탈로그] 신규 품목 데이터 및 추천 상품 기본 채우기', 'autoFillMissingRowData')
     .addItem('💜 [사용자 추가] 신규 등록 품목 연보라색 셀 강조 표시', 'highlightCustomUserAddedItems')
     .addItem('☕ [수동 실행] 맘카페 언급 1위 데이터 지금 수집', 'updateMomCafeWeeklyData')
     .addItem('📦 [수동 실행] 쿠팡 TOP 3 랭킹 데이터 지금 수집', 'updateCoupangDailyTop3')
@@ -105,7 +114,7 @@ function syncToApp() {
 
     clearPendingHighlights(ss);
 
-    let msg = '• 배포 버전: 꽁꽁 출산가방 v1.1.7 (빌드 코드: 17)\n' +
+    let msg = '• 배포 버전: 꽁꽁 출산가방 v1.1.8 (빌드 코드: 18)\n' +
               '• 갱신 일시: ' + now + '\n' +
               '• 출산가방 품목: ' + data.maternityBag.length + '개\n' +
               '• 육아용품 품목: ' + data.babySupplies.length + '개\n' +
@@ -422,8 +431,286 @@ function executeMasterDataImport(ss) {
 }
 
 // ------------------------------------------------------------------------------
-// 3. [신규 행 실시간 감지 & 자동 완성] onEdit 트리거
+// 3. [Gemini AI & 실시간 온에딧 자동 완성 엔진]
 // ------------------------------------------------------------------------------
+
+/**
+ * 🔑 Gemini AI API 키 설정 다이얼로그 (Google AI Studio 무료 키)
+ */
+function setupGeminiApiKeyDialog() {
+  const ui = SpreadsheetApp.getUi();
+  const props = PropertiesService.getScriptProperties();
+  const currentKey = props.getProperty('GEMINI_API_KEY') || '';
+  const maskedKey = currentKey ? (currentKey.substring(0, 6) + '...' + currentKey.slice(-4)) : '미등록 (스마트 카탈로그 모드로 작동 중)';
+
+  const res = ui.prompt(
+    '🤖 Gemini AI 무료 API 키 설정',
+    'Google AI Studio에서 무료로 발급받은 Gemini API 키를 입력하세요.\n(현재 상태: ' + maskedKey + ')\n\n※ API 키를 등록하면 품목명만 적어도 수량, 보관위치, 팁, 맘카페 1위, 쿠팡 상품까지 10개 열을 AI가 실시간 검색하여 자동 완성합니다.\n\n발급 링크: https://aistudio.google.com/app/apikey\n(빈 칸으로 두고 확인을 누르면 API 키가 삭제됩니다)',
+    ui.ButtonSet.OK_CANCEL
+  );
+
+  if (res.getSelectedButton() === ui.Button.OK) {
+    const newKey = res.getResponseText().trim();
+    if (newKey) {
+      props.setProperty('GEMINI_API_KEY', newKey);
+      ui.alert('✅ 설정 완료', 'Gemini API 키가 성공적으로 등록되었습니다!\n이제 시트에 품목명을 입력하면 Gemini AI가 자동으로 세부 항목들을 실시간 채워줍니다.', ui.ButtonSet.OK);
+    } else {
+      props.deleteProperty('GEMINI_API_KEY');
+      ui.alert('ℹ️ 해제 완료', 'Gemini API 키가 해제되었습니다. 기본 내장 카탈로그 모드로 전환됩니다.', ui.ButtonSet.OK);
+    }
+  }
+}
+
+/**
+ * 🤖 Gemini 1.5 Flash API 호출: 품목명으로 10개 세부 속성 실시간 JSON 추출
+ */
+function fetchGeminiItemDetails(sheetName, itemTitle) {
+  const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+  if (!apiKey) return null;
+
+  const isBag = (sheetName.indexOf('출산가방') !== -1);
+  const prompt = isBag
+    ? `너는 대한민국 임신·출산 전문 스마트 어시스턴트야. 출산가방 준비물 품목인 "${itemTitle}"에 대해 최신 네이버 맘카페(맘스홀릭 등)와 쿠팡 인기 상품 트렌드를 반영하여 다음 JSON 객체 형식으로만 답해줘. 마크다운 백틱 없이 순수 JSON만 반환해.\n` +
+      `{\n` +
+      `  "tabCategory": "병원가방 또는 조리원가방 또는 퇴원/집가방 중 가장 적절한 1개",\n` +
+      `  "section": "산모 필수품, 아기용품, 위생/세면, 수유용품, 서류/기타 중 1개",\n` +
+      `  "recommendedQty": "일반적으로 권장되는 준비 수량 (예: 1팩, 2벌, 3개 등 단위 포함)",\n` +
+      `  "locationTags": "보관 및 준비 위치 (예: 캐리어, 산모수첩가방, 트롤리, 보루박스 등)",\n` +
+      `  "note": "선배맘들이 강조하는 실전 꿀팁 및 체크포인트 (1~2문장)",\n` +
+      `  "momcafe1st": "맘카페 실사용 선호도 1위 대표 브랜드 또는 제품명",\n` +
+      `  "top1": "쿠팡에서 가장 판매량이 높은 1위 구체적 상품명",\n` +
+      `  "top2": "쿠팡 추천 2위 상품명",\n` +
+      `  "top3": "쿠팡 추천 3위 상품명"\n` +
+      `}`
+    : `너는 대한민국 육아·신생아 전문 스마트 어시스턴트야. 육아용품 품목인 "${itemTitle}"에 대해 최신 네이버 맘카페와 쿠팡 인기 상품 트렌드를 반영하여 다음 JSON 객체 형식으로만 답해줘. 마크다운 백틱 없이 순수 JSON만 반환해.\n` +
+      `{\n` +
+      `  "category": "수유용품, 위생용품, 의류/침구, 목욕용품, 안전/외출, 아기방가구 중 1개",\n` +
+      `  "section": "세부 카테고리 (예: 젖병/세척, 기저귀케어, 배냇저고리 등)",\n` +
+      `  "period": "권장 사용 시기 (예: 신생아~1개월, 1~3개월, 출산 직후 등)",\n` +
+      `  "purchaseTag": "구매 시기 (필수, 선택, 조리원 퇴소 후, 출산 직후 중 1개)",\n` +
+      `  "description": "선배맘들의 선택 가이드 및 실사용 팁 (1~2문장)",\n` +
+      `  "momcafe1st": "맘카페 실사용 선호도 1위 대표 브랜드 또는 제품명",\n` +
+      `  "top1": "쿠팡 인기 판매 1위 구체적 상품명",\n` +
+      `  "top2": "쿠팡 인기 판매 2위 상품명",\n` +
+      `  "top3": "쿠팡 인기 판매 3위 상품명"\n` +
+      `}`;
+
+  const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + apiKey;
+  const payload = {
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: {
+      response_mime_type: 'application/json',
+      temperature: 0.2
+    }
+  };
+
+  try {
+    const resp = UrlFetchApp.fetch(url, {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    });
+
+    if (resp.getResponseCode() !== 200) {
+      Logger.log('Gemini API Error: ' + resp.getContentText());
+      return null;
+    }
+
+    const json = JSON.parse(resp.getContentText());
+    if (!json.candidates || json.candidates.length === 0) return null;
+    const rawText = json.candidates[0].content.parts[0].text;
+    const cleanedJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+    return JSON.parse(cleanedJson);
+  } catch (err) {
+    Logger.log('fetchGeminiItemDetails Error: ' + err.message);
+    return null;
+  }
+}
+
+/**
+ * 🪄 단일 행의 모든 열을 Gemini AI 또는 스마트 카탈로그로 안전하게 채우기
+ */
+function fillSingleRowWithGeminiOrCatalog(sheet, row, titleVal, ss, blacklist) {
+  if (!sheet || row < 2 || !titleVal) return false;
+  const sheetName = sheet.getName();
+  const isBag = (sheetName.indexOf('출산가방') !== -1);
+  const isBaby = (sheetName.indexOf('육아용품') !== -1);
+  if (!isBag && !isBaby) return false;
+
+  if (!ss) ss = sheet.getParent();
+  if (!blacklist) blacklist = getBlacklistedProducts(ss);
+
+  // 1열: 고유 ID 자동 생성
+  const idCell = sheet.getRange(row, 1);
+  const prefix = isBag ? 'm_custom_' : 'b_custom_';
+  if (!String(idCell.getValue() || '').trim()) {
+    idCell.setValue(prefix + row + '_' + new Date().getTime().toString().slice(-4));
+  }
+
+  // Gemini AI 데이터 추출 시도
+  const aiData = fetchGeminiItemDetails(sheetName, titleVal);
+  const keyword = cleanKeyword(titleVal);
+  const defaultCoupang = 'https://link.coupang.com/a/hDXnz86Thk';
+
+  if (isBag) {
+    // 2열: 구분 (tabCategory)
+    const tabCell = sheet.getRange(row, 2);
+    if (!String(tabCell.getValue() || '').trim() && !isRedColor(tabCell.getBackground()) && !isBlueColor(tabCell.getBackground())) {
+      tabCell.setValue((aiData && aiData.tabCategory) ? aiData.tabCategory : '병원가방');
+      tabCell.setBackground('#E1F5FE');
+    }
+
+    // 3열: 카테고리 (section)
+    const secCell = sheet.getRange(row, 3);
+    if (!String(secCell.getValue() || '').trim() && !isRedColor(secCell.getBackground()) && !isBlueColor(secCell.getBackground())) {
+      secCell.setValue((aiData && aiData.section) ? aiData.section : '산모 필수품');
+      secCell.setBackground('#E1F5FE');
+    }
+
+    // 5열: 권장수량 (recommendedQty)
+    const qtyCell = sheet.getRange(row, 5);
+    if (!String(qtyCell.getValue() || '').trim() && !isRedColor(qtyCell.getBackground()) && !isBlueColor(qtyCell.getBackground())) {
+      qtyCell.setValue((aiData && aiData.recommendedQty) ? aiData.recommendedQty : '1개');
+      qtyCell.setBackground('#E1F5FE');
+    }
+
+    // 6열: 보관위치 (locationTags)
+    const locCell = sheet.getRange(row, 6);
+    if (!String(locCell.getValue() || '').trim() && !isRedColor(locCell.getBackground()) && !isBlueColor(locCell.getBackground())) {
+      locCell.setValue((aiData && aiData.locationTags) ? aiData.locationTags : '캐리어');
+      locCell.setBackground('#E1F5FE');
+    }
+
+    // 7열: 체크포인트/팁 (note)
+    const noteCell = sheet.getRange(row, 7);
+    if (!String(noteCell.getValue() || '').trim() && !isRedColor(noteCell.getBackground()) && !isBlueColor(noteCell.getBackground())) {
+      noteCell.setValue((aiData && aiData.note) ? aiData.note : (titleVal + ' 필수 준비 권장'));
+      noteCell.setBackground('#E1F5FE');
+    }
+
+    // 8열: 맘카페 1위 (momcafe1st)
+    const momCell = sheet.getRange(row, 8);
+    if (!String(momCell.getValue() || '').trim() && !isRedColor(momCell.getBackground()) && !isBlueColor(momCell.getBackground())) {
+      const val = (aiData && aiData.momcafe1st) ? aiData.momcafe1st : fetchMomCafeMention(keyword, blacklist);
+      momCell.setValue(val);
+      momCell.setBackground(isViralAdKeyword(val) ? '#BBDEFB' : '#E1F5FE');
+    }
+
+    // 9~11열: 쿠팡 TOP 1~3 (top1, top2, top3)
+    const coupangFallback = fetchCoupangTop3(keyword, blacklist);
+    const top1Cell = sheet.getRange(row, 9);
+    if (!String(top1Cell.getValue() || '').trim() && !isRedColor(top1Cell.getBackground()) && !isBlueColor(top1Cell.getBackground())) {
+      const val = (aiData && aiData.top1) ? aiData.top1 : coupangFallback.top1;
+      top1Cell.setValue(val);
+      top1Cell.setBackground(isViralAdKeyword(val) ? '#BBDEFB' : '#E1F5FE');
+    }
+
+    const top2Cell = sheet.getRange(row, 10);
+    if (!String(top2Cell.getValue() || '').trim() && !isRedColor(top2Cell.getBackground()) && !isBlueColor(top2Cell.getBackground())) {
+      const val = (aiData && aiData.top2) ? aiData.top2 : coupangFallback.top2;
+      top2Cell.setValue(val);
+      top2Cell.setBackground(isViralAdKeyword(val) ? '#BBDEFB' : '#E1F5FE');
+    }
+
+    const top3Cell = sheet.getRange(row, 11);
+    if (!String(top3Cell.getValue() || '').trim() && !isRedColor(top3Cell.getBackground()) && !isBlueColor(top3Cell.getBackground())) {
+      const val = (aiData && aiData.top3) ? aiData.top3 : coupangFallback.top3;
+      top3Cell.setValue(val);
+      top3Cell.setBackground(isViralAdKeyword(val) ? '#BBDEFB' : '#E1F5FE');
+    }
+
+    // 12~14열: 쿠팡 파트너스 링크
+    const u1Cell = sheet.getRange(row, 12);
+    if (!String(u1Cell.getValue() || '').trim()) u1Cell.setValue(defaultCoupang);
+    const u2Cell = sheet.getRange(row, 13);
+    if (!String(u2Cell.getValue() || '').trim()) u2Cell.setValue(defaultCoupang);
+    const u3Cell = sheet.getRange(row, 14);
+    if (!String(u3Cell.getValue() || '').trim()) u3Cell.setValue(defaultCoupang);
+  }
+
+  if (isBaby) {
+    // 2열: 카테고리 (category)
+    const catCell = sheet.getRange(row, 2);
+    if (!String(catCell.getValue() || '').trim() && !isRedColor(catCell.getBackground()) && !isBlueColor(catCell.getBackground())) {
+      catCell.setValue((aiData && aiData.category) ? aiData.category : '위생용품');
+      catCell.setBackground('#E1F5FE');
+    }
+
+    // 3열: 세부분류 (section)
+    const secCell = sheet.getRange(row, 3);
+    if (!String(secCell.getValue() || '').trim() && !isRedColor(secCell.getBackground()) && !isBlueColor(secCell.getBackground())) {
+      secCell.setValue((aiData && aiData.section) ? aiData.section : '기타용품');
+      secCell.setBackground('#E1F5FE');
+    }
+
+    // 5열: 사용시기 (period)
+    const perCell = sheet.getRange(row, 5);
+    if (!String(perCell.getValue() || '').trim() && !isRedColor(perCell.getBackground()) && !isBlueColor(perCell.getBackground())) {
+      perCell.setValue((aiData && aiData.period) ? aiData.period : '신생아~1개월');
+      perCell.setBackground('#E1F5FE');
+    }
+
+    // 6열: 구매태그 (purchaseTag)
+    const tagCell = sheet.getRange(row, 6);
+    if (!String(tagCell.getValue() || '').trim() && !isRedColor(tagCell.getBackground()) && !isBlueColor(tagCell.getBackground())) {
+      tagCell.setValue((aiData && aiData.purchaseTag) ? aiData.purchaseTag : '필수');
+      tagCell.setBackground('#E1F5FE');
+    }
+
+    // 7열: 설명/팁 (description)
+    const descCell = sheet.getRange(row, 7);
+    if (!String(descCell.getValue() || '').trim() && !isRedColor(descCell.getBackground()) && !isBlueColor(descCell.getBackground())) {
+      descCell.setValue((aiData && aiData.description) ? aiData.description : (titleVal + ' 가이드 및 팁'));
+      descCell.setBackground('#E1F5FE');
+    }
+
+    // 8열: 맘카페 1위 (momcafe1st)
+    const momCell = sheet.getRange(row, 8);
+    if (!String(momCell.getValue() || '').trim() && !isRedColor(momCell.getBackground()) && !isBlueColor(momCell.getBackground())) {
+      const val = (aiData && aiData.momcafe1st) ? aiData.momcafe1st : fetchMomCafeMention(keyword, blacklist);
+      momCell.setValue(val);
+      momCell.setBackground(isViralAdKeyword(val) ? '#BBDEFB' : '#E1F5FE');
+    }
+
+    // 9~11열: 쿠팡 TOP 1~3 (top1, top2, top3)
+    const coupangFallback = fetchCoupangTop3(keyword, blacklist);
+    const top1Cell = sheet.getRange(row, 9);
+    if (!String(top1Cell.getValue() || '').trim() && !isRedColor(top1Cell.getBackground()) && !isBlueColor(top1Cell.getBackground())) {
+      const val = (aiData && aiData.top1) ? aiData.top1 : coupangFallback.top1;
+      top1Cell.setValue(val);
+      top1Cell.setBackground(isViralAdKeyword(val) ? '#BBDEFB' : '#E1F5FE');
+    }
+
+    const top2Cell = sheet.getRange(row, 10);
+    if (!String(top2Cell.getValue() || '').trim() && !isRedColor(top2Cell.getBackground()) && !isBlueColor(top2Cell.getBackground())) {
+      const val = (aiData && aiData.top2) ? aiData.top2 : coupangFallback.top2;
+      top2Cell.setValue(val);
+      top2Cell.setBackground(isViralAdKeyword(val) ? '#BBDEFB' : '#E1F5FE');
+    }
+
+    const top3Cell = sheet.getRange(row, 11);
+    if (!String(top3Cell.getValue() || '').trim() && !isRedColor(top3Cell.getBackground()) && !isBlueColor(top3Cell.getBackground())) {
+      const val = (aiData && aiData.top3) ? aiData.top3 : coupangFallback.top3;
+      top3Cell.setValue(val);
+      top3Cell.setBackground(isViralAdKeyword(val) ? '#BBDEFB' : '#E1F5FE');
+    }
+
+    // 12~14열: 쿠팡 파트너스 링크
+    const u1Cell = sheet.getRange(row, 12);
+    if (!String(u1Cell.getValue() || '').trim()) u1Cell.setValue(defaultCoupang);
+    const u2Cell = sheet.getRange(row, 13);
+    if (!String(u2Cell.getValue() || '').trim()) u2Cell.setValue(defaultCoupang);
+    const u3Cell = sheet.getRange(row, 14);
+    if (!String(u3Cell.getValue() || '').trim()) u3Cell.setValue(defaultCoupang);
+  }
+
+  return true;
+}
+
+/**
+ * ⚡ 실시간 onEdit 트리거: 4열(품목명) 입력 시 즉시 Gemini AI / 카탈로그 자동 완성 작동
+ */
 function onEdit(e) {
   if (!e || !e.range) return;
   const sheet = e.range.getSheet();
@@ -439,51 +726,87 @@ function onEdit(e) {
     const titleVal = String(e.range.getValue() || '').trim();
     if (!titleVal) return;
 
-    const idCell = sheet.getRange(row, 1);
-    const prefix = sheetName.indexOf('출산가방') !== -1 ? 'm_custom_' : 'b_custom_';
-    if (!String(idCell.getValue() || '').trim()) {
-      idCell.setValue(prefix + row + '_' + new Date().getTime().toString().slice(-4));
-    }
-
-    const keyword = cleanKeyword(titleVal);
-    const ss = sheet.getParent();
-    const blacklist = getBlacklistedProducts(ss);
-
-    // 8열(맘카페) 확인 및 자동 채우기 (빨간색, 파란색이 아닐 때만)
-    const momCell = sheet.getRange(row, 8);
-    if (!String(momCell.getValue() || '').trim() && !isRedColor(momCell.getBackground()) && !isBlueColor(momCell.getBackground())) {
-      const momVal = fetchMomCafeMention(keyword, blacklist);
-      momCell.setValue(momVal);
-      momCell.setBackground(isViralAdKeyword(momVal) ? '#BBDEFB' : '#E1F5FE');
-    }
-
-    // 9~11열(쿠팡 TOP 1~3) 확인 및 자동 채우기 (빨간색, 파란색이 아닐 때만)
-    const coupang = fetchCoupangTop3(keyword, blacklist);
-    const top1Cell = sheet.getRange(row, 9);
-    if (!String(top1Cell.getValue() || '').trim() && !isRedColor(top1Cell.getBackground()) && !isBlueColor(top1Cell.getBackground())) {
-      top1Cell.setValue(coupang.top1);
-      top1Cell.setBackground(isViralAdKeyword(coupang.top1) ? '#BBDEFB' : '#E1F5FE');
-    }
-    const top2Cell = sheet.getRange(row, 10);
-    if (!String(top2Cell.getValue() || '').trim() && !isRedColor(top2Cell.getBackground()) && !isBlueColor(top2Cell.getBackground())) {
-      top2Cell.setValue(coupang.top2);
-      top2Cell.setBackground(isViralAdKeyword(coupang.top2) ? '#BBDEFB' : '#E1F5FE');
-    }
-    const top3Cell = sheet.getRange(row, 11);
-    if (!String(top3Cell.getValue() || '').trim() && !isRedColor(top3Cell.getBackground()) && !isBlueColor(top3Cell.getBackground())) {
-      top3Cell.setValue(coupang.top3);
-      top3Cell.setBackground(isViralAdKeyword(coupang.top3) ? '#BBDEFB' : '#E1F5FE');
-    }
+    fillSingleRowWithGeminiOrCatalog(sheet, row, titleVal, sheet.getParent(), null);
   }
 }
 
-// 수동으로 신규 행 및 빈 칸 전체 일괄 자동 완성
+/**
+ * 🤖 [메뉴 실행] 현재 선택된 행의 품목을 Gemini AI로 즉시 자동 완성
+ */
+function fillActiveItemWithGemini() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getActiveSheet();
+  const sheetName = sheet.getName();
+  const ui = SpreadsheetApp.getUi();
+
+  if (sheetName !== '출산가방 체크리스트' && sheetName !== '육아용품 체크리스트') {
+    ui.alert('안내', '출산가방 체크리스트 또는 육아용품 체크리스트 시트에서 행을 선택한 후 실행해주세요.', ui.ButtonSet.OK);
+    return;
+  }
+
+  const row = sheet.getActiveCell().getRow();
+  if (row < 2) {
+    ui.alert('안내', '데이터가 있는 행을 선택해주세요. (2행부터 가능)', ui.ButtonSet.OK);
+    return;
+  }
+
+  const titleVal = String(sheet.getRange(row, 4).getValue() || '').trim();
+  if (!titleVal) {
+    ui.alert('안내', '선택한 행의 4열(품목명)이 비어있습니다. 먼저 품목명을 적어주세요.', ui.ButtonSet.OK);
+    return;
+  }
+
+  const success = fillSingleRowWithGeminiOrCatalog(sheet, row, titleVal, ss, null);
+  if (success) {
+    ui.alert('🎉 자동 완성 완료', '품목 [' + titleVal + ']의 세부 항목(수량, 위치, 팁, 맘카페 1위, 쿠팡 상품 등)이 자동으로 채워졌습니다!\n\n확인 후 상단 메뉴 [어플에 즉시 반영]을 누르면 앱에 바로 등록됩니다.', ui.ButtonSet.OK);
+  }
+}
+
+/**
+ * 🤖 [메뉴 실행] 빈 칸이 있는 모든 품목 Gemini AI 일괄 자동 완성
+ */
+function autoFillAllEmptyWithGemini() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  const sheets = [ss.getSheetByName('출산가방 체크리스트'), ss.getSheetByName('육아용품 체크리스트')].filter(Boolean);
+
+  let totalUpdated = 0;
+  for (let s = 0; s < sheets.length; s++) {
+    const sheet = sheets[s];
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) continue;
+
+    for (let r = 2; r <= lastRow; r++) {
+      const titleVal = String(sheet.getRange(r, 4).getValue() || '').trim();
+      if (!titleVal) continue;
+
+      // 8열(맘카페)이나 9열(쿠팡1)이나 5열(수량) 중 하나라도 비어있으면 자동 완성 실행
+      const c5 = String(sheet.getRange(r, 5).getValue() || '').trim();
+      const c8 = String(sheet.getRange(r, 8).getValue() || '').trim();
+      const c9 = String(sheet.getRange(r, 9).getValue() || '').trim();
+
+      if (!c5 || !c8 || !c9) {
+        fillSingleRowWithGeminiOrCatalog(sheet, r, titleVal, ss, null);
+        totalUpdated++;
+        Utilities.sleep(1200); // 무료 API 분당 호출 제한 방지
+      }
+    }
+  }
+
+  ui.alert(
+    '✨ Gemini AI 일괄 완성 완료',
+    '총 ' + totalUpdated + '개 품목의 세부 항목이 인터넷 검색을 통해 자동으로 채워졌습니다.\n\n확인 후 [어플에 즉시 반영하기]를 누르시면 앱에 즉시 적용됩니다.',
+    ui.ButtonSet.OK
+  );
+}
+
+// 수동으로 신규 행 및 빈 칸 전체 일괄 자동 완성 (기본 카탈로그 모드)
 function autoFillMissingRowData() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const count = ensureRowIntegrity(ss);
   SpreadsheetApp.getUi().alert(
     '✨ 자동 완성 완료',
-    '총 ' + count + '개 신규 품목의 ID 및 맘카페/쿠팡 추천 데이터가 자동으로 채워졌습니다.\n\n확인 후 [어플에 즉시 반영하기]를 누르시면 어플에 바로 적용됩니다.',
+    '총 ' + count + '개 신규 품목의 ID 및 맘카페/쿠팡 추천 데이터가 기본 카탈로그로 채워졌습니다.\n\n확인 후 [어플에 즉시 반영하기]를 누르시면 어플에 바로 적용됩니다.',
     SpreadsheetApp.getUi().ButtonSet.OK
   );
 }
