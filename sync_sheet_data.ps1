@@ -1,4 +1,4 @@
-﻿[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host " [MaternityBag] Syncing Sheet Data to App & Preview" -ForegroundColor Yellow
@@ -40,6 +40,17 @@ if (Test-Path $configPath) {
                     $masterData = $response.data
                     $syncedFromCloud = $true
                     Write-Host "[OK] Successfully retrieved live data from Google Sheets Cloud! (Updated: $($response.lastUpdated))" -ForegroundColor Green
+                    
+                    # 육아용품 품목 수 검증 및 로컬 85개 카탈로그 보존 방어 로직
+                    if ($masterData.babySupplies -and $masterData.babySupplies.Count -lt 50 -and (Test-Path $jsonPath)) {
+                        try {
+                            $localExport = Get-Content $jsonPath -Raw -Encoding UTF8 | ConvertFrom-Json
+                            if ($localExport.babySupplies -and $localExport.babySupplies.Count -ge 50) {
+                                Write-Host "[Notice] 클라우드 육아용품($($masterData.babySupplies.Count)개)보다 로컬 카탈로그($($localExport.babySupplies.Count)개)가 더 완전합니다. 로컬 육아용품 데이터를 우선 유지합니다." -ForegroundColor Yellow
+                                $masterData.babySupplies = $localExport.babySupplies
+                            }
+                        } catch {}
+                    }
                 }
             }
         }
