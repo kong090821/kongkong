@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
@@ -227,26 +227,70 @@
     }
 
     /* 비회원 로그인 & 소셜 로그인 버튼 UI */
-    .btn-guest-login {
+    .btn-kakao-login {
       width: 100%;
-      padding: 13px 14px;
-      background: #fff5f2;
-      color: #d84315;
-      border: 1.5px solid #ffccbc;
+      padding: 13.5px 16px;
+      background: #FEE500;
+      color: #191919;
+      border: none;
       border-radius: 14px;
-      font-size: 15px;
+      font-size: 14.5px;
       font-weight: 800;
       cursor: pointer;
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between;
+      gap: 10px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 3px 12px rgba(254, 229, 0, 0.38);
+    }
+    .btn-kakao-login:hover {
+      background: #FADA0A;
+      box-shadow: 0 5px 16px rgba(254, 229, 0, 0.5);
+      transform: translateY(-1px);
+    }
+    .btn-kakao-login:active {
+      transform: translateY(0);
+    }
+    .btn-kakao-content {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+    }
+    .btn-guest-login {
+      width: 100%;
+      padding: 12.5px 16px;
+      background: #fff8f5;
+      color: #b7472a;
+      border: 1.5px solid #ffccbc;
+      border-radius: 14px;
+      font-size: 13.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       gap: 8px;
       transition: all 0.2s;
-      box-shadow: 0 2px 8px rgba(230, 81, 0, 0.08);
+      box-shadow: 0 2px 8px rgba(230, 81, 0, 0.06);
     }
     .btn-guest-login:hover {
       background: #fbe9e7;
       border-color: #ffab91;
+    }
+    .profile-login-badge-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+      vertical-align: middle;
     }
     .guest-warning-notice {
       font-size: 11.5px;
@@ -2421,15 +2465,26 @@
         <p class="app-subtitle">설레는 아기와의 만남, 꽁꽁 싸매어 완벽 준비해요</p>
 
         <div class="login-card">
-          <!-- 비회원으로 이용하기 버튼 단일배치 -->
-          <button id="btnGuestLogin" class="btn-guest-login" onclick="handleGuestLogin()">
-            <span>👶 출산가방 시작하기 (비회원)</span>
-            <span>➔</span>
+          <!-- 1. 카카오 로그인 버튼 (메인 1순위) -->
+          <button id="btnKakaoLogin" class="btn-kakao-login" onclick="handleSocialLogin('kakao')" title="카카오 계정으로 3초 만에 시작하기">
+            <div class="btn-kakao-content">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="#381E1F" style="flex-shrink: 0;">
+                <path d="M12 3C6.477 3 2 6.477 2 10.772c0 2.766 1.848 5.19 4.646 6.556l-.946 3.498c-.083.308.261.547.518.377l4.133-2.735c.536.071 1.085.109 1.649.109 5.523 0 10-3.477 10-7.805C22 6.477 17.523 3 12 3z"/>
+              </svg>
+              <span>카카오로 3초 만에 시작하기</span>
+            </div>
+            <span style="font-size: 13px; color: #554400; font-weight: 800;">➔</span>
+          </button>
+
+          <!-- 2. 비회원 이용 버튼 (서브 2순위) -->
+          <button id="btnGuestLogin" class="btn-guest-login" onclick="handleGuestLogin()" style="margin-top: 10px;" title="회원가입 없이 휴대폰 로컬에 저장하여 시작하기">
+            <span>👶 비회원으로 둘러보기 (휴대폰 저장)</span>
+            <span style="font-size: 13px; color: #b7472a; font-weight: 800;">➔</span>
           </button>
           
-          <div class="guest-warning-notice" style="background: #FFF8F5; border: 1px solid #FFE0D6; border-radius: 12px; padding: 12px 14px; text-align: left; font-size: 12px; color: #555; line-height: 1.5; margin-top: 14px;">
-            📱 <strong>로컬 안전 보관 안내:</strong><br/>
-            모든 설문 및 출산가방 체크 내역은 <strong>사용자 휴대폰에만 안전하게 자동 저장</strong>됩니다.
+          <div class="guest-warning-notice" style="background: #FFF8F5; border: 1px solid #FFE0D6; border-radius: 12px; padding: 11px 13px; text-align: left; font-size: 11.5px; color: #666; line-height: 1.5; margin-top: 13px;">
+            🔒 <strong>계정 보관 안내:</strong><br/>
+            카카오 로그인 시 <strong>새 폰 교체나 부부 계정 연동 시에도 내 출산가방이 안전하게 유지</strong>됩니다.
           </div>
         </div>
 
@@ -2565,8 +2620,9 @@
         <!-- 맞춤 프로필 정보 카드 -->
         <div id="dashboardProfileCard" class="dashboard-profile-card">
           <div class="profile-top-row">
-            <div class="profile-user-badge">
-              <span style="font-weight: 800; font-size: 14.5px; color: #2C3E50; white-space: nowrap;">👶 출산 준비 프로필</span>
+            <div class="profile-user-badge" style="display: flex; align-items: center; gap: 7px;">
+              <span id="profileLoginBadgeIcon" class="profile-login-badge-icon" title="로그인 상태">👶</span>
+              <span style="font-weight: 800; font-size: 14.5px; color: #2C3E50; white-space: nowrap;">출산 준비 프로필</span>
             </div>
             <div style="display: flex; gap: 4px; flex-wrap: nowrap;">
               <button class="profile-edit-btn" onclick="syncFromGoogleSheet(true)" title="최신 품목 데이터 실시간 업데이트" style="background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; font-weight: 600; white-space: nowrap;">🔄 품목 업데이트</button>
@@ -7346,6 +7402,13 @@
       }
       currentUser = null;
       isGuest = false;
+      const loginBadgeEl = document.getElementById('profileLoginBadgeIcon');
+      if (loginBadgeEl) {
+        loginBadgeEl.innerHTML = '👶';
+        loginBadgeEl.style.background = '#FFEFE9';
+        loginBadgeEl.style.border = '1px solid #FFD4C7';
+        loginBadgeEl.title = '로그인 상태';
+      }
       showToast('안전하게 로그아웃 되었습니다.');
       goToScreen('loginScreen');
     }
@@ -7810,6 +7873,33 @@
       const welcomeName = document.getElementById('welcomeUserName');
       const nick = (userProfile && userProfile.nickname && userProfile.nickname.trim()) ? userProfile.nickname.trim() : '예비 엄마·아빠';
       if (welcomeName) welcomeName.textContent = nick;
+
+      // 로그인 공급자별 원형 아이콘 동적 반영 (프로필 좌측)
+      const loginBadgeEl = document.getElementById('profileLoginBadgeIcon');
+      if (loginBadgeEl) {
+        const pType = (currentUser && currentUser.type) ? currentUser.type : (isGuest ? 'guest' : 'guest');
+        if (pType === 'kakao') {
+          loginBadgeEl.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="#381E1F" style="display:block;"><path d="M12 3C6.477 3 2 6.477 2 10.772c0 2.766 1.848 5.19 4.646 6.556l-.946 3.498c-.083.308.261.547.518.377l4.133-2.735c.536.071 1.085.109 1.649.109 5.523 0 10-3.477 10-7.805C22 6.477 17.523 3 12 3z"/></svg>`;
+          loginBadgeEl.style.background = '#FEE500';
+          loginBadgeEl.style.border = 'none';
+          loginBadgeEl.title = '카카오 간편 로그인 계정';
+        } else if (pType === 'naver') {
+          loginBadgeEl.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="#FFFFFF" style="display:block;"><path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z"/></svg>`;
+          loginBadgeEl.style.background = '#03C75A';
+          loginBadgeEl.style.border = 'none';
+          loginBadgeEl.title = '네이버 로그인 계정';
+        } else if (pType === 'google') {
+          loginBadgeEl.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" style="display:block;"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.25 21.36 7.33 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.16 0 9.94 0 12s.46 3.84 1.26 5.42l4.02-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.25 2.64 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>`;
+          loginBadgeEl.style.background = '#FFFFFF';
+          loginBadgeEl.style.border = '1px solid #E0E0E0';
+          loginBadgeEl.title = '구글 로그인 계정';
+        } else {
+          loginBadgeEl.innerHTML = '👶';
+          loginBadgeEl.style.background = '#FFEFE9';
+          loginBadgeEl.style.border = '1px solid #FFD4C7';
+          loginBadgeEl.title = '비회원 (로컬 보관)';
+        }
+      }
 
       const { ddayText } = calculateDDay(userProfile.dueDate);
       const tagDue = document.getElementById('tagDueDate');
