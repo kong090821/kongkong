@@ -7241,15 +7241,15 @@
     const OAUTH_CONFIG = {
       naver: {
         name: '네이버',
-        clientId: 'VzBNSJBiekAyuV0cV365',
-        clientSecret: 'bmFePh5i6r',
+        clientId: 'Qf1VfairfqPtPtaZCsg0',
+        clientSecret: '4nzxJ8How4',
         serviceName: '꽁꽁 출산가방',
         brandColor: '#03C75A',
         textColor: '#FFFFFF',
         title: '네이버 1초 간편 로그인 (공식 연동)',
         logoSvg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z"/></svg>',
-        scopes: ['네이버 고유 식별자 (ID) [필수]', '이름/별명 [선택]', '이메일 주소 [선택]'],
-        badge: '네이버 공식 연동 (Client ID: VzBNSJBi...)'
+        scopes: ['네이버 고유 식별자 (ID) [필수]', '이름/별명 [필수]', '이메일 주소 [선택]'],
+        badge: '네이버 공식 연동 (Client ID: Qf1Vfair...)'
       },
       kakao: {
         name: '카카오',
@@ -7283,15 +7283,15 @@
       const conf = OAUTH_CONFIG[provider];
       if (!conf) return;
 
-      const currentUrl = location.href.split('?')[0].split('#')[0];
+      const baseRedirect = (location.protocol === 'file:') ? 'https://kong090821.github.io' : location.href.split('?')[0].split('#')[0];
       let oauthUrl = '';
 
       if (provider === 'naver') {
-        oauthUrl = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${conf.clientId}&redirect_uri=${encodeURIComponent(currentUrl)}&state=naver_oauth`;
+        oauthUrl = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${conf.clientId}&redirect_uri=${encodeURIComponent(baseRedirect)}&state=naver_oauth`;
       } else if (provider === 'kakao') {
-        oauthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${conf.clientId}&redirect_uri=${encodeURIComponent(currentUrl)}&response_type=code&state=kakao_oauth`;
+        oauthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${conf.clientId}&redirect_uri=${encodeURIComponent(baseRedirect)}&response_type=code&state=kakao_oauth`;
       } else if (provider === 'google') {
-        oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${conf.clientId}&redirect_uri=${encodeURIComponent(currentUrl)}&response_type=token&scope=email%20profile&state=google_oauth`;
+        oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${conf.clientId}&redirect_uri=${encodeURIComponent(baseRedirect)}&response_type=token&scope=email%20profile&state=google_oauth`;
       }
 
       if (location.protocol === 'file:') {
