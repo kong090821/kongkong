@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>꽁꽁 출산가방 - 안드로이드 앱 프리뷰</title>
+  <!-- 카카오 공식 JavaScript SDK (v2.7.4) -->
+  <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js"></script>
   <style>
     :root {
       --primary: #ff6f59;
@@ -7208,15 +7210,16 @@
       },
       kakao: {
         name: '카카오',
-        clientId: '36ad1b8aa5be9ba137f85f4d7531dbb2',
+        clientId: '944d94273711c2589ad4dab5054e64a8',
         javascriptKey: '04af7db7f18e5cf0e0cb63be14a0f5bd',
+        nativeKey: '36ad1b8aa5be9ba137f85f4d7531dbb2',
         serviceName: '꽁꽁 출산가방',
         brandColor: '#FEE500',
         textColor: '#381E1F',
         title: '카카오 1초 간편 로그인 (공식 연동)',
         logoSvg: '<svg width="22" height="22" viewBox="0 0 24 24" fill="#381E1F"><path d="M12 3C6.477 3 2 6.477 2 10.772c0 2.766 1.848 5.19 4.646 6.556l-.946 3.498c-.083.308.261.547.518.377l4.133-2.735c.536.071 1.085.109 1.649.109 5.523 0 10-3.477 10-7.805C22 6.477 17.523 3 12 3z"/></svg>',
-        scopes: ['카카오 회원 고유 식별자 (UID) [필수]', '카카오 닉네임 [선택]'],
-        badge: '카카오 공식 연동 (Key: 36ad1b8a...)'
+        scopes: ['카카오 회원 고유 식별자 (UID) [필수]', '카카오 닉네임 [필수]'],
+        badge: '카카오 공식 연동 (REST: 944d9427...)'
       },
       google: {
         name: '구글',
@@ -7312,9 +7315,44 @@
         localStorage.setItem('maternity_uid_' + provider, persistentId);
       }
 
+      // 카카오 공식 SDK 로그인 연동 (웹/배포 환경 지원)
+      if (provider === 'kakao' && window.Kakao && window.Kakao.isInitialized() && location.protocol !== 'file:') {
+        try {
+          window.Kakao.Auth.login({
+            scope: 'profile_nickname',
+            success: function(authObj) {
+              window.Kakao.API.request({
+                url: '/v2/user/me',
+                success: function(res) {
+                  const kakaoUid = 'kakao_' + res.id;
+                  const kakaoNick = (res.kakao_account && res.kakao_account.profile && res.kakao_account.profile.nickname) ? res.kakao_account.profile.nickname : '카카오 회원';
+                  localStorage.setItem('maternity_uid_kakao', kakaoUid);
+                  proceedOAuthLoginSession(provider, kakaoUid, kakaoNick);
+                },
+                fail: function(err) {
+                  console.warn('Kakao profile request error:', err);
+                  proceedOAuthLoginSession(provider, persistentId, `${pName} 회원님`);
+                }
+              });
+            },
+            fail: function(err) {
+              console.warn('Kakao popup login closed or failed, fallback to local persistent user:', err);
+              proceedOAuthLoginSession(provider, persistentId, `${pName} 회원님`);
+            }
+          });
+          return;
+        } catch(e) {
+          console.warn('Kakao SDK Login exception:', e);
+        }
+      }
+
+      proceedOAuthLoginSession(provider, persistentId, `${pName} 회원님`);
+    }
+
+    async function proceedOAuthLoginSession(provider, persistentId, pName) {
       currentUser = { 
         type: provider, 
-        name: `${pName} 회원님`,
+        name: pName,
         id: persistentId
       };
 
@@ -7389,7 +7427,7 @@
       initDefaultDueDate();
       userProfile.coupleCode = generateCoupleCode();
       const nameEl = document.getElementById('surveyUserName');
-      if (nameEl) nameEl.textContent = `${pName} 회원님`;
+      if (nameEl) nameEl.textContent = `${pName}`;
       showToast(`🎉 ${pName} 1초 가입 성공! 첫 맞춤 설문을 진행합니다.`);
       goToScreen('onboardingScreen');
     }
@@ -8235,6 +8273,15 @@
       snackTimeout = setTimeout(() => {
         sb.classList.remove('show');
       }, 2600);
+    }
+
+    // 카카오 공식 SDK 초기화
+    try {
+      if (window.Kakao && !window.Kakao.isInitialized()) {
+        window.Kakao.init(OAUTH_CONFIG.kakao.javascriptKey);
+      }
+    } catch(e) {
+      console.warn('Kakao init warning:', e);
     }
 
     // 초기 서비스 및 화면 설정
