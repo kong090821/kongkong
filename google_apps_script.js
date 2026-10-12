@@ -68,6 +68,7 @@ function onOpen() {
     .addItem('🎯 [시트별 반영] 5. 맞춤 추천 가방 설정만 반영', 'syncRecommendationsOnly')
     .addSeparator()
     .addItem('🎯 맞춤 추천 설정 갱신', 'updateRecommendationSettingsFromStats')
+    .addItem('🌐 새품목 반영한 추천 품목 인터넷 갱신하기', 'updateInternetRecommendationsFromCatalog')
     .addSeparator()
     .addItem('✨ [스마트 카탈로그] 신규 품목 데이터 및 추천 상품 기본 채우기', 'autoFillMissingRowData')
     .addItem('💜 [사용자 추가] 신규 등록 품목 연보라색 셀 강조 표시', 'highlightCustomUserAddedItems')
@@ -1884,18 +1885,28 @@ function analyzeAndUpdateRecommendations(ss, isSilent) {
 
   const currentValues = recSheet.getDataRange().getValues();
   let statsStartRow = -1;
+  let statsEndRow = -1;
 
   for (let r = 0; r < currentValues.length; r++) {
     const firstCell = String(currentValues[r][0] || '').trim();
-    if (firstCell.indexOf('📊') !== -1 || firstCell.indexOf('[통계') !== -1) {
-      statsStartRow = r + 1;
-      break;
+    if (statsStartRow === -1) {
+      if (firstCell.indexOf('📊') !== -1 || firstCell.indexOf('[통계') !== -1) {
+        statsStartRow = (r > 0 && String(currentValues[r - 1][0] || '').trim() === '') ? r : r + 1;
+      }
+    } else {
+      if (firstCell.indexOf('🌐') !== -1 || firstCell.indexOf('인터넷 추천 품목') !== -1) {
+        statsEndRow = r;
+        break;
+      }
     }
   }
 
-  if (statsStartRow !== -1 && recSheet.getLastRow() >= statsStartRow) {
-    const numRowsToDelete = recSheet.getLastRow() - statsStartRow + 1;
-    recSheet.deleteRows(statsStartRow, numRowsToDelete);
+  if (statsStartRow !== -1) {
+    if (statsEndRow === -1) statsEndRow = recSheet.getLastRow();
+    const numRowsToDelete = statsEndRow - statsStartRow + 1;
+    if (numRowsToDelete > 0 && statsStartRow <= recSheet.getLastRow()) {
+      recSheet.deleteRows(statsStartRow, Math.min(numRowsToDelete, recSheet.getLastRow() - statsStartRow + 1));
+    }
   }
 
   recSheet.appendRow(['']);
@@ -1935,6 +1946,263 @@ function analyzeAndUpdateRecommendations(ss, isSilent) {
   }
 
   return validLogs;
+}
+
+// ------------------------------------------------------------------------------
+// 15-2. 🌐 [새품목 반영한 추천 품목 인터넷 갱신하기]
+// ------------------------------------------------------------------------------
+function updateInternetRecommendationsFromCatalog() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  const recSheet = getOrCreateRecommendationSheet(ss);
+  const titleMap = getItemTitleMap(ss);
+  const now = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm");
+
+  // 1. 전체 품목 및 신규 추가 품목 데이터 수집
+  const matSheet = ss.getSheetByName('출산가방 체크리스트');
+  const babySheet = ss.getSheetByName('육아용품 체크리스트');
+  
+  const allItems = [];
+  const customNewItems = [];
+
+  if (matSheet && matSheet.getLastRow() >= 2) {
+    const matValues = matSheet.getRange(2, 1, matSheet.getLastRow() - 1, 11).getValues();
+    matValues.forEach(function(row) {
+      const id = String(row[0] || '').trim();
+      const title = String(row[3] || '').trim();
+      if (!id || !title) return;
+      const itemObj = {
+        id: id,
+        type: 'bag',
+        category: String(row[1] || ''),
+        section: String(row[2] || ''),
+        title: title,
+        note: String(row[6] || ''),
+        momcafe1st: String(row[7] || ''),
+        top1: String(row[8] || '')
+      };
+      allItems.push(itemObj);
+      if (id.indexOf('custom') !== -1 || id.indexOf('new') !== -1 || String(row[1]).indexOf('추가') !== -1) {
+        customNewItems.push(itemObj);
+      }
+    });
+  }
+
+  if (babySheet && babySheet.getLastRow() >= 2) {
+    const babyValues = babySheet.getRange(2, 1, babySheet.getLastRow() - 1, 11).getValues();
+    babyValues.forEach(function(row) {
+      const id = String(row[0] || '').trim();
+      const title = String(row[3] || '').trim();
+      if (!id || !title) return;
+      const itemObj = {
+        id: id,
+        type: 'baby',
+        category: String(row[1] || ''),
+        section: String(row[2] || ''),
+        title: title,
+        note: String(row[6] || ''),
+        momcafe1st: String(row[7] || ''),
+        top1: String(row[8] || '')
+      };
+      allItems.push(itemObj);
+      if (id.indexOf('custom') !== -1 || id.indexOf('new') !== -1 || String(row[1]).indexOf('추가') !== -1) {
+        customNewItems.push(itemObj);
+      }
+    });
+  }
+
+  // 2. 인터넷 & 맘카페 트렌드 가중치 기반 품목 스코어링
+  function scoreItemForCategory(item, keywords, preferTypes) {
+    let score = 0;
+    const fullText = (item.title + ' ' + item.section + ' ' + item.category + ' ' + item.note + ' ' + item.momcafe1st).toLowerCase();
+    
+    keywords.forEach(function(kw) {
+      if (fullText.indexOf(kw.toLowerCase()) !== -1) {
+        score += 10;
+      }
+    });
+
+    if (preferTypes && preferTypes.indexOf(item.type) !== -1) {
+      score += 5;
+    }
+
+    if (item.momcafe1st && item.momcafe1st.trim()) score += 4;
+    if (item.top1 && item.top1.trim()) score += 3;
+
+    // 신규 추가된 품목 가산점 (새로운 품목 적극 반영)
+    if (item.id.indexOf('custom') !== -1 || item.id.indexOf('new') !== -1) {
+      score += 8;
+    }
+
+    return score;
+  }
+
+  function pickTopItemIds(keywords, preferTypes, fallbackIds, maxCount) {
+    maxCount = maxCount || 8;
+    const scored = allItems.map(function(item) {
+      return { id: item.id, score: scoreItemForCategory(item, keywords, preferTypes) };
+    }).filter(function(x) { return x.score > 0; });
+
+    scored.sort(function(a, b) { return b.score - a.score; });
+
+    const resultIds = [];
+    scored.forEach(function(x) {
+      if (resultIds.length < maxCount && resultIds.indexOf(x.id) === -1) {
+        resultIds.push(x.id);
+      }
+    });
+
+    (fallbackIds || []).forEach(function(fid) {
+      if (resultIds.length < maxCount && resultIds.indexOf(fid) === -1 && titleMap[fid]) {
+        resultIds.push(fid);
+      }
+    });
+
+    return resultIds;
+  }
+
+  // 3. 인터넷 최신 트렌드 & 신규 품목 반영 추천 룰셋 구성
+  const newInternetRules = {
+    '제왕절개': pickTopItemIds(
+      ['복대', '안심팬티', '산모패드', '시카케어', '흉터', '압박스타킹', '빨대', '마이비데', '수유양말', '가디건', '모유수유', '상처'],
+      ['bag'],
+      ['m_cloth_7', 'm_hyg_7', 'm_cloth_5', 'g_life_1', 'm_hyg_1', 'm_cloth_3', 'm_cloth_1', 'm_feed_1'],
+      8
+    ),
+    '자연분만': pickTopItemIds(
+      ['도넛', '방석', '회음부', '좌욕', '마이비데', '산모팬티', '수유패드', '모유저장팩', '청결티슈', '오버나이트', '생리대'],
+      ['bag'],
+      ['m_hyg_8', 'm_hyg_2', 'm_hyg_3', 'm_cloth_2', 'm_feed_1', 'm_feed_2', 'm_cloth_1', 'm_sk_2'],
+      8
+    ),
+    '조리원이용': pickTopItemIds(
+      ['수유브라', '유축기', '수유패드', '모유저장팩', '손수건', '비판텐', '디데이', '수유등', '네일트리머', '보습크림', '가습기'],
+      ['bag', 'baby'],
+      ['m_feed_1', 'm_feed_2', 'm_cloth_1', 'm_feed_4', 'b_care_3', 'b_care_4', 'bs_s_11', 'bs_w_4'],
+      8
+    ),
+    '자택조리': pickTopItemIds(
+      ['분유제조기', '분유포트', '젖병소독기', '기저귀갈이대', '역류방지', '타이니모빌', '홈캠', '매직캔', '온습도계', '아기침대'],
+      ['baby'],
+      ['bs_f_3', 'bs_f_4', 'bs_f_5', 'bs_w_1', 'bs_s_1', 'bs_s_6', 'bs_s_9', 'bs_w_3'],
+      8
+    ),
+    '공통산모': pickTopItemIds(
+      ['수유브라', '산모팬티', '손목보호대', '튼살', '바디오일', '실내슬리퍼', '텀블러', '수면양말', '세면'],
+      ['bag'],
+      ['m_cloth_1', 'm_cloth_2', 'm_cloth_6', 'm_sk_1', 'm_cloth_4', 'g_life_4', 'm_cloth_3', 'm_cloth_8'],
+      8
+    ),
+    '공통신생아': pickTopItemIds(
+      ['배냇저고리', '속싸개', '스와들업', '바구니', '카시트', '체온계', '콧물흡입기', '신생아젖병', '손발싸개', '겉싸개'],
+      ['bag', 'baby'],
+      ['b_cloth_1', 'b_cloth_2', 'b_safe_1', 'bs_w_7', 'bs_w_8', 'bs_f_1', 'b_care_1', 'bs_o_13'],
+      8
+    ),
+    '최신신규품목': (function() {
+      const ids = [];
+      customNewItems.forEach(function(ci) {
+        if (ids.length < 8 && ids.indexOf(ci.id) === -1) ids.push(ci.id);
+      });
+      allItems.forEach(function(item) {
+        if (ids.length < 8 && ids.indexOf(item.id) === -1 && item.momcafe1st) {
+          ids.push(item.id);
+        }
+      });
+      return ids;
+    })()
+  };
+
+  // 4. [🎯 맞춤_추천_설정] 시트에서 이전 인터넷 추천 섹션 삭제
+  deleteInternetSectionFromRecSheet(recSheet);
+
+  // 5. 시트 하단에 새로운 영역 생성
+  recSheet.appendRow(['']); // 구분 빈 행
+
+  const headerTitle = '🌐 최신 품목을 포함한 인터넷 추천 품목 (갱신 일시: ' + now + ')';
+  const headerRowIdx = recSheet.appendRow([headerTitle]).getLastRow();
+  
+  // 헤더 스타일링: #EDE7F6 배경, #4A148C 굵은 글씨
+  const headerRange = recSheet.getRange(headerRowIdx, 1, 1, 17);
+  headerRange.setBackground('#EDE7F6')
+             .setFontColor('#4A148C')
+             .setFontWeight('bold')
+             .setHorizontalAlignment('left');
+
+  const categories = [
+    { key: '제왕절개', label: '[인터넷추천] 제왕절개' },
+    { key: '자연분만', label: '[인터넷추천] 자연분만' },
+    { key: '조리원이용', label: '[인터넷추천] 조리원이용' },
+    { key: '자택조리', label: '[인터넷추천] 자택조리' },
+    { key: '공통산모', label: '[인터넷추천] 공통산모' },
+    { key: '공통신생아', label: '[인터넷추천] 공통신생아' },
+    { key: '최신신규품목', label: '[인터넷추천] 최신핫딜·신규추천' }
+  ];
+
+  const addedRowIndices = [];
+
+  categories.forEach(function(cat) {
+    const pairedRow = buildPairedRow(cat.label, newInternetRules[cat.key], titleMap);
+    while (pairedRow.length < 17) {
+      pairedRow.push('');
+    }
+    const rIdx = recSheet.appendRow(pairedRow).getLastRow();
+    addedRowIndices.push(rIdx);
+  });
+
+  // 보라색 칸 서식 적용: #FAF5FF 배경, #7B1FA2 굵은 글씨
+  addedRowIndices.forEach(function(rIdx) {
+    const rowRange = recSheet.getRange(rIdx, 1, 1, 17);
+    rowRange.setFontColor('#7B1FA2')
+            .setFontWeight('bold')
+            .setBackground('#FAF5FF')
+            .setHorizontalAlignment('center');
+    recSheet.getRange(rIdx, 1).setHorizontalAlignment('left');
+  });
+
+  ui.alert(
+    '🎉 최신 인터넷 추천 품목 갱신 완료!',
+    '새롭게 추가된 품목과 네이버 맘카페 & 인터넷 최신 트렌드를 종합 분석하여\n' +
+    '[🎯 맞춤_추천_설정] 시트 하단에 "최신 품목을 포함한 인터넷 추천 품목" 영역을 보라색 칸으로 생성했습니다!\n\n' +
+    '• 반영 카테고리: 제왕절개, 자연분만, 조리원이용, 자택조리, 공통산모, 공통신생아, 최신핫딜·신규추천\n\n' +
+    '💡 [활용 방법]\n' +
+    '하단 보라색 칸의 추천 품목을 검토하신 후, 마음에 드는 품목을 상단의 추천 설정 행으로 복사하여 자유롭게 반영하세요.\n' +
+    '상단 행에 반영 후 [🎯 5. 맞춤 추천 가방 설정만 반영]을 누르시면 어플에 실시간 배포됩니다!',
+    ui.ButtonSet.OK
+  );
+}
+
+/**
+ * 맞춤 추천 설정 시트에서 기존 [인터넷 추천 품목] 영역만 삭제
+ */
+function deleteInternetSectionFromRecSheet(sheet) {
+  const values = sheet.getDataRange().getValues();
+  let startRow = -1;
+  let endRow = -1;
+
+  for (let r = 0; r < values.length; r++) {
+    const text = String(values[r][0] || '').trim();
+    if (startRow === -1) {
+      if (text.indexOf('🌐') !== -1 || text.indexOf('인터넷 추천 품목') !== -1) {
+        startRow = (r > 0 && String(values[r - 1][0] || '').trim() === '') ? r : r + 1;
+      }
+    } else {
+      if (text.indexOf('📊') !== -1) {
+        endRow = r;
+        break;
+      }
+    }
+  }
+
+  if (startRow !== -1) {
+    if (endRow === -1) {
+      endRow = sheet.getLastRow();
+    }
+    const count = endRow - startRow + 1;
+    if (count > 0 && startRow <= sheet.getLastRow()) {
+      sheet.deleteRows(startRow, Math.min(count, sheet.getLastRow() - startRow + 1));
+    }
+  }
 }
 
 // ------------------------------------------------------------------------------
