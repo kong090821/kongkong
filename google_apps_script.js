@@ -51,7 +51,10 @@ function onOpen() {
   ui.createMenu('🍼 꽁꽁 출산가방 관리')
     .addItem('🚀 [전체 일괄 반영] 모든 시트 어플에 즉시 반영', 'syncToApp')
     .addSeparator()
-    .addItem('🐙 [GitHub 연동] GitHub 최신 데이터 가져와 구글 시트에 일괄 동기화', 'syncFromGitHub')
+    .addItem('📥 [GitHub Pull] GitHub 최신 데이터 ➔ 구글 시트로 당겨오기 (4대 품목 전용)', 'pullFromGitHub')
+    .addItem('📤 [GitHub Push] 구글 시트 데이터 ➔ GitHub로 밀어넣기 (커밋 & 푸시)', 'pushToGitHub')
+    .addItem('🔑 [GitHub] 개인 토큰(PAT) 설정 / 확인', 'setupGitHubTokenDialog')
+    .addSeparator()
     .addItem('🐙 [GitHub 연동] 육아용품 85개만 GitHub에서 가져오기', 'syncBabySuppliesFromGitHub')
     .addSeparator()
     .addItem('🤖 [Gemini AI] 현재 선택한 행 품목 인터넷 실시간 검색 자동 완성', 'fillActiveItemWithGemini')
@@ -3410,23 +3413,54 @@ function populateStandardBabySuppliesCatalog() {
 }
 
 // ==============================================================================
-// 🐙 [GitHub 실시간 연동] GitHub 최신 데이터 ➔ 구글 스프레드시트 원클릭 동기화 엔진
+// 🐙 [GitHub 양방향 동기화] GitHub Pull (당겨오기) & Push (밀어넣기) 전용 엔진
 // ==============================================================================
 
 const GITHUB_EXPORT_JSON_URL = 'https://raw.githubusercontent.com/kong090821/kongkong/main/data_export.json';
+const GITHUB_REPO_OWNER = 'kong090821';
+const GITHUB_REPO_NAME = 'kongkong';
+
+function getGitHubToken() {
+  const prop = PropertiesService.getScriptProperties().getProperty('GITHUB_PAT');
+  if (prop && prop.trim()) return prop.trim();
+  return null;
+}
+
+function setupGitHubTokenDialog() {
+  const ui = SpreadsheetApp.getUi();
+  const current = PropertiesService.getScriptProperties().getProperty('GITHUB_PAT');
+  const statusStr = current ? '등록 완료 (' + current.substring(0, 4) + '****)' : '미등록 (푸시 실행 시 입력 가능)';
+  const res = ui.prompt(
+    '🔑 GitHub 개인 액세스 토큰 (PAT) 설정',
+    '현재 토큰 상태: ' + statusStr + '\n\n' +
+    'GitHub에 데이터를 푸시하기 위한 Personal Access Token을 입력해주세요:\n' +
+    '(※ 토큰은 구글 클라우드 암호화 속성에 안전하게 보관되며 코드에 노출되지 않습니다)',
+    ui.ButtonSet.OK_CANCEL
+  );
+  if (res.getSelectedButton() === ui.Button.OK) {
+    const val = res.getResponseText().trim();
+    if (val) {
+      PropertiesService.getScriptProperties().setProperty('GITHUB_PAT', val);
+      ui.alert('✅ GitHub 토큰이 안전하게 저장되었습니다.');
+    }
+  }
+}
 
 /**
- * GitHub main 브랜치의 최신 data_export.json을 가져와 4대 시트(출산가방, 육아용품, 할일, 혜택) 전체를 일괄 갱신
+ * 📥 [GitHub Pull] GitHub 최신 data_export.json을 가져와 4개 핵심 시트만 갱신
+ * (※ '🎯 맞춤_추천_설정' 및 '📊 사용자_활동_통계'는 절대 건드리지 않고 100% 보존)
  */
-function syncFromGitHub() {
+function pullFromGitHub() {
   const ui = SpreadsheetApp.getUi();
   const ss = SpreadsheetApp.getActiveSpreadsheet();
 
   const confirm = ui.alert(
-    '🐙 GitHub 최신 데이터 ➔ 구글 시트 동기화',
-    'GitHub (kong090821/kongkong/main)의 최신 data_export.json 데이터를 가져와\n' +
-    '구글 시트의 4대 핵심 시트(출산가방, 육아용품, 시기별할일, 출산혜택)를 모두 최신 상태로 갱신하시겠습니까?\n\n' +
-    '※ 작업 완료 후 어플 캐시까지 실시간으로 자동 배포됩니다.',
+    '📥 GitHub Pull: GitHub ➔ 구글 시트 당겨오기',
+    'GitHub (' + GITHUB_REPO_OWNER + '/' + GITHUB_REPO_NAME + '/main)의 최신 데이터를 가져와\n' +
+    '4대 핵심 시트(출산가방, 육아용품, 시기별할일, 출산혜택)만 안전하게 갱신하시겠습니까?\n\n' +
+    '🛡️ [데이터 보존 원칙]\n' +
+    '• "🎯 맞춤_추천_설정" 및 "📊 사용자_활동_통계"는 절대 덮어씌워지지 않고 100% 보존됩니다!\n' +
+    '• 갱신 완료 후 어플 캐시까지 실시간으로 자동 배포됩니다.',
     ui.ButtonSet.YES_NO
   );
   if (confirm !== ui.Button.YES) return;
@@ -3445,6 +3479,7 @@ function syncFromGitHub() {
     const payload = JSON.parse(res.getContentText());
     let counts = { bag: 0, baby: 0, todo: 0, benefit: 0 };
 
+    // 1. 4개 메인 카테고리 시트만 수정
     if (Array.isArray(payload.maternityBag) && payload.maternityBag.length > 0) {
       counts.bag = writeMaternityBagToSheet(ss, payload.maternityBag);
     }
@@ -3458,47 +3493,154 @@ function syncFromGitHub() {
       counts.benefit = writeBenefitsToSheet(ss, payload.benefits);
     }
 
-    // 어플 클라우드 캐시 즉시 갱신
+    // 어플 클라우드 캐시 즉시 갱신 (맞춤 추천 설정은 시트의 기존 값 그대로 보존 배포)
     syncToApp();
 
     ui.alert(
-      '🎉 GitHub 데이터 동기화 완료!',
+      '🎉 GitHub Pull 완료!',
       '• 🎒 출산가방 체크리스트: ' + counts.bag + '개 품목\n' +
       '• 🍼 육아용품 체크리스트: ' + counts.baby + '개 품목\n' +
       '• ⏰ 시기별 할일: ' + counts.todo + '개 항목\n' +
       '• 💰 출산 혜택 정리: ' + counts.benefit + '개 혜택\n\n' +
-      '✅ 구글 시트 갱신과 동시에 어플 실시간 배포까지 성공적으로 완료되었습니다!',
+      '🛡️ "🎯 맞춤_추천_설정" 및 활동 통계는 손상 없이 안전하게 보존되었습니다.\n' +
+      '✅ 구글 시트 갱신과 동시에 어플 실시간 배포까지 완료되었습니다!',
       ui.ButtonSet.OK
     );
   } catch (err) {
-    ui.alert('❌ 동기화 중 오류가 발생했습니다: ' + err.toString());
+    ui.alert('❌ Pull 중 오류 발생: ' + err.toString());
+  }
+}
+function syncFromGitHub() { pullFromGitHub(); }
+
+/**
+ * 📤 [GitHub Push] 구글 시트의 4대 핵심 데이터를 GitHub main 브랜치에 커밋 & 푸시
+ */
+function pushToGitHub() {
+  const ui = SpreadsheetApp.getUi();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  const confirm = ui.alert(
+    '📤 GitHub Push: 구글 시트 ➔ GitHub 밀어넣기',
+    '구글 스프레드시트의 4대 핵심 시트(출산가방, 육아용품, 시기별할일, 출산혜택) 데이터를\n' +
+    'GitHub (' + GITHUB_REPO_OWNER + '/' + GITHUB_REPO_NAME + '/main)에 직접 커밋 & 푸시하시겠습니까?\n\n' +
+    '※ data_export.json 및 master_data.js가 최신 내용으로 갱신되어\n' +
+    '다른 컴퓨터에서도 "git pull"을 통해 바로 작업하실 수 있습니다.',
+    ui.ButtonSet.YES_NO
+  );
+  if (confirm !== ui.Button.YES) return;
+
+  try {
+    const data = getAllSheetsData(ss);
+    const now = Utilities.formatDate(new Date(), "Asia/Seoul", "yyyy-MM-dd HH:mm:ss");
+    const jsonStr = JSON.stringify(data, null, 2);
+    const jsStr = "window.MASTER_DATA = " + JSON.stringify(data) + ";\n";
+
+    let token = getGitHubToken();
+    if (!token) {
+      const tokenInput = ui.prompt(
+        '🔑 GitHub 토큰(PAT) 등록 필요',
+        'GitHub에 데이터를 푸시하려면 Personal Access Token이 필요합니다.\n' +
+        '토큰을 입력해주세요 (최초 1회 등록 시 구글 클라우드에 안전하게 보관됩니다):',
+        ui.ButtonSet.OK_CANCEL
+      );
+      if (tokenInput.getSelectedButton() !== ui.Button.OK || !tokenInput.getResponseText().trim()) {
+        ui.alert('⚠️ 토큰이 입력되지 않아 푸시가 취소되었습니다.');
+        return;
+      }
+      token = tokenInput.getResponseText().trim();
+      PropertiesService.getScriptProperties().setProperty('GITHUB_PAT', token);
+    }
+
+    // 1. data_export.json 파일 GitHub에 푸시
+    const res1 = updateGitHubFile(
+      GITHUB_REPO_OWNER, GITHUB_REPO_NAME, 'data_export.json', jsonStr,
+      'chore: sync Google Sheet data to data_export.json (' + now + ')', token
+    );
+    if (!res1.success) {
+      ui.alert('❌ data_export.json 푸시 실패: HTTP ' + res1.code + '\n' + res1.body);
+      return;
+    }
+
+    // 2. master_data.js 파일 GitHub에 푸시
+    const res2 = updateGitHubFile(
+      GITHUB_REPO_OWNER, GITHUB_REPO_NAME, 'master_data.js', jsStr,
+      'chore: sync Google Sheet data to master_data.js (' + now + ')', token
+    );
+    if (!res2.success) {
+      ui.alert('❌ master_data.js 푸시 실패: HTTP ' + res2.code + '\n' + res2.body);
+      return;
+    }
+
+    // 어플 클라우드 캐시도 함께 갱신
+    syncToApp();
+
+    ui.alert(
+      '🎉 GitHub Push 완료!',
+      '• 푸시 일시: ' + now + '\n' +
+      '• 🎒 출산가방: ' + data.maternityBag.length + '개\n' +
+      '• 🍼 육아용품: ' + data.babySupplies.length + '개\n' +
+      '• ⏰ 시기별 할일: ' + data.todos.length + '개\n' +
+      '• 💰 출산 혜택: ' + data.benefits.length + '개\n\n' +
+      '✅ GitHub 원격 저장소에 성공적으로 커밋 & 푸시되었습니다!\n' +
+      '이제 다른 PC에서 "git pull"을 실행하시면 동일한 최신 데이터로 작업하실 수 있습니다.',
+      ui.ButtonSet.OK
+    );
+  } catch (err) {
+    ui.alert('❌ Push 중 오류 발생: ' + err.toString());
   }
 }
 
 /**
- * GitHub에서 육아용품 85개만 가져와 갱신
+ * GitHub REST API Contents PUT 헬퍼 함수
  */
-function syncBabySuppliesFromGitHub() {
-  const ui = SpreadsheetApp.getUi();
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+function updateGitHubFile(repoOwner, repoName, filePath, contentString, commitMessage, token) {
+  const apiUrl = 'https://api.github.com/repos/' + repoOwner + '/' + repoName + '/contents/' + filePath;
+  const headers = {
+    'Authorization': 'token ' + token,
+    'User-Agent': 'GoogleAppsScript-MaternityBag',
+    'Accept': 'application/vnd.github.v3+json'
+  };
 
+  // 1. 기존 파일의 SHA 조회
+  let currentSha = null;
   try {
-    const res = UrlFetchApp.fetch(GITHUB_EXPORT_JSON_URL, {
-      muteHttpExceptions: true,
-      headers: { 'Cache-Control': 'no-cache' }
+    const getRes = UrlFetchApp.fetch(apiUrl, {
+      method: 'get',
+      headers: headers,
+      muteHttpExceptions: true
     });
-    if (res.getResponseCode() !== 200) {
-      ui.alert('❌ GitHub 연결 실패: HTTP 코드 ' + res.getResponseCode());
-      return;
+    if (getRes.getResponseCode() === 200) {
+      const fileJson = JSON.parse(getRes.getContentText());
+      currentSha = fileJson.sha;
     }
-    const payload = JSON.parse(res.getContentText());
-    if (Array.isArray(payload.babySupplies) && payload.babySupplies.length > 0) {
-      const count = writeBabySuppliesToSheet(ss, payload.babySupplies);
-      syncBabySuppliesOnly();
-      ui.alert('🎉 육아용품 ' + count + '개 품목이 GitHub에서 구글 시트로 동기화되었습니다!');
-    }
-  } catch (err) {
-    ui.alert('❌ 오류: ' + err.toString());
+  } catch(e) {}
+
+  // 2. UTF-8 Base64 인코딩
+  const base64Content = Utilities.base64Encode(contentString, Utilities.Charset.UTF_8);
+
+  // 3. 파일 내용 업데이트 (PUT)
+  const payload = {
+    message: commitMessage,
+    content: base64Content,
+    branch: 'main'
+  };
+  if (currentSha) {
+    payload.sha = currentSha;
+  }
+
+  const putRes = UrlFetchApp.fetch(apiUrl, {
+    method: 'put',
+    headers: headers,
+    contentType: 'application/json',
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  });
+
+  const code = putRes.getResponseCode();
+  if (code === 200 || code === 201) {
+    return { success: true };
+  } else {
+    return { success: false, code: code, body: putRes.getContentText() };
   }
 }
 
