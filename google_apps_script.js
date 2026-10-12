@@ -51,6 +51,9 @@ function onOpen() {
   ui.createMenu('🍼 꽁꽁 출산가방 관리')
     .addItem('🚀 [전체 일괄 반영] 모든 시트 어플에 즉시 반영', 'syncToApp')
     .addSeparator()
+    .addItem('🐙 [GitHub 연동] GitHub 최신 데이터 가져와 구글 시트에 일괄 동기화', 'syncFromGitHub')
+    .addItem('🐙 [GitHub 연동] 육아용품 85개만 GitHub에서 가져오기', 'syncBabySuppliesFromGitHub')
+    .addSeparator()
     .addItem('🤖 [Gemini AI] 현재 선택한 행 품목 인터넷 실시간 검색 자동 완성', 'fillActiveItemWithGemini')
     .addItem('🤖 [Gemini AI] 빈 칸 있는 모든 품목 일괄 자동 완성', 'autoFillAllEmptyWithGemini')
     .addItem('🔑 [Gemini AI] API 키 설정 (Google AI Studio 무료 발급)', 'setupGeminiApiKeyDialog')
@@ -3405,3 +3408,186 @@ function populateStandardBabySuppliesCatalog() {
     ui.alert('❌ 등록 중 오류가 발생했습니다: ' + err.toString());
   }
 }
+
+// ==============================================================================
+// 🐙 [GitHub 실시간 연동] GitHub 최신 데이터 ➔ 구글 스프레드시트 원클릭 동기화 엔진
+// ==============================================================================
+
+const GITHUB_EXPORT_JSON_URL = 'https://raw.githubusercontent.com/kong090821/kongkong/main/data_export.json';
+
+/**
+ * GitHub main 브랜치의 최신 data_export.json을 가져와 4대 시트(출산가방, 육아용품, 할일, 혜택) 전체를 일괄 갱신
+ */
+function syncFromGitHub() {
+  const ui = SpreadsheetApp.getUi();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  const confirm = ui.alert(
+    '🐙 GitHub 최신 데이터 ➔ 구글 시트 동기화',
+    'GitHub (kong090821/kongkong/main)의 최신 data_export.json 데이터를 가져와\n' +
+    '구글 시트의 4대 핵심 시트(출산가방, 육아용품, 시기별할일, 출산혜택)를 모두 최신 상태로 갱신하시겠습니까?\n\n' +
+    '※ 작업 완료 후 어플 캐시까지 실시간으로 자동 배포됩니다.',
+    ui.ButtonSet.YES_NO
+  );
+  if (confirm !== ui.Button.YES) return;
+
+  try {
+    const res = UrlFetchApp.fetch(GITHUB_EXPORT_JSON_URL, {
+      muteHttpExceptions: true,
+      headers: { 'Cache-Control': 'no-cache' }
+    });
+
+    if (res.getResponseCode() !== 200) {
+      ui.alert('❌ GitHub 연결 실패: HTTP 코드 ' + res.getResponseCode());
+      return;
+    }
+
+    const payload = JSON.parse(res.getContentText());
+    let counts = { bag: 0, baby: 0, todo: 0, benefit: 0 };
+
+    if (Array.isArray(payload.maternityBag) && payload.maternityBag.length > 0) {
+      counts.bag = writeMaternityBagToSheet(ss, payload.maternityBag);
+    }
+    if (Array.isArray(payload.babySupplies) && payload.babySupplies.length > 0) {
+      counts.baby = writeBabySuppliesToSheet(ss, payload.babySupplies);
+    }
+    if (Array.isArray(payload.todos) && payload.todos.length > 0) {
+      counts.todo = writeTodosToSheet(ss, payload.todos);
+    }
+    if (Array.isArray(payload.benefits) && payload.benefits.length > 0) {
+      counts.benefit = writeBenefitsToSheet(ss, payload.benefits);
+    }
+
+    // 어플 클라우드 캐시 즉시 갱신
+    syncToApp();
+
+    ui.alert(
+      '🎉 GitHub 데이터 동기화 완료!',
+      '• 🎒 출산가방 체크리스트: ' + counts.bag + '개 품목\n' +
+      '• 🍼 육아용품 체크리스트: ' + counts.baby + '개 품목\n' +
+      '• ⏰ 시기별 할일: ' + counts.todo + '개 항목\n' +
+      '• 💰 출산 혜택 정리: ' + counts.benefit + '개 혜택\n\n' +
+      '✅ 구글 시트 갱신과 동시에 어플 실시간 배포까지 성공적으로 완료되었습니다!',
+      ui.ButtonSet.OK
+    );
+  } catch (err) {
+    ui.alert('❌ 동기화 중 오류가 발생했습니다: ' + err.toString());
+  }
+}
+
+/**
+ * GitHub에서 육아용품 85개만 가져와 갱신
+ */
+function syncBabySuppliesFromGitHub() {
+  const ui = SpreadsheetApp.getUi();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  try {
+    const res = UrlFetchApp.fetch(GITHUB_EXPORT_JSON_URL, {
+      muteHttpExceptions: true,
+      headers: { 'Cache-Control': 'no-cache' }
+    });
+    if (res.getResponseCode() !== 200) {
+      ui.alert('❌ GitHub 연결 실패: HTTP 코드 ' + res.getResponseCode());
+      return;
+    }
+    const payload = JSON.parse(res.getContentText());
+    if (Array.isArray(payload.babySupplies) && payload.babySupplies.length > 0) {
+      const count = writeBabySuppliesToSheet(ss, payload.babySupplies);
+      syncBabySuppliesOnly();
+      ui.alert('🎉 육아용품 ' + count + '개 품목이 GitHub에서 구글 시트로 동기화되었습니다!');
+    }
+  } catch (err) {
+    ui.alert('❌ 오류: ' + err.toString());
+  }
+}
+
+function writeMaternityBagToSheet(ss, items) {
+  let sheet = ss.getSheetByName('출산가방 체크리스트');
+  if (!sheet) sheet = ss.insertSheet('출산가방 체크리스트');
+  const headers = [
+    'ID', '구분', '카테고리', '품목명', '추천수량', '보관위치', '체크포인트 및 팁',
+    '맘카페 1위', '쿠팡 TOP 1', '쿠팡 TOP 2', '쿠팡 TOP 3',
+    '쿠팡링크 1위', '쿠팡링크 2위', '쿠팡링크 3위'
+  ];
+  const rows = items.map(function(i) {
+    return [
+      i.id || '', i.tabCategory || '', i.section || '', i.title || '',
+      i.recommendedQty || '', i.locationTags || '', i.note || '',
+      i.momcafe1st || '', i.top1 || '', i.top2 || '', i.top3 || '',
+      i.top1_url || 'https://link.coupang.com/a/hDXnz86Thk',
+      i.top2_url || 'https://link.coupang.com/a/hDXnz86Thk',
+      i.top3_url || 'https://link.coupang.com/a/hDXnz86Thk'
+    ];
+  });
+  sheet.clear();
+  const all = [headers].concat(rows);
+  sheet.getRange(1, 1, all.length, headers.length).setValues(all);
+  sheet.getRange(1, 1, 1, headers.length)
+       .setBackground('#FFF3E0').setFontWeight('bold').setFontColor('#E65100').setHorizontalAlignment('center');
+  sheet.setFrozenRows(1);
+  return items.length;
+}
+
+function writeBabySuppliesToSheet(ss, items) {
+  let sheet = ss.getSheetByName('육아용품 체크리스트');
+  if (!sheet) sheet = ss.insertSheet('육아용품 체크리스트');
+  const headers = [
+    'ID', '구분', '카테고리', '품목명', '사용시기', '구매태그', '상세설명 및 팁',
+    '맘카페 1위', '쿠팡 TOP 1', '쿠팡 TOP 2', '쿠팡 TOP 3',
+    '쿠팡링크 1위', '쿠팡링크 2위', '쿠팡링크 3위'
+  ];
+  const rows = items.map(function(i) {
+    return [
+      i.id || '', i.category || i.tabCategory || '', i.section || '', i.title || '',
+      i.period || '', i.purchaseTag || '', i.description || i.note || '',
+      i.momcafe1st || '', i.top1 || '', i.top2 || '', i.top3 || '',
+      i.top1_url || 'https://link.coupang.com/a/hDXnz86Thk',
+      i.top2_url || 'https://link.coupang.com/a/hDXnz86Thk',
+      i.top3_url || 'https://link.coupang.com/a/hDXnz86Thk'
+    ];
+  });
+  sheet.clear();
+  const all = [headers].concat(rows);
+  sheet.getRange(1, 1, all.length, headers.length).setValues(all);
+  sheet.getRange(1, 1, 1, headers.length)
+       .setBackground('#E8F5E9').setFontWeight('bold').setFontColor('#1B5E20').setHorizontalAlignment('center');
+  sheet.setFrozenRows(1);
+  return items.length;
+}
+
+function writeTodosToSheet(ss, items) {
+  let sheet = ss.getSheetByName('시기별할일');
+  if (!sheet) sheet = ss.insertSheet('시기별할일');
+  const headers = ['ID', '시기구분', '담당역할', '할일명', '상세팁 및 안내'];
+  const rows = items.map(function(i) {
+    return [i.id || '', i.category || '', i.role || '', i.title || '', i.tip || ''];
+  });
+  sheet.clear();
+  const all = [headers].concat(rows);
+  sheet.getRange(1, 1, all.length, headers.length).setValues(all);
+  sheet.getRange(1, 1, 1, headers.length)
+       .setBackground('#E1F5FE').setFontWeight('bold').setFontColor('#0277BD').setHorizontalAlignment('center');
+  sheet.setFrozenRows(1);
+  return items.length;
+}
+
+function writeBenefitsToSheet(ss, items) {
+  let sheet = ss.getSheetByName('출산혜택정리');
+  if (!sheet) sheet = ss.insertSheet('출산혜택정리');
+  const headers = ['ID', '지역구분', '혜택명', '분류', '지원금액/내용', '지원대상', '신청시기', '신청방법/장소'];
+  const rows = items.map(function(i) {
+    return [
+      i.id || '', i.region || '', i.title || '', i.type || '',
+      i.amount || '', i.eligibility || '', i.timing || '', i.place || ''
+    ];
+  });
+  sheet.clear();
+  const all = [headers].concat(rows);
+  sheet.getRange(1, 1, all.length, headers.length).setValues(all);
+  sheet.getRange(1, 1, 1, headers.length)
+       .setBackground('#F3E5F5').setFontWeight('bold').setFontColor('#6A1B9A').setHorizontalAlignment('center');
+  sheet.setFrozenRows(1);
+  return items.length;
+}
+
