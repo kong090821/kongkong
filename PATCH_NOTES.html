@@ -218,7 +218,7 @@
         <div class="meta-item"><span>앱 명칭:</span> 꽁꽁 출산가방</div>
         <div class="meta-item"><span>패키지명:</span> <code>com.kongkong.babybag</code></div>
         <div class="meta-item"><span>현재 버전:</span> <strong>v1.3.0 (코드: 24)</strong></div>
-        <div class="meta-item"><span>최종 수정일:</span> 2026년 10월 10일</div>
+        <div class="meta-item"><span>최종 수정일:</span> 2026년 10월 15일</div>
       </div>
     </div>
 
@@ -273,6 +273,20 @@
     <!-- 2. 최신 변경 및 패치 이력 -->
     <div class="section-card">
       <h2>📜 2. 최신 변경 및 패치 이력 (Patch Logs)</h2>
+
+      <!-- 2026-10-15 (v1.3.0) -->
+      <div class="patch-block">
+        <div class="patch-date">🗓️ 2026-10-15</div>
+        <div class="patch-version">버전 유지: 1.3.0 (버전 코드: 24)</div>
+        <div class="patch-group">
+          <div class="patch-group-title">🔄 프리뷰 환경 및 데이터 동기화 파이프라인 최신화</div>
+          <ul>
+            <li><strong>프리뷰 및 에셋 전체 일괄 동기화:</strong> <code>update_full_preview.ps1</code> 파이프라인을 고도화하여 <code>index.html</code>뿐만 아니라 <code>master_data.js</code>, <code>firebase_config.json</code>, <code>data_export.json</code>까지 <code>preview/</code> 및 안드로이드 에셋에 완전 동기화.</li>
+            <li><strong>모든 프리뷰 파일 최신화:</strong> <code>preview.html</code>, <code>preview/index.html</code>, <code>preview/preview.html</code>, <code>preview/master_data.js</code>, <code>preview/data_export.json</code>, <code>preview/firebase_config.json</code> 전수 최신 갱신 완료.</li>
+            <li><strong>스크립트 호환성 개선:</strong> <code>sync_sheet_data.ps1</code> UTF-8 BOM 적용으로 PowerShell 5.1 콘솔 한글 파싱 오류 해결 및 구글 스프레드시트 클라우드 실시간 데이터(출산가방 63개, 육아용품 85개, 시기별할일 111개, 출산혜택 56개) 연동 정상화.</li>
+          </ul>
+        </div>
+      </div>
 
       <!-- 2026-10-10 (v1.3.0) -->
       <div class="patch-block">

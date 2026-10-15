@@ -3,7 +3,7 @@
 > **앱 명칭**: 꽁꽁 출산가방 (KongKong Baby Bag)  
 > **패키지명**: `com.kongkong.babybag`  
 > **개발 목적**: 임신 초~후기 예비 산모 및 보호자가 필수 출산가방, 육아용품, 시기별 할일, 정부/지자체 출산 혜택을 누락 없이 맞춤형으로 준비할 수 있도록 지원하는 하이브리드 모바일 어플리케이션  
-> **최종 수정일**: 2026년 10월 10일
+> **최종 수정일**: 2026년 10월 15일
 
 ---
 
@@ -28,6 +28,16 @@
 ---
 
 ## 📜 2. 최신 변경 및 패치 이력 (Patch Logs)
+
+---
+
+### 🗓️ 2026-10-15 (버전 유지: 1.3.0 / versionCode: 24)
+#### 🔄 프리뷰 환경 및 데이터 동기화 파이프라인 최신화
+- **[프리뷰/에셋 최신화]**:
+  - `update_full_preview.ps1` 파이프라인 고도화: `index.html`뿐만 아니라 `master_data.js`, `firebase_config.json`, `data_export.json`까지 `preview/` 및 안드로이드 에셋(`android/app/src/main/assets/`)에 일괄 동기화되도록 확장.
+  - 모든 프리뷰 파일(`preview.html`, `preview/index.html`, `preview/preview.html`, `preview/master_data.js`, `preview/data_export.json`, `preview/firebase_config.json`)을 최신 상태로 갱신 완료.
+- **[스크립트 호환성 개선]**:
+  - `sync_sheet_data.ps1`에 UTF-8 BOM을 적용하여 Windows 기본 PowerShell 5.1 콘솔에서의 한글 파싱 오류를 원천 차단하고 구글 스프레드시트 클라우드 실시간 데이터(출산가방 63개, 육아용품 85개, 시기별할일 111개, 출산혜택 56개) 연동을 정상화.
 
 ---
 
