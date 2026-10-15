@@ -294,24 +294,30 @@
     }
     .btn-guest-login {
       width: 100%;
-      padding: 12.5px 16px;
-      background: #fff8f5;
-      color: #b7472a;
-      border: 1.5px solid #ffccbc;
-      border-radius: 14px;
-      font-size: 13.5px;
-      font-weight: 700;
+      padding: 15px 18px;
+      background: linear-gradient(135deg, #FF6F59 0%, #FF8A65 100%);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 16px;
+      font-size: 15px;
+      font-weight: 800;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
-      transition: all 0.2s;
-      box-shadow: 0 2px 8px rgba(230, 81, 0, 0.06);
+      gap: 10px;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 16px rgba(255, 111, 89, 0.32);
+      letter-spacing: -0.2px;
     }
     .btn-guest-login:hover {
-      background: #fbe9e7;
-      border-color: #ffab91;
+      background: linear-gradient(135deg, #F05E47 0%, #FF7852 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 111, 89, 0.42);
+    }
+    .btn-guest-login:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 8px rgba(255, 111, 89, 0.25);
     }
     .profile-login-badge-icon {
       width: 22px;
@@ -2499,37 +2505,18 @@
         <p class="app-subtitle">설레는 아기와의 만남, 꽁꽁 싸매어 완벽 준비해요</p>
 
         <div class="login-card">
-          <!-- 1. 카카오 로그인 버튼 (메인 1순위) -->
-          <button id="btnKakaoLogin" class="btn-kakao-login" onclick="handleSocialLogin('kakao')" title="카카오 계정으로 3초 만에 시작하기">
-            <div class="btn-kakao-content">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="#381E1F" style="flex-shrink: 0;">
-                <path d="M12 3C6.477 3 2 6.477 2 10.772c0 2.766 1.848 5.19 4.646 6.556l-.946 3.498c-.083.308.261.547.518.377l4.133-2.735c.536.071 1.085.109 1.649.109 5.523 0 10-3.477 10-7.805C22 6.477 17.523 3 12 3z"/>
-              </svg>
-              <span>카카오로 3초 만에 시작하기</span>
-            </div>
-            <span style="font-size: 13px; color: #554400; font-weight: 800;">➔</span>
-          </button>
-
-          <!-- 2. 네이버 로그인 버튼 (2순위) -->
-          <button id="btnNaverLogin" class="btn-naver-login" onclick="handleSocialLogin('naver')" title="네이버 계정으로 간편하게 시작하기">
-            <div class="btn-naver-content">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="#FFFFFF" style="flex-shrink: 0;">
-                <path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z"/>
-              </svg>
-              <span>네이버로 시작하기</span>
-            </div>
-            <span style="font-size: 13px; color: #FFFFFF; font-weight: 800; opacity: 0.9;">➔</span>
-          </button>
-
-          <!-- 3. 비회원 이용 버튼 (서브 3순위) -->
-          <button id="btnGuestLogin" class="btn-guest-login" onclick="handleGuestLogin()" style="margin-top: 10px;" title="회원가입 없이 휴대폰 로컬에 저장하여 시작하기">
-            <span>👶 비회원으로 둘러보기 (휴대폰 저장)</span>
-            <span style="font-size: 13px; color: #b7472a; font-weight: 800;">➔</span>
+          <!-- 아기 만날 준비 시작하기 버튼 -->
+          <button id="btnGuestLogin" class="btn-guest-login" onclick="handleGuestLogin()" title="아기 만날 준비 시작하기">
+            <span style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 18px;">👶</span>
+              <span>아기 만날 준비 시작하기</span>
+            </span>
+            <span style="font-size: 14px; font-weight: 800; opacity: 0.95;">➔</span>
           </button>
           
-          <div class="guest-warning-notice" style="background: #FFF8F5; border: 1px solid #FFE0D6; border-radius: 12px; padding: 11px 13px; text-align: left; font-size: 11.5px; color: #666; line-height: 1.5; margin-top: 13px;">
-            🔒 <strong>계정 보관 안내:</strong><br/>
-            소셜 로그인(카카오·네이버) 시 <strong>새 폰 교체나 부부 계정 연동 시에도 내 출산가방이 안전하게 유지</strong>됩니다.
+          <div class="guest-warning-notice" style="background: #FFF8F5; border: 1px solid #FFE0D6; border-radius: 13px; padding: 12px 14px; text-align: left; font-size: 11.5px; color: #666; line-height: 1.55; margin-top: 14px;">
+            ⚠️ <strong>데이터 저장 안내:</strong><br/>
+            모든 데이터는 <strong>스마트폰 기기 내부에만 저장</strong>됩니다. 기기를 변경하거나 어플을 삭제할 경우 <strong>저장된 데이터가 사라질 수 있으니</strong> 유의하시기 바랍니다.
           </div>
         </div>
 
@@ -7201,7 +7188,7 @@
           updateDashboardProfileUI();
           updateSavedBadges();
           updateSaveIndicatorUI('guest');
-          showToast(`📱 휴대폰에 보관된 비회원 데이터(${savedBagItemIds.size}개) 복원 완료!`);
+          showToast(`📱 휴대폰에 보관된 출산가방 데이터(${savedBagItemIds.size}개) 복원 완료!`);
           goToScreen('dashboardScreen');
           return;
         } catch (e) {
@@ -7210,7 +7197,7 @@
       }
 
       initDefaultDueDate();
-      showToast('👶 비회원으로 시작합니다. (휴대폰 로컬에 안전 저장)');
+      showToast('👶 아기 만날 준비를 시작합니다!');
       const nameEl = document.getElementById('surveyUserName');
       if (nameEl) nameEl.textContent = userProfile.nickname || '예비 엄마·아빠';
       const nickInp = document.getElementById('surveyNicknameInput');
