@@ -1,4 +1,4 @@
-﻿window.MASTER_DATA = {
+window.MASTER_DATA = {
     "maternityBag":  [
                          {
                              "id":  "m_cloth_1",

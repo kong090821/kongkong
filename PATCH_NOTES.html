@@ -217,8 +217,8 @@
       <div class="meta-grid">
         <div class="meta-item"><span>앱 명칭:</span> 꽁꽁 출산가방</div>
         <div class="meta-item"><span>패키지명:</span> <code>com.kongkong.babybag</code></div>
-        <div class="meta-item"><span>현재 버전:</span> <strong>v1.4.0 (코드: 25)</strong></div>
-        <div class="meta-item"><span>최종 수정일:</span> 2026년 10월 15일</div>
+        <div class="meta-item"><span>현재 버전:</span> <strong>v1.5.0 (코드: 26)</strong></div>
+        <div class="meta-item"><span>최종 수정일:</span> 2026년 10월 18일</div>
       </div>
     </div>
 
@@ -273,6 +273,20 @@
     <!-- 2. 최신 변경 및 패치 이력 -->
     <div class="section-card">
       <h2>📜 2. 최신 변경 및 패치 이력 (Patch Logs)</h2>
+
+      <!-- 2026-10-18 (v1.5.0) -->
+      <div class="patch-block">
+        <div class="patch-date">🗓️ 2026-10-18</div>
+        <div class="patch-version">패치 버전 1.5.0 (버전 코드: 26)</div>
+        <div class="patch-group">
+          <div class="patch-group-title">🍼 육아용품 및 내 가방 출산혜택 UI 레이아웃 최적화 & 전 화면 품목 터치 확장(Expand/Collapse) 기능 적용</div>
+          <ul>
+            <li><strong>육아용품 체크리스트 품목명 표시 공간 대폭 확대:</strong> '시기'(44px), '구입경로'(50px), '가방담기'(56px) 컬럼 간격을 좁히고 우측으로 정렬하여 '준비물' 품목명이 짤리지 않고 온전히 표시되도록 가로 공간을 대폭 확보. 품목명 줄바꿈 지원 및 하단 설명 1줄 요약 말줄임표 처리.</li>
+            <li><strong>모든 탭 및 내 가방 품목 터치 확장/축소(Expand/Collapse) 토글:</strong> 모든 체크리스트와 내 가방 항목에서 제품명/혜택명을 터치하면 해당 칸이 부드럽게 확장(<code>is-expanded</code>)되어 짤렸던 설명, 자격 조건, 팁 등의 전문을 온전히 확인 가능. 다시 터치하면 원래대로 1줄 요약 상태로 축소 복귀.</li>
+            <li><strong>내 가방 출산혜택 테이블 레이아웃 전면 개편:</strong> 기존에 짤리던 '혜택' 컬럼 비율을 대폭 확대(<code>flex: 1.8</code>)하여 지원금 및 혜택명이 온전히 노출되도록 개선. '자격/조건' 컬럼은 너비를 축소(<code>90px</code>)하고 좌우 간격을 줄이는 대신 2줄 표시(<code>-webkit-line-clamp: 2</code>)로 개편하여 공간 효율 및 가독성 극대화. 완료 컬럼 너비도 56px로 최적화.</li>
+          </ul>
+        </div>
+      </div>
 
       <!-- 2026-10-15 (v1.4.0) -->
       <div class="patch-block">

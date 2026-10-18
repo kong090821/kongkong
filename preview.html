@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
@@ -1132,11 +1132,12 @@
 
     .tag-chip-period {
       display: inline-block;
-      font-size: 9.5px;
+      font-size: 9px;
       font-weight: 700;
-      padding: 1.5px 5px;
+      padding: 1.5px 3.5px;
       border-radius: 4px;
       white-space: nowrap;
+      letter-spacing: -0.3px;
     }
     .tag-chip-period.newborn { background: #ede7f6; color: #673ab7; }
     .tag-chip-period.infant { background: #e3f2fd; color: #1976d2; }
@@ -1145,11 +1146,13 @@
 
     .tag-chip-purchase {
       display: inline-block;
-      font-size: 10px;
+      font-size: 9.5px;
       font-weight: 700;
-      padding: 2px 6px;
+      padding: 2px 4px;
       border-radius: 4px;
       margin-bottom: 2px;
+      white-space: nowrap;
+      letter-spacing: -0.3px;
     }
     .tag-chip-purchase.carrot { background: #ffe0b2; color: #e65100; }
     .tag-chip-purchase.newitem { background: #e8f5e9; color: #2e7d32; }
@@ -1234,6 +1237,63 @@
       overflow: hidden;
       text-overflow: ellipsis;
       max-width: 100%;
+    }
+
+    /* 품목 터치 시 설명 및 짤린 부분 펼치기/접기 (Expand/Collapse) */
+    .bag-col-name,
+    .benefit-info-col {
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: rgba(255, 111, 89, 0.1);
+      transition: opacity 0.15s ease;
+    }
+    .bag-col-name:active,
+    .benefit-info-col:active {
+      opacity: 0.8;
+    }
+
+    .bag-item-card.is-expanded,
+    .bag-item-row.is-expanded,
+    .benefit-card-row.is-expanded {
+      background: #fffcf8 !important;
+      border-color: #ffd8ce !important;
+      box-shadow: 0 4px 12px rgba(255, 111, 89, 0.12) !important;
+      transition: all 0.2s ease;
+    }
+
+    .bag-item-card.is-expanded .single-line-text,
+    .bag-item-row.is-expanded .single-line-text,
+    .benefit-card-row.is-expanded .single-line-text,
+    .benefit-card-row.is-expanded .benefit-desc,
+    .benefit-card-row.is-expanded .benefit-title-text,
+    .benefit-card-row.is-expanded .benefit-eligibility-box {
+      white-space: normal !important;
+      overflow: visible !important;
+      text-overflow: unset !important;
+      word-break: break-word !important;
+      line-height: 1.4 !important;
+      max-width: 100% !important;
+    }
+
+    .bag-item-row.is-expanded .saved-ben-elig-text {
+      display: block !important;
+      -webkit-line-clamp: unset !important;
+      overflow: visible !important;
+      white-space: normal !important;
+      line-height: 1.35 !important;
+    }
+
+    /* 내 가방 출산혜택 자격/조건 2줄 표시 */
+    .saved-ben-elig-text {
+      font-size: 10.5px;
+      color: #555;
+      text-align: center;
+      line-height: 1.25;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      word-break: keep-all;
     }
 
     /* 내 가방 완료 체크 시 취소선 및 흐림 처리 */
@@ -1395,7 +1455,7 @@
       gap: 3px;
     }
     .bag-col-period {
-      width: 56px;
+      width: 44px;
       text-align: center;
       display: flex;
       flex-direction: column;
@@ -1404,7 +1464,7 @@
       gap: 2px;
     }
     .bag-col-purchase {
-      width: 65px;
+      width: 50px;
       text-align: center;
       display: flex;
       align-items: center;
@@ -2874,16 +2934,16 @@
 
         <!-- 테이블 헤더 (목차 클릭 시 정렬) -->
         <div class="bag-table-header">
-          <div class="sortable-th" style="flex: 1;" id="th_baby_title" onclick="handleBabySort('title')">
+          <div class="sortable-th" style="flex: 1; justify-content: center;" id="th_baby_title" onclick="handleBabySort('title')">
             준비물 <span class="sort-icon" id="icon_baby_title">⇅</span>
           </div>
-          <div class="sortable-th" style="width: 56px;" id="th_baby_period" onclick="handleBabySort('period')">
+          <div class="sortable-th" style="width: 44px; text-align: center; justify-content: center; padding: 0 1px;" id="th_baby_period" onclick="handleBabySort('period')">
             시기 <span class="sort-icon" id="icon_baby_period">⇅</span>
           </div>
-          <div class="sortable-th" style="width: 65px;" id="th_baby_purchase" onclick="handleBabySort('purchase')">
+          <div class="sortable-th" style="width: 50px; text-align: center; justify-content: center; padding: 0 1px;" id="th_baby_purchase" onclick="handleBabySort('purchase')">
             구입경로 <span class="sort-icon" id="icon_baby_purchase">⇅</span>
           </div>
-          <div class="sortable-th" style="width: 72px;" id="babyColCheckTitle" onclick="handleBabySort('saved')">
+          <div class="sortable-th" style="width: 56px; text-align: center; justify-content: center; padding: 0 1px;" id="babyColCheckTitle" onclick="handleBabySort('saved')">
             가방담기 <span class="sort-icon" id="icon_baby_saved">⇅</span>
           </div>
         </div>
@@ -3215,16 +3275,16 @@
 
         <!-- 가방 안 테이블 헤더: 마지막 컬럼이 '완료' -->
         <div class="bag-table-header">
-          <div class="sortable-th" style="flex: 1;" onclick="handleSavedBabySort('title')">
+          <div class="sortable-th" style="flex: 1; justify-content: center;" onclick="handleSavedBabySort('title')">
             준비물 <span class="sort-icon" id="icon_saved_baby_title">⇅</span>
           </div>
-          <div class="sortable-th" style="width: 56px;" onclick="handleSavedBabySort('period')">
+          <div class="sortable-th" style="width: 44px; text-align: center; justify-content: center; padding: 0 1px;" onclick="handleSavedBabySort('period')">
             시기 <span class="sort-icon" id="icon_saved_baby_period">⇅</span>
           </div>
-          <div class="sortable-th" style="width: 65px;" onclick="handleSavedBabySort('purchase')">
+          <div class="sortable-th" style="width: 50px; text-align: center; justify-content: center; padding: 0 1px;" onclick="handleSavedBabySort('purchase')">
             구입경로 <span class="sort-icon" id="icon_saved_baby_purchase">⇅</span>
           </div>
-          <div class="sortable-th" style="width: 72px;" onclick="handleSavedBabySort('comp')">
+          <div class="sortable-th" style="width: 56px; text-align: center; justify-content: center; padding: 0 1px;" onclick="handleSavedBabySort('comp')">
             완료 <span class="sort-icon" id="icon_saved_baby_comp">⇅</span>
           </div>
         </div>
@@ -3306,13 +3366,13 @@
 
         <!-- 가방 안 테이블 헤더: 마지막 컬럼이 '완료' -->
         <div class="bag-table-header">
-          <div class="sortable-th" style="flex: 1;" onclick="handleSavedBenefitsSort('title')">
+          <div class="sortable-th" style="flex: 1.8; justify-content: center;" id="th_saved_ben_title" onclick="handleSavedBenefitsSort('title')">
             혜택 <span class="sort-icon" id="icon_saved_ben_title">⇅</span>
           </div>
-          <div class="sortable-th" style="flex: 1.2; text-align: center; justify-content: center;" onclick="handleSavedBenefitsSort('elig')">
+          <div class="sortable-th" style="width: 90px; text-align: center; justify-content: center; padding: 0 2px;" id="th_saved_ben_elig" onclick="handleSavedBenefitsSort('elig')">
             자격/조건 <span class="sort-icon" id="icon_saved_ben_elig">⇅</span>
           </div>
-          <div class="sortable-th" style="width: 78px;" onclick="handleSavedBenefitsSort('comp')">
+          <div class="sortable-th" style="width: 56px; text-align: center; justify-content: center; padding: 0 1px;" id="th_saved_ben_comp" onclick="handleSavedBenefitsSort('comp')">
             완료 <span class="sort-icon" id="icon_saved_ben_comp">⇅</span>
           </div>
         </div>
@@ -4040,6 +4100,19 @@
     let savedBenefitIds = new Set(["nat_1", "nat_2", "nat_3", "nat_6", "nat_7", "reg_seoul_1", "per_1", "per_5"]);
     let completedBenefitIds = new Set();
     let deletedItemIds = new Set();
+    let expandedItemIds = new Set();
+
+    function toggleItemExpandById(id, el) {
+      if (expandedItemIds.has(id)) {
+        expandedItemIds.delete(id);
+      } else {
+        expandedItemIds.add(id);
+      }
+      const card = el ? (el.closest('.bag-item-card, .bag-item-row, .benefit-card-row') || el) : null;
+      if (card) {
+        card.classList.toggle('is-expanded', expandedItemIds.has(id));
+      }
+    }
 
     let currentBagTab = 0;
     let isBagDeleteMode = false;
@@ -4616,6 +4689,7 @@
     function createBagItemRowHTML(item) {
       const isDeleted = deletedItemIds.has(item.id);
       const isSaved = savedBagItemIds.has(item.id);
+      const isExpanded = expandedItemIds.has(item.id);
       const momcafeProd = item.momcafe1st || getMomcafeRank1Product(item.title);
 
       const locTagsHTML = (item.locationTags || []).map(t => {
@@ -4627,18 +4701,18 @@
 
       let checkColContent = '';
       if (isDeleted) {
-        checkColContent = `<button class="btn-item-restore" onclick="restoreBagItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')">🔄 복구</button>`;
+        checkColContent = `<button class="btn-item-restore" onclick="event.stopPropagation(); restoreBagItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')">🔄 복구</button>`;
       } else if (isBagDeleteMode) {
-        checkColContent = `<button class="btn-item-delete" onclick="deleteBagItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')">삭제 🗑️</button>`;
+        checkColContent = `<button class="btn-item-delete" onclick="event.stopPropagation(); deleteBagItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')">삭제 🗑️</button>`;
       } else {
-        checkColContent = `<input type="checkbox" class="benefit-checkbox" ${isSaved ? 'checked' : ''} onclick="toggleBagItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')" />`;
+        checkColContent = `<input type="checkbox" class="benefit-checkbox" ${isSaved ? 'checked' : ''} onclick="event.stopPropagation(); toggleBagItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')" />`;
       }
 
       return `
-        <div class="bag-item-card ${isDeleted ? 'is-deleted-card' : (isSaved ? 'saved' : '')}">
+        <div class="bag-item-card ${isDeleted ? 'is-deleted-card' : (isSaved ? 'saved' : '')} ${isExpanded ? 'is-expanded' : ''}">
           <div class="bag-item-card-main">
-            <div class="bag-col-name">
-              <div class="single-line-text" style="font-weight:700; color:var(--text-dark); font-size:13px; text-align:center;">${item.title}</div>
+            <div class="bag-col-name" style="cursor: pointer;" onclick="toggleItemExpandById('${item.id}', this)" title="터치하여 설명 펼치기/접기">
+              <div style="font-weight:700; color:var(--text-dark); font-size:12.5px; line-height:1.25; word-break:keep-all; text-align:center;">${item.title}</div>
               ${item.note ? `<div class="single-line-text" style="font-size:11px; color:var(--text-muted); margin-top:2px; text-align:center;">${item.note}</div>` : ''}
             </div>
             <div class="bag-col-tags">
@@ -4841,6 +4915,7 @@
     function createBabyItemRowHTML(item) {
       const isDeleted = deletedItemIds.has(item.id);
       const isSaved = savedBabySuppliesIds.has(item.id);
+      const isExpanded = expandedItemIds.has(item.id);
       const momcafeProd = item.momcafe1st || getMomcafeRank1Product(item.title);
 
       const periodTagsHTML = (item.periodTags || []).map(t => {
@@ -4856,27 +4931,27 @@
 
       let checkCol = '';
       if (isDeleted) {
-        checkCol = `<button class="btn-item-restore" onclick="restoreBabyItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')">🔄 복구</button>`;
+        checkCol = `<button class="btn-item-restore" onclick="event.stopPropagation(); restoreBabyItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')">🔄 복구</button>`;
       } else if (isBabyDeleteMode) {
-        checkCol = `<button class="btn-item-delete" onclick="deleteBabyItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')">삭제 🗑️</button>`;
+        checkCol = `<button class="btn-item-delete" onclick="event.stopPropagation(); deleteBabyItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')">삭제 🗑️</button>`;
       } else {
-        checkCol = `<input type="checkbox" class="benefit-checkbox" ${isSaved ? 'checked' : ''} onclick="toggleBabySupply('${item.id}', '${item.title.replace(/'/g, "\\'")}')" />`;
+        checkCol = `<input type="checkbox" class="benefit-checkbox" ${isSaved ? 'checked' : ''} onclick="event.stopPropagation(); toggleBabySupply('${item.id}', '${item.title.replace(/'/g, "\\'")}')" />`;
       }
 
       return `
-        <div class="bag-item-card ${isDeleted ? 'is-deleted-card' : (isSaved ? 'saved' : '')}">
+        <div class="bag-item-card ${isDeleted ? 'is-deleted-card' : (isSaved ? 'saved' : '')} ${isExpanded ? 'is-expanded' : ''}">
           <div class="bag-item-card-main">
-            <div class="bag-col-name">
-              <div class="single-line-text" style="font-weight:700; color:var(--text-dark); font-size:13px; text-align:center;">${item.title}</div>
+            <div class="bag-col-name" style="flex: 1; padding-right: 4px; cursor: pointer;" onclick="toggleItemExpandById('${item.id}', this)" title="터치하여 설명 펼치기/접기">
+              <div style="font-weight:700; color:var(--text-dark); font-size:12.5px; line-height:1.25; word-break:keep-all; text-align:center;">${item.title}</div>
               ${item.note ? `<div class="single-line-text" style="font-size:11px; color:var(--text-muted); margin-top:2px; text-align:center;">${item.note}</div>` : ''}
             </div>
-            <div style="width: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; flex-shrink: 0;">
+            <div style="width: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; flex-shrink: 0;">
               ${periodTagsHTML}
             </div>
-            <div style="width: 65px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <div style="width: 50px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
               ${purchaseHTML}
             </div>
-            <div style="width: 72px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">${checkCol}</div>
+            <div style="width: 56px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">${checkCol}</div>
           </div>
           <div class="card-rec-footer">
             <div class="card-momcafe-badge" onclick="event.stopPropagation(); openTopSheet('${item.id}', '${item.title.replace(/'/g, "\\'")}')" title="맘카페 언급 1위: ${momcafeProd}">
@@ -5068,6 +5143,7 @@
     function createTodoItemRowHTML(item) {
       const isDeleted = deletedItemIds.has(item.id);
       const isSaved = savedTodoIds.has(item.id);
+      const isExpanded = expandedItemIds.has(item.id);
 
       let roleStyle = "background:#e8f5e9; color:#2e7d32;";
       if (item.roleTag === '#아빠') roleStyle = "background:#e3f2fd; color:#1565c0;";
@@ -5075,17 +5151,17 @@
 
       let checkCol = '';
       if (isDeleted) {
-        checkCol = `<button class="btn-item-restore" onclick="restoreTodoItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')">🔄 복구</button>`;
+        checkCol = `<button class="btn-item-restore" onclick="event.stopPropagation(); restoreTodoItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')">🔄 복구</button>`;
       } else if (isTodoDeleteMode) {
-        checkCol = `<button class="btn-item-delete" onclick="deleteTodoItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')">삭제 🗑️</button>`;
+        checkCol = `<button class="btn-item-delete" onclick="event.stopPropagation(); deleteTodoItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')">삭제 🗑️</button>`;
       } else {
-        checkCol = `<input type="checkbox" class="benefit-checkbox" ${isSaved ? 'checked' : ''} onclick="toggleTodoSaved('${item.id}', '${item.title.replace(/'/g, "\\'")}')" />`;
+        checkCol = `<input type="checkbox" class="benefit-checkbox" ${isSaved ? 'checked' : ''} onclick="event.stopPropagation(); toggleTodoSaved('${item.id}', '${item.title.replace(/'/g, "\\'")}')" />`;
       }
 
       return `
-        <div class="bag-item-row ${isDeleted ? 'is-deleted-card' : (isSaved ? 'saved' : '')}">
-          <div class="bag-col-name" style="text-align: center; justify-content: center;">
-            <div class="single-line-text" style="font-weight:700; color:var(--text-dark); font-size:13px; text-align:center;">${item.title}</div>
+        <div class="bag-item-row ${isDeleted ? 'is-deleted-card' : (isSaved ? 'saved' : '')} ${isExpanded ? 'is-expanded' : ''}">
+          <div class="bag-col-name" style="text-align: center; justify-content: center; cursor: pointer;" onclick="toggleItemExpandById('${item.id}', this)" title="터치하여 상세 팁 펼치기/접기">
+            <div style="font-weight:700; color:var(--text-dark); font-size:12.5px; line-height:1.25; word-break:keep-all; text-align:center;">${item.title}</div>
             ${item.tip ? `<div class="single-line-text" style="font-size:11px; color:var(--text-muted); margin-top:2px; text-align:center;">${item.tip}</div>` : ''}
           </div>
           <div style="width: 65px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
@@ -5327,19 +5403,20 @@
     function createBenefitCardHTML(item) {
       const isDeleted = deletedItemIds.has(item.id);
       const isSaved = savedBenefitIds.has(item.id);
+      const isExpanded = expandedItemIds.has(item.id);
 
       let checkColContent = '';
       if (isDeleted) {
-        checkColContent = `<button class="btn-item-restore" onclick="restoreBenefitItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')">🔄 복구</button>`;
+        checkColContent = `<button class="btn-item-restore" onclick="event.stopPropagation(); restoreBenefitItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')">🔄 복구</button>`;
       } else if (isBenefitsDeleteMode) {
-        checkColContent = `<button class="btn-item-delete" onclick="deleteBenefitItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')">삭제 🗑️</button>`;
+        checkColContent = `<button class="btn-item-delete" onclick="event.stopPropagation(); deleteBenefitItem('${item.id}', '${item.title.replace(/'/g, "\\'")}')">삭제 🗑️</button>`;
       } else {
-        checkColContent = `<input type="checkbox" class="benefit-checkbox" ${isSaved ? 'checked' : ''} onclick="toggleBenefit('${item.id}', '${item.title.replace(/'/g, "\\'")}')" />`;
+        checkColContent = `<input type="checkbox" class="benefit-checkbox" ${isSaved ? 'checked' : ''} onclick="event.stopPropagation(); toggleBenefit('${item.id}', '${item.title.replace(/'/g, "\\'")}')" />`;
       }
 
       return `
-        <div class="benefit-card-row ${isDeleted ? 'is-deleted-card' : (isSaved ? 'saved' : '')}">
-          <div class="benefit-info-col">
+        <div class="benefit-card-row ${isDeleted ? 'is-deleted-card' : (isSaved ? 'saved' : '')} ${isExpanded ? 'is-expanded' : ''}">
+          <div class="benefit-info-col" style="cursor: pointer;" onclick="toggleItemExpandById('${item.id}', this)" title="터치하여 혜택 상세 펼치기/접기">
             <div class="benefit-title-row">
               <span class="benefit-title-text">${item.title}</span>
               <span class="benefit-badge">${item.badge || '혜택'}</span>
@@ -6315,10 +6392,10 @@
           ${progressBoxHTML}
           ${chipsHTML}
           <div class="bag-table-header">
-            <div class="sortable-th" style="flex: 1;" onclick="handleSavedBabySort('title')">준비물 <span class="sort-icon">⇅</span></div>
-            <div class="sortable-th" style="width: 56px;" onclick="handleSavedBabySort('period')">시기 <span class="sort-icon">⇅</span></div>
-            <div class="sortable-th" style="width: 65px;" onclick="handleSavedBabySort('purchase')">구입경로 <span class="sort-icon">⇅</span></div>
-            <div class="sortable-th" style="width: 72px;" onclick="handleSavedBabySort('comp')">완료 <span class="sort-icon">⇅</span></div>
+            <div class="sortable-th" style="flex: 1; justify-content: center;" onclick="handleSavedBabySort('title')">준비물 <span class="sort-icon">⇅</span></div>
+            <div class="sortable-th" style="width: 44px; text-align: center; justify-content: center; padding: 0 1px;" onclick="handleSavedBabySort('period')">시기 <span class="sort-icon">⇅</span></div>
+            <div class="sortable-th" style="width: 50px; text-align: center; justify-content: center; padding: 0 1px;" onclick="handleSavedBabySort('purchase')">구입경로 <span class="sort-icon">⇅</span></div>
+            <div class="sortable-th" style="width: 56px; text-align: center; justify-content: center; padding: 0 1px;" onclick="handleSavedBabySort('comp')">완료 <span class="sort-icon">⇅</span></div>
           </div>
           ${uncomp.map(createSavedBabyRowHTML).join('')}
           ${comp.length > 0 ? `<div class="completed-divider">─── 준비 완료 (${comp.length}개) ───</div>` + comp.map(createSavedBabyRowHTML).join('') : ''}
@@ -6462,9 +6539,9 @@
           ${progressBoxHTML}
           ${chipsHTML}
           <div class="bag-table-header">
-            <div class="sortable-th" style="flex: 1;" onclick="handleSavedBenefitsSort('title')">혜택 <span class="sort-icon">⇅</span></div>
-            <div class="sortable-th" style="flex: 1.2; text-align: center; justify-content: center;" onclick="handleSavedBenefitsSort('elig')">자격/조건 <span class="sort-icon">⇅</span></div>
-            <div class="sortable-th" style="width: 78px;" onclick="handleSavedBenefitsSort('comp')">완료 <span class="sort-icon">⇅</span></div>
+            <div class="sortable-th" style="flex: 1.8; justify-content: center;" onclick="handleSavedBenefitsSort('title')">혜택 <span class="sort-icon">⇅</span></div>
+            <div class="sortable-th" style="width: 90px; text-align: center; justify-content: center; padding: 0 2px;" onclick="handleSavedBenefitsSort('elig')">자격/조건 <span class="sort-icon">⇅</span></div>
+            <div class="sortable-th" style="width: 56px; text-align: center; justify-content: center; padding: 0 1px;" onclick="handleSavedBenefitsSort('comp')">완료 <span class="sort-icon">⇅</span></div>
           </div>
           ${uncomp.map(createSavedBenefitRowHTML).join('')}
           ${comp.length > 0 ? `<div class="completed-divider">─── 신청 완료 (${comp.length}개) ───</div>` + comp.map(createSavedBenefitRowHTML).join('') : ''}
@@ -6512,6 +6589,7 @@
 
     function createSavedMaternityRowHTML(item) {
       const isComp = completedBagItemIds.has(item.id);
+      const isExpanded = expandedItemIds.has(item.id);
       const locTagsHTML = (item.locationTags || []).map(t => {
         let cls = 'hospital';
         if (t === '#조리원') cls = 'carecenter';
@@ -6520,16 +6598,16 @@
       }).join('');
 
       return `
-        <div class="bag-item-row ${isComp ? 'completed-saved-row' : ''}">
-          <div class="bag-col-name" style="text-align: center; justify-content: center;">
-            <div class="single-line-text" style="font-weight:700; color:var(--text-dark); font-size:13px; text-align:center;">${item.title}</div>
+        <div class="bag-item-row ${isComp ? 'completed-saved-row' : ''} ${isExpanded ? 'is-expanded' : ''}">
+          <div class="bag-col-name" style="text-align: center; justify-content: center; cursor: pointer;" onclick="toggleItemExpandById('${item.id}', this)" title="터치하여 설명 펼치기/접기">
+            <div style="font-weight:700; color:var(--text-dark); font-size:12.5px; line-height:1.25; word-break:keep-all; text-align:center;">${item.title}</div>
             ${item.note ? `<div class="single-line-text" style="font-size:11px; color:var(--text-muted); margin-top:2px; text-align:center;">${item.note}</div>` : ''}
           </div>
           <div class="bag-col-tags" style="width: 70px; text-align: center; justify-content: center;">
             ${locTagsHTML}
           </div>
           <div class="bag-col-check" style="width: 78px; text-align: center; justify-content: center;">
-            <input type="checkbox" class="benefit-checkbox" ${isComp ? 'checked' : ''} onclick="toggleBagItemCompleted('${item.id}', '${item.title.replace(/'/g, "\\'")}')" />
+            <input type="checkbox" class="benefit-checkbox" ${isComp ? 'checked' : ''} onclick="event.stopPropagation(); toggleBagItemCompleted('${item.id}', '${item.title.replace(/'/g, "\\'")}')" />
           </div>
         </div>
       `;
@@ -6635,6 +6713,7 @@
 
     function createSavedBabyRowHTML(item) {
       const isComp = completedBabySuppliesIds.has(item.id);
+      const isExpanded = expandedItemIds.has(item.id);
       const periodTagsHTML = (item.periodTags || []).map(t => {
         let cls = 'all';
         if (t === '#신생아') cls = 'newborn';
@@ -6646,19 +6725,19 @@
       const purchaseHTML = `<span class="tag-chip-purchase ${purchaseCls}">${item.purchaseTag || '#새제품'}</span>`;
 
       return `
-        <div class="bag-item-row ${isComp ? 'completed-saved-row' : ''}">
-          <div class="bag-col-name" style="text-align: center; justify-content: center;">
-            <div class="single-line-text" style="font-weight:700; color:var(--text-dark); font-size:13px; text-align:center;">${item.title}</div>
+        <div class="bag-item-row ${isComp ? 'completed-saved-row' : ''} ${isExpanded ? 'is-expanded' : ''}">
+          <div class="bag-col-name" style="flex: 1; text-align: center; justify-content: center; padding-right: 4px; cursor: pointer;" onclick="toggleItemExpandById('${item.id}', this)" title="터치하여 설명 펼치기/접기">
+            <div style="font-weight:700; color:var(--text-dark); font-size:12.5px; line-height:1.25; word-break:keep-all; text-align:center;">${item.title}</div>
             ${item.note ? `<div class="single-line-text" style="font-size:11px; color:var(--text-muted); margin-top:2px; text-align:center;">${item.note}</div>` : ''}
           </div>
-          <div style="width: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; flex-shrink: 0;">
+          <div style="width: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; flex-shrink: 0;">
             ${periodTagsHTML}
           </div>
-          <div style="width: 65px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <div style="width: 50px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
             ${purchaseHTML}
           </div>
-          <div style="width: 72px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-            <input type="checkbox" class="benefit-checkbox" ${isComp ? 'checked' : ''} onclick="toggleBabyCompleted('${item.id}', '${item.title.replace(/'/g, "\\'")}')" />
+          <div style="width: 56px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <input type="checkbox" class="benefit-checkbox" ${isComp ? 'checked' : ''} onclick="event.stopPropagation(); toggleBabyCompleted('${item.id}', '${item.title.replace(/'/g, "\\'")}')" />
           </div>
         </div>
       `;
@@ -6777,21 +6856,22 @@
 
     function createSavedTodoRowHTML(item) {
       const isComp = completedTodoIds.has(item.id);
+      const isExpanded = expandedItemIds.has(item.id);
       let roleStyle = "background:#e8f5e9; color:#2e7d32;";
       if (item.roleTag === '#아빠') roleStyle = "background:#e3f2fd; color:#1565c0;";
       else if (item.roleTag === '#엄마') roleStyle = "background:#fff0ec; color:#ff6f59;";
 
       return `
-        <div class="bag-item-row ${isComp ? 'completed-saved-row' : ''}">
-          <div class="bag-col-name" style="text-align: center; justify-content: center;">
-            <div class="single-line-text" style="font-weight:700; color:var(--text-dark); font-size:13px; text-align:center;">${item.title}</div>
+        <div class="bag-item-row ${isComp ? 'completed-saved-row' : ''} ${isExpanded ? 'is-expanded' : ''}">
+          <div class="bag-col-name" style="text-align: center; justify-content: center; cursor: pointer;" onclick="toggleItemExpandById('${item.id}', this)" title="터치하여 상세 팁 펼치기/접기">
+            <div style="font-weight:700; color:var(--text-dark); font-size:12.5px; line-height:1.25; word-break:keep-all; text-align:center;">${item.title}</div>
             ${item.tip ? `<div class="single-line-text" style="font-size:11px; color:var(--text-muted); margin-top:2px; text-align:center;">${item.tip}</div>` : ''}
           </div>
           <div style="width: 65px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
             <span style="display:inline-block; padding:3px 7px; border-radius:6px; font-size:11px; font-weight:700; ${roleStyle}">${item.roleTag || '#부부'}</span>
           </div>
           <div style="width: 75px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-            <input type="checkbox" class="benefit-checkbox" ${isComp ? 'checked' : ''} onclick="toggleTodoCompleted('${item.id}', '${item.title.replace(/'/g, "\\'")}')" />
+            <input type="checkbox" class="benefit-checkbox" ${isComp ? 'checked' : ''} onclick="event.stopPropagation(); toggleTodoCompleted('${item.id}', '${item.title.replace(/'/g, "\\'")}')" />
           </div>
         </div>
       `;
@@ -6917,18 +6997,19 @@
 
     function createSavedBenefitRowHTML(item) {
       const isComp = completedBenefitIds.has(item.id);
+      const isExpanded = expandedItemIds.has(item.id);
 
       return `
-        <div class="bag-item-row ${isComp ? 'completed-saved-row' : ''}">
-          <div class="bag-col-name" style="text-align: center; justify-content: center;">
-            <div class="single-line-text" style="font-weight:700; color:var(--text-dark); font-size:13px; text-align:center;">${item.title}</div>
-            ${item.desc ? `<div class="single-line-text" style="font-size:11px; color:var(--text-muted); margin-top:2px; text-align:center;">${item.desc}</div>` : ''}
+        <div class="bag-item-row ${isComp ? 'completed-saved-row' : ''} ${isExpanded ? 'is-expanded' : ''}">
+          <div class="bag-col-name" style="flex: 1.8; text-align: center; justify-content: center; padding: 0 4px; cursor: pointer;" onclick="toggleItemExpandById('${item.id}', this)" title="터치하여 혜택 상세 펼치기/접기">
+            <div style="font-weight:700; color:var(--text-dark); font-size:12.5px; line-height:1.25; word-break:keep-all; text-align:center;">${item.title}</div>
+            ${item.desc ? `<div class="single-line-text" style="font-size:11px; color:var(--text-muted); margin-top:2px; text-align:center; word-break:keep-all;">${item.desc}</div>` : ''}
           </div>
-          <div style="flex: 1.2; display: flex; align-items: center; justify-content: center; padding: 0 4px; flex-shrink: 0;">
-            <div class="single-line-text" style="font-size:11.5px; color:#555; text-align:center;">${item.eligibility || '해당 대상자'}</div>
+          <div style="width: 90px; display: flex; align-items: center; justify-content: center; padding: 0 2px; flex-shrink: 0; cursor: pointer;" onclick="toggleItemExpandById('${item.id}', this)" title="터치하여 자격 조건 펼치기/접기">
+            <div class="saved-ben-elig-text">${item.eligibility || '해당 대상자'}</div>
           </div>
-          <div style="width: 78px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-            <input type="checkbox" class="benefit-checkbox" ${isComp ? 'checked' : ''} onclick="toggleBenefitCompleted('${item.id}', '${item.title.replace(/'/g, "\\'")}')" />
+          <div style="width: 56px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <input type="checkbox" class="benefit-checkbox" ${isComp ? 'checked' : ''} onclick="event.stopPropagation(); toggleBenefitCompleted('${item.id}', '${item.title.replace(/'/g, "\\'")}')" />
           </div>
         </div>
       `;

@@ -1,5 +1,5 @@
 # Full preview synchronization script
-$enc = [System.Text.Encoding]::UTF8
+$enc = New-Object System.Text.UTF8Encoding($false)
 
 Write-Host "Syncing root files to preview and android assets..." -ForegroundColor Cyan
 
