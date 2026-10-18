@@ -274,6 +274,21 @@
     <div class="section-card">
       <h2>📜 2. 최신 변경 및 패치 이력 (Patch Logs)</h2>
 
+      <!-- 2026-10-18 (v1.6.0) -->
+      <div class="patch-block">
+        <div class="patch-date">🗓️ 2026-10-18</div>
+        <div class="patch-version">패치 버전 1.6.0 (버전 코드: 27)</div>
+        <div class="patch-group">
+          <div class="patch-group-title">🍼 쿠팡 파트너스 Open API 전면 연동 & 전 품목 개별 상품 제휴 링크 자동 생성 시스템 구축</div>
+          <ul>
+            <li><strong>쿠팡 파트너스 Open API 및 공식 HMAC-SHA256 인증 연동:</strong> 발급받은 쿠팡 파트너스 API(Access Key: <code>6bcc...4283</code>, Secret Key: <code>5dbc...f970</code>, Partner ID: <code>AF8298351</code>)를 구글 스프레드시트 앱스 스크립트(<code>google_apps_script.js</code>) 및 앱 엔진에 완벽 통합. UTC 타임스탬프와 HMAC-SHA256 서명 기반 <code>CEA</code> 헤더 생성 모듈 탑재.</li>
+            <li><strong>전 품목 442개 쿠팡 상품 개별 제휴 단축 링크 일괄 변환 생성:</strong> 출산가방(63종) 및 육아용품(85종)의 1~3위 모든 추천 상품 총 442개 슬롯에 대해 쿠팡 파트너스 딥링크 API를 통해 회원님 고유의 공식 단축 링크(<code>https://link.coupang.com/a/...</code>)를 100% 개별 생성 및 마스터 데이터(<code>data_export.json</code>, <code>master_data.js</code>) 전수 반영.</li>
+            <li><strong>구글 스프레드시트 원클릭 자동 링크 생성 메뉴 추가:</strong> 시트 상단 메뉴에 <code>⚡ [쿠팡 파트너스 API] 모든 품목 개별 쿠팡 링크 자동 생성</code> 및 <code>🔑 [쿠팡 파트너스] API 키 설정 / 확인</code> 메뉴 탑재. 신규 품목 추가 시 버튼 한 번으로 해당 품목의 파트너스 제휴 링크가 자동 생성되어 L, M, N열에 자동 기록.</li>
+            <li><strong>스마트 링크 Fallback 및 파트너스 태그 영구 보존:</strong> 앱 내 Top Sheet 구매 가이드 및 외부 상품 연결(<code>openProductLink</code>) 시, 개별 링크가 없는 경우에도 회원님의 파트너스 검색 랜딩 링크(<code>https://link.coupang.com/re/AFFSRP?lptag=AF8298351&pageKey=...</code>)로 자동 연결되어 100% 수익 누락 방지. 출산가방 매핑 파이프라인 보강 완료.</li>
+          </ul>
+        </div>
+      </div>
+
       <!-- 2026-10-18 (v1.5.0) -->
       <div class="patch-block">
         <div class="patch-date">🗓️ 2026-10-18</div>

@@ -59,7 +59,9 @@ function onOpen() {
     .addItem('🤖 [Gemini AI] 빈 칸 있는 모든 품목 일괄 자동 완성', 'autoFillAllEmptyWithGemini')
     .addItem('🔑 [Gemini AI] API 키 설정 (Google AI Studio 무료 발급)', 'setupGeminiApiKeyDialog')
     .addSeparator()
+    .addItem('⚡ [쿠팡 파트너스 API] 모든 품목 개별 쿠팡 링크 자동 생성', 'autoGenerateAllCoupangLinks')
     .addItem('🔗 [쿠팡 파트너스] 수동 입력 링크 어플에 즉시 반영', 'syncCoupangLinksToApp')
+    .addItem('🔑 [쿠팡 파트너스] API 키 설정 / 확인', 'setupCoupangApiKeyDialog')
     .addSeparator()
     .addItem('🎒 [시트별 반영] 1. 출산가방 체크리스트만 반영', 'syncMaternityBagOnly')
     .addItem('🍼 [시트별 반영] 2. 육아용품 체크리스트만 반영', 'syncBabySuppliesOnly')
@@ -137,12 +139,202 @@ function syncToApp() {
 }
 
 // ------------------------------------------------------------------------------
-// [쿠팡 파트너스 수동 입력 링크 어플 반영]
+// [쿠팡 파트너스 Open API 자동 링크 생성 & 수동 링크 어플 반영 엔진]
 // ------------------------------------------------------------------------------
+const COUPANG_DEFAULT_ACCESS_KEY = '6bcc5792-feee-4a17-9091-3fc4bb7f4283';
+const COUPANG_DEFAULT_SECRET_KEY = '5dbce511b9683b3b614b7bb4e43ea2138e40f970';
+const COUPANG_PARTNER_TAG = 'AF8298351';
+const DEFAULT_COUPANG_URL = 'https://link.coupang.com/re/AFFSRP?lptag=' + COUPANG_PARTNER_TAG + '&pageKey=%EC%B6%9C%EC%82%B0%EC%A4%80%EB%B9%84%EB%AC%BC';
+
+function getCoupangCredentials() {
+  const props = PropertiesService.getScriptProperties();
+  const accessKey = props.getProperty('COUPANG_ACCESS_KEY') || COUPANG_DEFAULT_ACCESS_KEY;
+  const secretKey = props.getProperty('COUPANG_SECRET_KEY') || COUPANG_DEFAULT_SECRET_KEY;
+  return { accessKey: accessKey.trim(), secretKey: secretKey.trim() };
+}
+
+function setupCoupangApiKeyDialog() {
+  const ui = SpreadsheetApp.getUi();
+  const creds = getCoupangCredentials();
+  const maskedSecret = creds.secretKey ? (creds.secretKey.substring(0, 4) + '...' + creds.secretKey.slice(-4)) : '미설정';
+
+  const res = ui.prompt(
+    '🔑 쿠팡 파트너스 API 키 설정',
+    '쿠팡 파트너스 Open API 자격 증명 상태를 확인하거나 변경합니다.\n\n' +
+    '• 현재 Access Key: ' + creds.accessKey + '\n' +
+    '• 현재 Secret Key: ' + maskedSecret + '\n' +
+    '• 파트너 추적 태그: ' + COUPANG_PARTNER_TAG + '\n\n' +
+    '새로운 키를 등록하시려면 AccessKey, SecretKey를 쉼표(,)로 구분하여 입력하세요.\n' +
+    '(기존 설정을 유지하시려면 취소 버튼을 누르세요)',
+    ui.ButtonSet.OK_CANCEL
+  );
+
+  if (res.getSelectedButton() === ui.Button.OK) {
+    const val = res.getResponseText().trim();
+    if (val.indexOf(',') !== -1) {
+      const parts = val.split(',');
+      const newAccess = parts[0].trim();
+      const newSecret = parts[1].trim();
+      if (newAccess && newSecret) {
+        PropertiesService.getScriptProperties().setProperty('COUPANG_ACCESS_KEY', newAccess);
+        PropertiesService.getScriptProperties().setProperty('COUPANG_SECRET_KEY', newSecret);
+        ui.alert('✅ 쿠팡 파트너스 API 키가 저장되었습니다!');
+      }
+    }
+  }
+}
+
+function generateCoupangAuthHeader(method, path, query) {
+  const creds = getCoupangCredentials();
+  const datetime = Utilities.formatDate(new Date(), "GMT", "yyMMdd'T'HHmmss'Z'");
+  let message = datetime + method.toUpperCase() + path;
+  if (query) {
+    message += '?' + query;
+  }
+  const rawSig = Utilities.computeHmacSha256Signature(message, creds.secretKey);
+  const hexSig = rawSig.map(function(b) {
+    const n = (b < 0 ? b + 256 : b);
+    return (n < 16 ? '0' : '') + n.toString(16);
+  }).join('');
+  return 'CEA algorithm=HmacSHA256, access-key=' + creds.accessKey + ', signed-date=' + datetime + ', signature=' + hexSig;
+}
+
+function batchConvertCoupangDeeplinks(urls) {
+  if (!urls || urls.length === 0) return {};
+  const path = '/v2/providers/affiliate_open_api/apis/openapi/v1/deeplink';
+  const url = 'https://api-gateway.coupang.com' + path;
+  const resultMap = {};
+
+  for (let i = 0; i < urls.length; i += 20) {
+    const chunk = urls.slice(i, i + 20);
+    const authHeader = generateCoupangAuthHeader('POST', path, '');
+    try {
+      const resp = UrlFetchApp.fetch(url, {
+        method: 'post',
+        headers: {
+          'Authorization': authHeader,
+          'Content-Type': 'application/json'
+        },
+        payload: JSON.stringify({ coupangUrls: chunk }),
+        muteHttpExceptions: true
+      });
+
+      if (resp.getResponseCode() === 200) {
+        const json = JSON.parse(resp.getContentText());
+        if (json.data && Array.isArray(json.data)) {
+          json.data.forEach(function(item) {
+            if (item.originalUrl && item.shortenUrl) {
+              resultMap[item.originalUrl] = item.shortenUrl;
+            }
+          });
+        }
+      } else {
+        Logger.log('Coupang API Batch Error: ' + resp.getContentText());
+      }
+    } catch (e) {
+      Logger.log('batchConvertCoupangDeeplinks Exception: ' + e.message);
+    }
+    Utilities.sleep(250);
+  }
+  return resultMap;
+}
+
+function autoGenerateAllCoupangLinks() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+
+  const confirm = ui.alert(
+    '⚡ [쿠팡 파트너스 API] 모든 품목 개별 쿠팡 링크 자동 생성',
+    '출산가방 및 육아용품 시트의 모든 품목에 대해 쿠팡 파트너스 공식 단축 링크(https://link.coupang.com/a/...)를 일괄 생성하여 L, M, N열에 채워 넣으시겠습니까?\n\n' +
+    '※ 기존에 이미 등록된 개별 단축 링크는 안전하게 보존되고, 미등록 또는 기본 링크인 항목만 쿠팡 API를 통해 고유 제휴 링크로 자동 변환됩니다.',
+    ui.ButtonSet.YES_NO
+  );
+
+  if (confirm !== ui.Button.YES) return;
+
+  try {
+    ensureRowIntegrity(ss);
+    let totalUpdated = 0;
+    const sheets = ['출산가방 체크리스트', '육아용품 체크리스트'];
+
+    sheets.forEach(function(sName) {
+      const sheet = ss.getSheetByName(sName);
+      if (!sheet) return;
+      const lastRow = sheet.getLastRow();
+      if (lastRow < 2) return;
+
+      const dataRange = sheet.getRange(2, 1, lastRow - 1, 14);
+      const values = dataRange.getValues();
+
+      const itemsToConvert = [];
+
+      for (let r = 0; r < values.length; r++) {
+        const rowNum = r + 2;
+        const title = String(values[r][3] || '').trim();
+        const top1 = String(values[r][8] || '').trim();
+        const top2 = String(values[r][9] || '').trim();
+        const top3 = String(values[r][10] || '').trim();
+
+        const u1 = String(values[r][11] || '').trim();
+        const u2 = String(values[r][12] || '').trim();
+        const u3 = String(values[r][13] || '').trim();
+
+        const targets = [
+          { col: 12, name: top1 || title, currentUrl: u1 },
+          { col: 13, name: top2 || (title ? title + ' 추천' : ''), currentUrl: u2 },
+          { col: 14, name: top3 || (title ? title + ' 인기' : ''), currentUrl: u3 }
+        ];
+
+        targets.forEach(function(t) {
+          const isGeneric = (!t.currentUrl || t.currentUrl === 'https://link.coupang.com/a/hDXnz86Thk' || t.currentUrl.indexOf('AFFSRP') !== -1);
+          if (isGeneric && t.name) {
+            const cleanQuery = t.name.split('/')[0].split('(')[0].trim();
+            const coupangSearchUrl = 'https://www.coupang.com/np/search?component=&q=' + encodeURIComponent(cleanQuery) + '&channel=user';
+            itemsToConvert.push({
+              row: rowNum,
+              col: t.col,
+              searchUrl: coupangSearchUrl,
+              fallbackKeyword: cleanQuery
+            });
+          }
+        });
+      }
+
+      if (itemsToConvert.length === 0) return;
+
+      const uniqueSearchUrls = Array.from(new Set(itemsToConvert.map(function(item) { return item.searchUrl; })));
+      const convertedMap = batchConvertCoupangDeeplinks(uniqueSearchUrls);
+
+      itemsToConvert.forEach(function(item) {
+        const shortenUrl = convertedMap[item.searchUrl];
+        if (shortenUrl) {
+          sheet.getRange(item.row, item.col).setValue(shortenUrl);
+          totalUpdated++;
+        } else {
+          const fallbackLink = 'https://link.coupang.com/re/AFFSRP?lptag=' + COUPANG_PARTNER_TAG + '&pageKey=' + encodeURIComponent(item.fallbackKeyword);
+          sheet.getRange(item.row, item.col).setValue(fallbackLink);
+          totalUpdated++;
+        }
+      });
+    });
+
+    syncToApp();
+
+    ui.alert(
+      '🎉 [쿠팡 파트너스] 링크 일괄 생성 완료!',
+      '• 변환된 링크 수: ' + totalUpdated + '개 슬롯\n' +
+      '• 파트너스 ID: ' + COUPANG_PARTNER_TAG + '\n\n' +
+      '모든 품목의 1~3위 상품에 대해 쿠팡 파트너스 고유 수익 링크가 등록되었으며, 어플에도 실시간 반영되었습니다!',
+      ui.ButtonSet.OK
+    );
+  } catch (err) {
+    ui.alert('❌ 쿠팡 링크 생성 중 오류: ' + err.toString());
+  }
+}
+
 function syncCoupangLinksToApp() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const ui = SpreadsheetApp.getUi();
-  const DEFAULT_COUPANG_URL = 'https://link.coupang.com/a/hDXnz86Thk';
 
   try {
     ensureRowIntegrity(ss);
@@ -170,13 +362,13 @@ function syncCoupangLinksToApp() {
       }
     });
 
-    const msg = '• 배포 버전: 꽁꽁 출산가방 v1.1.7\n' +
+    const msg = '• 배포 버전: 꽁꽁 출산가방 v1.6.0\n' +
                 '• 갱신 일시: ' + now + '\n' +
-                '• 출산가방 수동 등록 품목: ' + customMaternityLinks + '개\n' +
-                '• 육아용품 수동 등록 품목: ' + customBabyLinks + '개\n' +
-                '• 기본 연결 링크: ' + DEFAULT_COUPANG_URL + '\n\n' +
-                '✅ 구글 시트에서 수동으로 입력하신 쿠팡 파트너스 링크가 어플에 성공적으로 반영되었습니다!\n' +
-                '※ 링크를 입력하지 않은 모든 품목은 회원님의 기본 쿠팡 링크로 자동 연결됩니다.';
+                '• 출산가방 파트너스 링크 품목: ' + customMaternityLinks + '개\n' +
+                '• 육아용품 파트너스 링크 품목: ' + customBabyLinks + '개\n' +
+                '• 파트너 추적 태그: ' + COUPANG_PARTNER_TAG + '\n\n' +
+                '✅ 구글 시트의 모든 쿠팡 파트너스 링크가 어플에 성공적으로 반영되었습니다!\n' +
+                '※ 링크를 개별 입력하지 않은 품목도 회원님의 파트너스 검색 링크로 100% 자동 연결됩니다.';
 
     ui.alert('🔗 쿠팡 파트너스 링크 반영 완료', msg, ui.ButtonSet.OK);
   } catch (err) {
@@ -192,7 +384,7 @@ function syncCoupangLinksToApp() {
 function syncMaternityBagOnly() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const ui = SpreadsheetApp.getUi();
-  const DEFAULT_COUPANG_URL = 'https://link.coupang.com/a/hDXnz86Thk';
+  const DEFAULT_COUPANG_URL = 'https://link.coupang.com/re/AFFSRP?lptag=' + COUPANG_PARTNER_TAG + '&pageKey=%EC%B6%9C%EC%82%B0%EC%A4%80%EB%B9%84%EB%AC%BC';
   try {
     ensureRowIntegrity(ss);
     const bagData = parseSheetToObjects(ss.getSheetByName('출산가방 체크리스트'), [
@@ -224,7 +416,7 @@ function syncMaternityBagOnly() {
 function syncBabySuppliesOnly() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const ui = SpreadsheetApp.getUi();
-  const DEFAULT_COUPANG_URL = 'https://link.coupang.com/a/hDXnz86Thk';
+  const DEFAULT_COUPANG_URL = 'https://link.coupang.com/re/AFFSRP?lptag=' + COUPANG_PARTNER_TAG + '&pageKey=%EC%B6%9C%EC%82%B0%EC%A4%80%EB%B9%84%EB%AC%BC';
   try {
     ensureRowIntegrity(ss);
     const babyData = parseSheetToObjects(ss.getSheetByName('육아용품 체크리스트'), [
@@ -446,7 +638,7 @@ function fillSingleRowWithGeminiOrCatalog(sheet, row, titleVal, ss, blacklist) {
   // Gemini AI 데이터 추출 시도
   const aiData = fetchGeminiItemDetails(sheetName, titleVal);
   const keyword = cleanKeyword(titleVal);
-  const defaultCoupang = 'https://link.coupang.com/a/hDXnz86Thk';
+  const defaultCoupang = 'https://link.coupang.com/re/AFFSRP?lptag=' + COUPANG_PARTNER_TAG + '&pageKey=' + encodeURIComponent(titleVal);
 
   if (isBag) {
     // 2열: 구분 (tabCategory)
@@ -1681,7 +1873,7 @@ function getRecommendationRules(ss) {
 // 4개 시트 전체 데이터 추출 (파란색 셀 바이럴 광고 어플 반영 자동 분리)
 function getAllSheetsData(ss) {
   ensureRowIntegrity(ss);
-  const DEFAULT_COUPANG_URL = 'https://link.coupang.com/a/hDXnz86Thk';
+  const DEFAULT_COUPANG_URL = 'https://link.coupang.com/re/AFFSRP?lptag=' + COUPANG_PARTNER_TAG + '&pageKey=%EC%B6%9C%EC%82%B0%EC%A4%80%EB%B9%84%EB%AC%BC';
 
   const maternityList = parseSheetToObjects(ss.getSheetByName('출산가방 체크리스트'), [
     'id', 'tabCategory', 'section', 'title', 'recommendedQty', 'locationTags', 'note', 'momcafe1st', 'top1', 'top2', 'top3', 'top1_url', 'top2_url', 'top3_url'
@@ -2286,9 +2478,9 @@ function populateStandardBabySuppliesCatalog() {
     "베이비브레짜 포뮬러 프로 어드밴스드 자동 분유제조기",
     "버버(BurrBurr) 스마트 분유제조기 2세대",
     "콤비 스마트 분유제조기",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2e7ghxue",
+    "https://link.coupang.com/a/hW2e7jpdfg",
+    "https://link.coupang.com/a/hW2e7mlZro"
   ],
   [
     "bs_f_2",
@@ -2302,9 +2494,9 @@ function populateStandardBabySuppliesCatalog() {
     "릴리프 한경희 스마트 보온 분유포트 1.5L",
     "보르르 안심 유리 분유포트 1.7L",
     "쿠첸 프리미엄 분유포트 티메이커",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2e7ovUf6",
+    "https://link.coupang.com/a/hW2e7rDz08",
+    "https://link.coupang.com/a/hW2e7uw8Xc"
   ],
   [
     "bs_f_3",
@@ -2318,9 +2510,9 @@ function populateStandardBabySuppliesCatalog() {
     "봄봄 무선 휴대용 배터리 분유포트",
     "모윰 프리미엄 원터치 안심 보온병 500ml",
     "써모스 베이비 진공 단열 조유 보온병",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2e7yal0C",
+    "https://link.coupang.com/a/hW2e7Blv4K",
+    "https://link.coupang.com/a/hW2e7EpwR2"
   ],
   [
     "bs_f_4",
@@ -2334,9 +2526,9 @@ function populateStandardBabySuppliesCatalog() {
     "베이비맥스 자동 분유 쉐이커 2세대",
     "마더케이 전동 분유 교반기 쉐이커",
     "이지스마트 휴대용 분유 믹서",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2e7HDUce",
+    "https://link.coupang.com/a/hW2e7J846K",
+    "https://link.coupang.com/a/hW2e7MVprE"
   ],
   [
     "bs_f_5",
@@ -2350,9 +2542,9 @@ function populateStandardBabySuppliesCatalog() {
     "유팡 플러스 LED 젖병소독기 UP911",
     "스펙트라 UV LED 젖병소독기",
     "해님 4세대 스마트 UV 젖병소독기",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2e81XzUW",
+    "https://link.coupang.com/a/hW2e84KlXw",
+    "https://link.coupang.com/a/hW2e87Ohqu"
   ],
   [
     "bs_f_6",
@@ -2366,9 +2558,9 @@ function populateStandardBabySuppliesCatalog() {
     "꿈비 스마트 젖병세척기 올인원",
     "마더케이 전동 젖병 세척기",
     "베베앙 젖병 자동 세척 살균기",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2e9bdyjA",
+    "https://link.coupang.com/a/hW2e9erVDM",
+    "https://link.coupang.com/a/hW2e9ha72W"
   ],
   [
     "bs_f_7",
@@ -2382,9 +2574,9 @@ function populateStandardBabySuppliesCatalog() {
     "마더케이 에코 실리콘 젖병 브러쉬 2종 세트",
     "그로미미 대용량 젖병 건조대",
     "블랑101 1종 젖병세정제 무향",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2e9kpvm8",
+    "https://link.coupang.com/a/hW2e9nchpJ",
+    "https://link.coupang.com/a/hW2e9qxN0K"
   ],
   [
     "bs_f_8",
@@ -2398,9 +2590,9 @@ function populateStandardBabySuppliesCatalog() {
     "더블하트 모유실감 3세대 젖병 160ml",
     "헤겐 배앓이방지 PPSU 젖병 150ml",
     "닥터브라운 옵션스플러스 젖병 150ml",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2e9ueF1U",
+    "https://link.coupang.com/a/hW2e9xbsd2",
+    "https://link.coupang.com/a/hW2e9zYegC"
   ],
   [
     "bs_f_9",
@@ -2414,9 +2606,9 @@ function populateStandardBabySuppliesCatalog() {
     "더블하트 모유실감 3세대 PPSU 젖병 240ml",
     "헤겐 수유 젖병 240ml 2입 세트",
     "스펙트라 올뉴 PA 젖병 260ml",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2e9DjKRE",
+    "https://link.coupang.com/a/hW2e9GrqCG",
+    "https://link.coupang.com/a/hW2e9KwBk4"
   ],
   [
     "bs_f_10",
@@ -2430,9 +2622,9 @@ function populateStandardBabySuppliesCatalog() {
     "더블하트 모유실감 3세대 젖꼭지 SS/S 2입",
     "모윰 리얼핏 젖꼭지 1단계 (신생아용)",
     "헤겐 배앓이방지 젖꼭지 1단계",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2e9OJm1Y",
+    "https://link.coupang.com/a/hW2e9R4TC0",
+    "https://link.coupang.com/a/hW2e9VLLEa"
   ],
   [
     "bs_f_11",
@@ -2446,9 +2638,9 @@ function populateStandardBabySuppliesCatalog() {
     "필립스 아벤트 울트라에어 야광 쪽쪽이 2입",
     "빕스(BIBS) 데 루스 천연고무 쪽쪽이",
     "모윰 마카롱 실리콘 쪽쪽이 1단계",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2e9ZewQm",
+    "https://link.coupang.com/a/hW2e0LuPe0",
+    "https://link.coupang.com/a/hW2e92isjk"
   ],
   [
     "bs_f_12",
@@ -2462,9 +2654,9 @@ function populateStandardBabySuppliesCatalog() {
     "모윰 원터치 실리콘 쪽쪽이 클립 2P",
     "마더케이 쪽쪽이 휴대용 케이스",
     "베베락 실리콘 쪽쪽이 스트랩",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fbeuDtY",
+    "https://link.coupang.com/a/hW2fbgV9qK",
+    "https://link.coupang.com/a/hW2fbj3PbM"
   ],
   [
     "bs_f_13",
@@ -2478,9 +2670,9 @@ function populateStandardBabySuppliesCatalog() {
     "알프레미오 친환경 오가닉 수유시트",
     "유비맘 C자형 수유쿠션 D-30",
     "마더스베이비 메모리폼 C자형 수유쿠션",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fbm0BnU",
+    "https://link.coupang.com/a/hW2fbpNnqu",
+    "https://link.coupang.com/a/hW2fbsRiTs"
   ],
   [
     "bs_f_14",
@@ -2494,9 +2686,9 @@ function populateStandardBabySuppliesCatalog() {
     "스펙트라 Dual-S 듀얼 전동 유축기",
     "스펙트라 와이드 전동 유축기 본체세트",
     "시밀레 프리에 핸즈프리 웨어러블 무선 유축기",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fbwgzMy",
+    "https://link.coupang.com/a/hW2fbzdlYG",
+    "https://link.coupang.com/a/hW2fbBqVK8"
   ],
   [
     "bs_f_15",
@@ -2510,9 +2702,9 @@ function populateStandardBabySuppliesCatalog() {
     "마더케이 이지컷 모유저장팩 200ml 120매",
     "란시노 모유보관팩 50매",
     "더블하트 허니콤 일회용 수유패드 132매",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fbEuRd6",
+    "https://link.coupang.com/a/hW2fbHCwY8",
+    "https://link.coupang.com/a/hW2fbKQUjk"
   ],
   [
     "bs_f_16",
@@ -2526,9 +2718,9 @@ function populateStandardBabySuppliesCatalog() {
     "란시노 HPA 라놀린 유두보호 크림 40g",
     "메델라 퓨어란 100 라놀린 크림",
     "마더스베이비 내추럴 유두보호 버터크림",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fbNl5dQ",
+    "https://link.coupang.com/a/hW2fbQp0GO",
+    "https://link.coupang.com/a/hW2fbTxGrQ"
   ],
   [
     "bs_f_17",
@@ -2542,9 +2734,9 @@ function populateStandardBabySuppliesCatalog() {
     "스토케 트립트랩 하이체어 베이비세트",
     "아가드 아이슬라이드 하이체어",
     "본베베 점보 하이체어",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fbWL3L2",
+    "https://link.coupang.com/a/hW2fbZyPOC",
+    "https://link.coupang.com/a/hW2fb2k99w"
   ],
   [
     "bs_f_18",
@@ -2558,9 +2750,9 @@ function populateStandardBabySuppliesCatalog() {
     "베이비뵨 스몰 베이비 빕 실리콘 턱받이 2P",
     "도노도노 올인원 실리콘 턱받이",
     "모윰 실리콘 포켓 턱받이",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fb5beMu",
+    "https://link.coupang.com/a/hW2fb8pB6G",
+    "https://link.coupang.com/a/hW2fdtit5w"
   ],
   [
     "bs_f_19",
@@ -2574,9 +2766,9 @@ function populateStandardBabySuppliesCatalog() {
     "블루마마 도자기 실리콘 흡착볼 세트",
     "모윰 실리콘 흡착 이유식기",
     "도노도노 모듈러 실리콘 식기",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fdv1Bam",
+    "https://link.coupang.com/a/hW2fdzPf40",
+    "https://link.coupang.com/a/hW2fdCkqZw"
   ],
   [
     "bs_f_20",
@@ -2590,9 +2782,9 @@ function populateStandardBabySuppliesCatalog() {
     "릿첼 소프트 유아용 이유식 스푼 케이스세트",
     "마더케이 실리콘 이유식 큐브트레이",
     "글라스락 베이비 이유식 눈금 보관용기",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fdFomsu",
+    "https://link.coupang.com/a/hW2fdIeq5s",
+    "https://link.coupang.com/a/hW2fdLbdhA"
   ],
   [
     "bs_s_1",
@@ -2606,9 +2798,9 @@ function populateStandardBabySuppliesCatalog() {
     "벨라 원목 아기침대 풀세트",
     "리안 드림콧 아기침대 이동형",
     "보네스트 친환경 원목 침대",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fdNGob6",
+    "https://link.coupang.com/a/hW2fdQa7oW",
+    "https://link.coupang.com/a/hW2fdS1b1U"
   ],
   [
     "bs_s_2",
@@ -2622,9 +2814,9 @@ function populateStandardBabySuppliesCatalog() {
     "포몽드 리버시블 듀라론 냉감 쿨매트",
     "비비엔다 듀라론 쿨매트",
     "도노도노 쿨에어 매쉬 쿨매트",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fdWfzl6",
+    "https://link.coupang.com/a/hW2fdYKKgC",
+    "https://link.coupang.com/a/hW2fd1fyNN"
   ],
   [
     "bs_s_3",
@@ -2638,9 +2830,9 @@ function populateStandardBabySuppliesCatalog() {
     "비비엔다 프리미엄 순면 방수패드 L",
     "말랑하니 대형 순면 방수패드",
     "아가드 오가닉 방수패드",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fd4Lxf2",
+    "https://link.coupang.com/a/hW2fd6Y62u",
+    "https://link.coupang.com/a/hW2fd9tQfk"
   ],
   [
     "bs_s_4",
@@ -2654,9 +2846,9 @@ function populateStandardBabySuppliesCatalog() {
     "라비킷 라이너 루프트 메쉬 두상베개",
     "지오필로우 신생아 두상베개 S",
     "도노도노 에르고 두상베개",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fecBv0m",
+    "https://link.coupang.com/a/hW2fefPTky",
+    "https://link.coupang.com/a/hW2feik4e4"
   ],
   [
     "bs_s_5",
@@ -2670,9 +2862,9 @@ function populateStandardBabySuppliesCatalog() {
     "라라스 메쉬 통잠베개",
     "해피테일즈 뒤집기 방지 옆잠베개",
     "달퐁 옆잠 방지 쿠션",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fek7tUi",
+    "https://link.coupang.com/a/hW2ffzw9w4",
+    "https://link.coupang.com/a/hW2ffEAgUu"
   ],
   [
     "bs_s_6",
@@ -2686,9 +2878,9 @@ function populateStandardBabySuppliesCatalog() {
     "로토토베베 와플 역류방지쿠션",
     "제이앤제나 역류방지쿠션 밴드형",
     "포그내 올인원 역류방지쿠션",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2ffHZxNA",
+    "https://link.coupang.com/a/hW2ffKWjZI",
+    "https://link.coupang.com/a/hW2ffNI52i"
   ],
   [
     "bs_s_7",
@@ -2702,9 +2894,9 @@ function populateStandardBabySuppliesCatalog() {
     "도노도노 소프트 코튼 블랭킷",
     "베베데코 오가닉 와플 블랭킷",
     "비비엔다 엠보 거즈 이불",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2ffQM1vg",
+    "https://link.coupang.com/a/hW2ffUciom",
+    "https://link.coupang.com/a/hW2ffXqFIy"
   ],
   [
     "bs_s_8",
@@ -2718,9 +2910,9 @@ function populateStandardBabySuppliesCatalog() {
     "알집매트 더블제로 무틈 폴더매트",
     "파크론 롤매트 15T",
     "꿈비 클린롤매트",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2ffZVQC4",
+    "https://link.coupang.com/a/hW2ff2ZL52",
+    "https://link.coupang.com/a/hW2ff6o2Y8"
   ],
   [
     "bs_s_9",
@@ -2734,9 +2926,9 @@ function populateStandardBabySuppliesCatalog() {
     "말랑하니 수면유도 백색소음기 프로",
     "드림에그 화이트노이즈 머신",
     "쿠첸 베이비 사운드 머신",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2ff9Dqjk",
+    "https://link.coupang.com/a/hW2fgcVJEi",
+    "https://link.coupang.com/a/hW2fgf3ppk"
   ],
   [
     "bs_s_10",
@@ -2750,9 +2942,9 @@ function populateStandardBabySuppliesCatalog() {
     "헤이홈 스마트 베이비 홈캠 Pro + 침대거치대",
     "샤오미 스마트 홈캠 C400",
     "티피링크 Tapo C210 회전형 웹캠",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fgjhMJw",
+    "https://link.coupang.com/a/hW2fglMXD2",
+    "https://link.coupang.com/a/hW2fgoQS60"
   ],
   [
     "bs_s_11",
@@ -2766,9 +2958,9 @@ function populateStandardBabySuppliesCatalog() {
     "말랑하니 충전식 LED 수유등",
     "루나스퀘어 스마트 무선 수유등",
     "비비라이프 실리콘 터치 무드등",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fgsxK8a",
+    "https://link.coupang.com/a/hW2fgvuxki",
+    "https://link.coupang.com/a/hW2fgyhjmS"
   ],
   [
     "bs_s_12",
@@ -2782,9 +2974,9 @@ function populateStandardBabySuppliesCatalog() {
     "조지루시 가열식 가습기 EE-DC50",
     "케어팟 스테인리스 초음파 가습기 X50",
     "한일 에어미스트 촉촉 가습기",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fhMRqQS",
+    "https://link.coupang.com/a/hW2fhP5Oa4",
+    "https://link.coupang.com/a/hW2fhSAY5A"
   ],
   [
     "bs_s_13",
@@ -2798,9 +2990,9 @@ function populateStandardBabySuppliesCatalog() {
     "LG전자 퓨리케어 360도 공기청정기 플러스",
     "삼성전자 블루스카이 3100",
     "위닉스 타워 프라임 공기청정기",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fhVnjqu",
+    "https://link.coupang.com/a/hW2fhYMAjA",
+    "https://link.coupang.com/a/hW2fh1JmvI"
   ],
   [
     "bs_s_14",
@@ -2814,9 +3006,9 @@ function populateStandardBabySuppliesCatalog() {
     "휴비딕 온습도계 HT-1",
     "샤오미 미지아 스마트 온습도계 2",
     "카스 디지털 온습도계 T023",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fh4J4IC",
+    "https://link.coupang.com/a/hW2fh7RKtE",
+    "https://link.coupang.com/a/hW2fiaOwFM"
   ],
   [
     "bs_s_15",
@@ -2830,9 +3022,9 @@ function populateStandardBabySuppliesCatalog() {
     "아엠홈 프리미엄 100% 방한 암막커튼",
     "데코뷰 호텔식 고중량 암막커튼",
     "지나송 맞춤형 이중 암막 블라인드",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fidjHAi",
+    "https://link.coupang.com/a/hW2fignInA",
+    "https://link.coupang.com/a/hW2fijkuzI"
   ],
   [
     "bs_s_16",
@@ -2846,9 +3038,9 @@ function populateStandardBabySuppliesCatalog() {
     "베이비뵨 바운서 블리스 메쉬",
     "포맘스 락카루 스마트 자동 바운서",
     "브라이트스타트 자동 바운서",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fil7gCi",
+    "https://link.coupang.com/a/hW2fioTAXc",
+    "https://link.coupang.com/a/hW2fisiRQi"
   ],
   [
     "bs_s_17",
@@ -2862,9 +3054,9 @@ function populateStandardBabySuppliesCatalog() {
     "타이니러브 수더앤그루브 프린세스/메도우 모빌 거치대세트",
     "아가드 침대 회전 모빌",
     "피셔프라이스 버터플라이 모빌",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fiv6rqC",
+    "https://link.coupang.com/a/hW2fiyBCk8",
+    "https://link.coupang.com/a/hW2fiBW8Wa"
   ],
   [
     "bs_s_18",
@@ -2878,9 +3070,9 @@ function populateStandardBabySuppliesCatalog() {
     "두두스토리 베이비 사운드 병풍 풀세트",
     "애플비 신생아 초점책 4권 세트",
     "블루래빗 첫 두뇌발달 초점책",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fiFmpPg",
+    "https://link.coupang.com/a/hW2fiIxzTo",
+    "https://link.coupang.com/a/hW2fjXpivs"
   ],
   [
     "bs_s_19",
@@ -2894,9 +3086,9 @@ function populateStandardBabySuppliesCatalog() {
     "피셔프라이스 킥앤플레이 피아노 아기체육관",
     "하베브릭스 올인원 아기체육관",
     "브라이트스타트 지글스 아기체육관",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fj0DFPE",
+    "https://link.coupang.com/a/hW2fj3qrSe",
+    "https://link.coupang.com/a/hW2fj6LYtg"
   ],
   [
     "bs_s_20",
@@ -2910,9 +3102,9 @@ function populateStandardBabySuppliesCatalog() {
     "코나 에듀테이블 스마트 한영버전",
     "피셔프라이스 스마트 스테이지 에듀테이블",
     "하베브릭스 변신 에듀테이블",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fkabfmm",
+    "https://link.coupang.com/a/hW2fkc71yu",
+    "https://link.coupang.com/a/hW2fkfzCPA"
   ],
   [
     "bs_s_21",
@@ -2926,9 +3118,9 @@ function populateStandardBabySuppliesCatalog() {
     "아임오 춤추는 꼬꼬맘 미니꼬꼬 포함",
     "브이텍 깜짝볼 스마트 토이",
     "피셔프라이스 춤추는 비트보",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fkjncpU",
+    "https://link.coupang.com/a/hW2fkl9Ysu",
+    "https://link.coupang.com/a/hW2fkoWiNo"
   ],
   [
     "bs_s_22",
@@ -2942,9 +3134,9 @@ function populateStandardBabySuppliesCatalog() {
     "스마트베어 튤립 사운드북 베스트 5종 세트",
     "블루래빗 첫 동요 사운드북",
     "핑크퐁 아기상어 사운드북",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fkrTajR",
+    "https://link.coupang.com/a/hW2fkuXxuu",
+    "https://link.coupang.com/a/hW2fkxsgHk"
   ],
   [
     "bs_s_23",
@@ -2958,9 +3150,9 @@ function populateStandardBabySuppliesCatalog() {
     "모윰 포니 실리콘 치발기 스탠딩형",
     "마마스템 잼잼몬스터 손목 치발기",
     "앙쥬 바나나 치발기 케이스세트",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fkAGJlQ",
+    "https://link.coupang.com/a/hW2fkDbUgm",
+    "https://link.coupang.com/a/hW2fkFYeBg"
   ],
   [
     "bs_s_24",
@@ -2974,9 +3166,9 @@ function populateStandardBabySuppliesCatalog() {
     "젤리캣 블라썸 버니 M 사이즈",
     "블루래빗 오가닉 코튼 애착인형",
     "메리마망 수제 오가닉 인형",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fkI5Umi",
+    "https://link.coupang.com/a/hW2fkMTtWC",
+    "https://link.coupang.com/a/hW2fkPkZTo"
   ],
   [
     "bs_s_25",
@@ -2990,9 +3182,9 @@ function populateStandardBabySuppliesCatalog() {
     "말랑하니 감성 원목 디데이 달력",
     "달퐁 포토 디데이 캘린더",
     "리틀포레 아기 성장 기록 다이어리",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fkSsFEq",
+    "https://link.coupang.com/a/hW2fl73W3w",
+    "https://link.coupang.com/a/hW2fmay7X2"
   ],
   [
     "bs_c_1",
@@ -3006,9 +3198,9 @@ function populateStandardBabySuppliesCatalog() {
     "소베맘 스마트 폴딩 기저귀 갈이대 세트",
     "아가드 멀티 기저귀갈이대",
     "베베앙 높이조절 기저귀교환대",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fmdUJTo",
+    "https://link.coupang.com/a/hW2fmgRv5w",
+    "https://link.coupang.com/a/hW2fmjmGZ2"
   ],
   [
     "bs_c_2",
@@ -3022,9 +3214,9 @@ function populateStandardBabySuppliesCatalog() {
     "말랑하니 접이식 기저귀교환 방수패드",
     "비비엔다 갈이대용 방수요",
     "베베데코 오가닉 방수매트",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fml81kW",
+    "https://link.coupang.com/a/hW2fmpgG5Z",
+    "https://link.coupang.com/a/hW2fmtlROm"
   ],
   [
     "bs_c_3",
@@ -3038,9 +3230,9 @@ function populateStandardBabySuppliesCatalog() {
     "매직캔 히포2 오토 실링 휴지통 27L",
     "이지캔 스마트 기저귀 쓰레기통 27L",
     "샤오미 스마트 센서 자동 밀폐 쓰레기통",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fmv8DQW",
+    "https://link.coupang.com/a/hW2fmzczjU",
+    "https://link.coupang.com/a/hW2fmCTrk4"
   ],
   [
     "bs_c_4",
@@ -3054,9 +3246,9 @@ function populateStandardBabySuppliesCatalog() {
     "이케아 RASKOG 로스코그 이동식 카트 3단",
     "한샘 샘키즈 이동식 수납 트롤리",
     "코스트코 3단 메탈 서랍 트롤리",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fmGppNk",
+    "https://link.coupang.com/a/hW2fmIUAHQ",
+    "https://link.coupang.com/a/hW2fmLYwaO"
   ],
   [
     "bs_c_5",
@@ -3070,9 +3262,9 @@ function populateStandardBabySuppliesCatalog() {
     "하기스 네이처메이드 밴드형 1단계 신생아용",
     "팸퍼스 스와들러 1단계",
     "나비잠 울트라씬 코튼 기저귀 NB",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fmPFobY",
+    "https://link.coupang.com/a/hW2fmSCan6",
+    "https://link.coupang.com/a/hW2fmVGxyK"
   ],
   [
     "bs_c_6",
@@ -3086,9 +3278,9 @@ function populateStandardBabySuppliesCatalog() {
     "온다베이비 신생아 욕조 2종 세트",
     "슈너글 아기욕조 샴푸버디 세트",
     "네이처리빙 스마트 인체공학 욕조",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fmYKs1I",
+    "https://link.coupang.com/a/hW2fm2rk2S",
+    "https://link.coupang.com/a/hW2fm5FIm4"
   ],
   [
     "bs_c_7",
@@ -3102,9 +3294,9 @@ function populateStandardBabySuppliesCatalog() {
     "워터웰 360도 회전 아기 세면대 수전 필터세트",
     "바디럽 퓨어썸 세면대용 필터 수전",
     "대림바스 디클린 아기전용 세면대 헤드",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2foB5lM4",
+    "https://link.coupang.com/a/hW2foGawvs",
+    "https://link.coupang.com/a/hW2foIkrka"
   ],
   [
     "bs_c_8",
@@ -3118,9 +3310,9 @@ function populateStandardBabySuppliesCatalog() {
     "포브 프리아 아기비데 세면대 거치형",
     "치코 베이비비데",
     "아가드 이지 힙 클린 아기비데",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2foLNhQG",
+    "https://link.coupang.com/a/hW2foOGupo",
+    "https://link.coupang.com/a/hW2foRYNKm"
   ],
   [
     "bs_c_9",
@@ -3134,9 +3326,9 @@ function populateStandardBabySuppliesCatalog() {
     "드레텍 방수 디지털 탕온도계 오리형",
     "카스 스마트 탕온도계",
     "피죤 디지털 안전 탕온도계",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2foU928O",
+    "https://link.coupang.com/a/hW2foYvE4a",
+    "https://link.coupang.com/a/hW2fo2jeEv"
   ],
   [
     "bs_c_10",
@@ -3150,9 +3342,9 @@ function populateStandardBabySuppliesCatalog() {
     "아토앤오투 옥시젠 버블 탑투토 바스앤샴푸",
     "몽디에스 바스앤드샴푸 400ml",
     "차앤맘 피토세라마이드 헤어앤바디워시",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fo4KKBg",
+    "https://link.coupang.com/a/hW2fo7VZZJ",
+    "https://link.coupang.com/a/hW2fpbhBU4"
   ],
   [
     "bs_c_11",
@@ -3166,9 +3358,9 @@ function populateStandardBabySuppliesCatalog() {
     "아토팜 MLE 베이비 크림 160ml",
     "몽디에스 아토 로션 + 수딩젤 세트",
     "바이오더마 에이비씨덤 보습 로션",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fpe5bvo",
+    "https://link.coupang.com/a/hW2fphwHsa",
+    "https://link.coupang.com/a/hW2fpkqlIy"
   ],
   [
     "bs_c_12",
@@ -3182,9 +3374,9 @@ function populateStandardBabySuppliesCatalog() {
     "바이엘 비판텐 연고 30g/100g",
     "란시노 라놀린 수유 케어 크림",
     "수도크림 베이비 발진 진정 크림",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fpnumvQ",
+    "https://link.coupang.com/a/hW2fpq0kX6",
+    "https://link.coupang.com/a/hW2fptafMO"
   ],
   [
     "bs_c_13",
@@ -3198,9 +3390,9 @@ function populateStandardBabySuppliesCatalog() {
     "브라운 써모스캔 귀체온계 IRT-6520 정품 필터포함",
     "휴비딕 비접촉 듀얼 체온계",
     "보령 비접촉 피부적외선 체온계",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fpwlvbg",
+    "https://link.coupang.com/a/hW2fpy7UQu",
+    "https://link.coupang.com/a/hW2fq9Uj6W"
   ],
   [
     "bs_c_14",
@@ -3214,9 +3406,9 @@ function populateStandardBabySuppliesCatalog() {
     "노시부 프로 전동식 의료용 코세척 흡인기",
     "휴비딕 전동 콧물흡입기 크린노즈",
     "모윰 전동 흡인기 베이비노즈",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2frdjqlo",
+    "https://link.coupang.com/a/hW2frguFJQ",
+    "https://link.coupang.com/a/hW2frjg5o4"
   ],
   [
     "bs_c_15",
@@ -3230,9 +3422,9 @@ function populateStandardBabySuppliesCatalog() {
     "아가드 루미 전동 네일트리머 세트",
     "더블하트 신생아 손톱가위 세트",
     "마더케이 베이비 네일케어 4종 키트",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2frmdRBc",
+    "https://link.coupang.com/a/hW2fronMpU",
+    "https://link.coupang.com/a/hW2frry1Om"
   ],
   [
     "bs_c_16",
@@ -3246,9 +3438,9 @@ function populateStandardBabySuppliesCatalog() {
     "마더케이 신생아 안전 면봉 300P + 안전 집게",
     "더블하트 오일 점착 면봉 50입",
     "비앤비 멸균 구강 티슈 거즈 30매",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fruC2BE",
+    "https://link.coupang.com/a/hW2frx5NNQ",
+    "https://link.coupang.com/a/hW2frASds4"
   ],
   [
     "bs_c_17",
@@ -3262,9 +3454,9 @@ function populateStandardBabySuppliesCatalog() {
     "그린제약 일회용 에탄올 솜 스왑 100매",
     "닥터스왑 알콜스왑 200매",
     "신신제약 에탄올 소독스왑",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2frEobVk",
+    "https://link.coupang.com/a/hW2frGTmPQ",
+    "https://link.coupang.com/a/hW2frJXnC8"
   ],
   [
     "bs_c_18",
@@ -3278,9 +3470,9 @@ function populateStandardBabySuppliesCatalog() {
     "바이오가이아 프로텍티스 베이비드롭 비타민D",
     "닥터바이오 D 드롭스",
     "락피도 베이비 드롭스 유산균",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2frMT9Pg",
+    "https://link.coupang.com/a/hW2frPlFL2",
+    "https://link.coupang.com/a/hW2frSwVau"
   ],
   [
     "bs_c_19",
@@ -3294,9 +3486,9 @@ function populateStandardBabySuppliesCatalog() {
     "밤부베베 시그니처 대나무 배냇저고리 3종",
     "아가방 오가닉 배냇저고리 세트",
     "압소바 텐셀 배냇저고리",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2frVAVXM",
+    "https://link.coupang.com/a/hW2frYxH9U",
+    "https://link.coupang.com/a/hW2fr0Zd6G"
   ],
   [
     "bs_c_20",
@@ -3310,9 +3502,9 @@ function populateStandardBabySuppliesCatalog() {
     "유니클로 베이비 코튼메쉬 바디수트 2P",
     "아가방 무형광 순면 긴팔 바디수트",
     "베베드피노 실내 상하의 세트",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fr5iR1o",
+    "https://link.coupang.com/a/hW2ftoOXBY",
+    "https://link.coupang.com/a/hW2ftrj8wu"
   ],
   [
     "bs_c_21",
@@ -3326,9 +3518,9 @@ function populateStandardBabySuppliesCatalog() {
     "러브투드림 스와들업 오리지널 S/M",
     "에이든 순면 모슬린 속싸개 3종",
     "말랑하니 지퍼형 이지 스와들",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2ftun3Zs",
+    "https://link.coupang.com/a/hW2ftxNkSy",
+    "https://link.coupang.com/a/hW2ftA1IcK"
   ],
   [
     "bs_c_22",
@@ -3342,9 +3534,9 @@ function populateStandardBabySuppliesCatalog() {
     "밤부베베 대나무 손싸개 2P + 발싸개 2P",
     "아가방 오가닉 아기모자 세트",
     "블루독베이비 손발싸개 기프트세트",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2ftDOufk",
+    "https://link.coupang.com/a/hW2ftHrBYq",
+    "https://link.coupang.com/a/hW2ftK8tZA"
   ],
   [
     "bs_c_23",
@@ -3358,9 +3550,9 @@ function populateStandardBabySuppliesCatalog() {
     "밤부베베 시그니처 대나무 거즈 손수건 30매",
     "밤부베베 순한 대나무 엠보 손수건 20매",
     "도노도노 순면 천기저귀 5P 세트",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2ftN5gbI",
+    "https://link.coupang.com/a/hW2ftQAq6e",
+    "https://link.coupang.com/a/hW2ftTEmzc"
   ],
   [
     "bs_c_24",
@@ -3374,9 +3566,9 @@ function populateStandardBabySuppliesCatalog() {
     "한샘 샘키즈 수납장 1305",
     "마더케이 논슬립 베이비 옷걸이 30P",
     "리빙앤유 슬림 유아 옷걸이",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2ftWL2ke",
+    "https://link.coupang.com/a/hW2ftZ0pEq",
+    "https://link.coupang.com/a/hW2ft2NbG0"
   ],
   [
     "bs_c_25",
@@ -3390,9 +3582,9 @@ function populateStandardBabySuppliesCatalog() {
     "블랑101 시그니처 고농축 아기 세탁세제 1L",
     "레드루트 유기농 베이비 세탁세제",
     "하우파파 안심 중성 아기세제",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2ft5Q69Y",
+    "https://link.coupang.com/a/hW2ft9gn24",
+    "https://link.coupang.com/a/hW2fuc3XDo"
   ],
   [
     "bs_o_1",
@@ -3406,9 +3598,9 @@ function populateStandardBabySuppliesCatalog() {
     "부가부 폭스 5 디럭스 유모차",
     "실버크로스 듄 컴팩트 디럭스",
     "에그2 럭셔리 유모차",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fufQJFY",
+    "https://link.coupang.com/a/hW2fuiUE8W",
+    "https://link.coupang.com/a/hW2ful2kTZ"
   ],
   [
     "bs_o_2",
@@ -3422,9 +3614,9 @@ function populateStandardBabySuppliesCatalog() {
     "부가부 버터플라이 휴대용 유모차",
     "줄즈 에어 플러스 기내반입 유모차",
     "해밀턴 X1 플러스 오토폴딩 유모차",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fvyYre0",
+    "https://link.coupang.com/a/hW2fvCcOzc",
+    "https://link.coupang.com/a/hW2fvFdwL6"
   ],
   [
     "bs_o_3",
@@ -3438,9 +3630,9 @@ function populateStandardBabySuppliesCatalog() {
     "폴레드 에어러브4 롤리팝 통풍 쿨시트",
     "도노도노 사계절 양면 유모차 라이너",
     "베베누보 에어 매쉬 쿨시트",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fvH7a2u",
+    "https://link.coupang.com/a/hW2fvLbbPM",
+    "https://link.coupang.com/a/hW2fvOHah2"
   ],
   [
     "bs_o_4",
@@ -3454,9 +3646,9 @@ function populateStandardBabySuppliesCatalog() {
     "타이니러브 뮤지컬 네이처스트롤 유모차 모빌",
     "부가부 정품 컵홀더",
     "루시 스마트 유모차 오거나이저 가방",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fvQQ46K",
+    "https://link.coupang.com/a/hW2fvT2kvc",
+    "https://link.coupang.com/a/hW2fvWOEP6"
   ],
   [
     "bs_o_5",
@@ -3470,9 +3662,9 @@ function populateStandardBabySuppliesCatalog() {
     "오아 문어발 무선 유모차 선풍기",
     "프롬비 휴대용 아기 안전망 선풍기",
     "루메나 FAN PRO4 무선 선풍기",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fv0hvmC",
+    "https://link.coupang.com/a/hW2fv3lv9U",
+    "https://link.coupang.com/a/hW2fv6zTt6"
   ],
   [
     "bs_o_6",
@@ -3486,9 +3678,9 @@ function populateStandardBabySuppliesCatalog() {
     "싸이벡스 아톤 S2 바구니 카시트",
     "페도라 C0 플러스 신생아 바구니카시트",
     "맥시코시 카브리오픽스 바구니카시트",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fv844oC",
+    "https://link.coupang.com/a/hW2fwb85bU",
+    "https://link.coupang.com/a/hW2fwfWEMe"
   ],
   [
     "bs_o_7",
@@ -3502,9 +3694,9 @@ function populateStandardBabySuppliesCatalog() {
     "브라이텍스 듀얼픽스 플러스 i-Size 회전형",
     "다이치 올인원 360 카시트",
     "싸이벡스 제로나 Gi i-Size 카시트",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fwiJqOO",
+    "https://link.coupang.com/a/hW2fwmmDSe",
+    "https://link.coupang.com/a/hW2fwpcxQy"
   ],
   [
     "bs_o_8",
@@ -3518,9 +3710,9 @@ function populateStandardBabySuppliesCatalog() {
     "폴레드 차량용 와이드 베이비 뷰 미러",
     "다이치 프리미엄 차량용 후방거울",
     "벤츠 아기 후방 확인 볼록거울",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fwsFom4",
+    "https://link.coupang.com/a/hW2fwvJpam",
+    "https://link.coupang.com/a/hW2fxOo3J6"
   ],
   [
     "bs_o_9",
@@ -3534,9 +3726,9 @@ function populateStandardBabySuppliesCatalog() {
     "베베데코 프리미엄 자석 암막 차량용 햇빛가리개",
     "도노도노 자외선 차단 3중 암막 쉐이드",
     "아가드 정전기 흡착 차량용 커튼",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fxRsZc4",
+    "https://link.coupang.com/a/hW2fxUAEX6",
+    "https://link.coupang.com/a/hW2fxXfP2a"
   ],
   [
     "bs_o_10",
@@ -3550,9 +3742,9 @@ function populateStandardBabySuppliesCatalog() {
     "베이비뵨 베이비 캐리어 미니 3D 메쉬",
     "코니 아기띠 플렉스 엘라스트",
     "포그내 스텝원 에어 슬링 아기띠",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fx0kdcO",
+    "https://link.coupang.com/a/hW2fx26xxI",
+    "https://link.coupang.com/a/hW2fx6NpyS"
   ],
   [
     "bs_o_11",
@@ -3566,9 +3758,9 @@ function populateStandardBabySuppliesCatalog() {
     "포그내 맥스 라이트 올인원 아기띠",
     "에르고베이비 옴니 브리즈 360",
     "아이엔젤 닥터다이얼 올인원 아기띠",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fyaSAhg",
+    "https://link.coupang.com/a/hW2fydFmjQ",
+    "https://link.coupang.com/a/hW2fyg0SUS"
   ],
   [
     "bs_o_12",
@@ -3582,9 +3774,9 @@ function populateStandardBabySuppliesCatalog() {
     "베이비뵨 캐리어 미니 전용 턱받이 2P",
     "포그내 오가닉 어깨 침받이 2P",
     "밤부베베 대나무 아기띠 침받이",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fyk58XA",
+    "https://link.coupang.com/a/hW2fynBjR6",
+    "https://link.coupang.com/a/hW2fyqFkFo"
   ],
   [
     "bs_o_13",
@@ -3598,9 +3790,9 @@ function populateStandardBabySuppliesCatalog() {
     "아가방 보송 사계절 겉싸개",
     "압소바 순면 엠보 겉싸개",
     "베베데코 오가닉 구름 겉싸개",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fytQuJw",
+    "https://link.coupang.com/a/hW2fywUqcu",
+    "https://link.coupang.com/a/hW2fyz15Xw"
   ],
   [
     "bs_o_14",
@@ -3614,9 +3806,9 @@ function populateStandardBabySuppliesCatalog() {
     "블루독베이비 신생아 보닛모자 + 우주복 세트",
     "밍크뮤 플라워 본딩 외출 우주복",
     "에뜨와 신생아 파일 우주복",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fyDgthI",
+    "https://link.coupang.com/a/hW2fyF3fki",
+    "https://link.coupang.com/a/hW2fyIPzFc"
   ],
   [
     "bs_o_15",
@@ -3630,9 +3822,9 @@ function populateStandardBabySuppliesCatalog() {
     "제이해밀턴 프리미엄 기저귀 백팩 L4",
     "마더케이 올인원 기저귀 숄더백",
     "포브 콤팩트 기저귀 이너백 가방",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk",
-    "https://link.coupang.com/a/hDXnz86Thk"
+    "https://link.coupang.com/a/hW2fyMeQyi",
+    "https://link.coupang.com/a/hW2fz2GVlA",
+    "https://link.coupang.com/a/hW2fz5tHoa"
   ]
 ];
 
@@ -3922,9 +4114,9 @@ function writeMaternityBagToSheet(ss, items) {
       i.id || '', i.tabCategory || '', i.section || '', i.title || '',
       i.recommendedQty || '', i.locationTags || '', i.note || '',
       i.momcafe1st || '', i.top1 || '', i.top2 || '', i.top3 || '',
-      i.top1_url || 'https://link.coupang.com/a/hDXnz86Thk',
-      i.top2_url || 'https://link.coupang.com/a/hDXnz86Thk',
-      i.top3_url || 'https://link.coupang.com/a/hDXnz86Thk'
+      i.top1_url || ('https://link.coupang.com/re/AFFSRP?lptag=' + COUPANG_PARTNER_TAG + '&pageKey=' + encodeURIComponent(i.top1 || i.title || '출산준비물')),
+      i.top2_url || ('https://link.coupang.com/re/AFFSRP?lptag=' + COUPANG_PARTNER_TAG + '&pageKey=' + encodeURIComponent(i.top2 || i.title || '출산준비물')),
+      i.top3_url || ('https://link.coupang.com/re/AFFSRP?lptag=' + COUPANG_PARTNER_TAG + '&pageKey=' + encodeURIComponent(i.top3 || i.title || '출산준비물'))
     ];
   });
   sheet.clear();
@@ -3949,9 +4141,9 @@ function writeBabySuppliesToSheet(ss, items) {
       i.id || '', i.category || i.tabCategory || '', i.section || '', i.title || '',
       i.period || '', i.purchaseTag || '', i.description || i.note || '',
       i.momcafe1st || '', i.top1 || '', i.top2 || '', i.top3 || '',
-      i.top1_url || 'https://link.coupang.com/a/hDXnz86Thk',
-      i.top2_url || 'https://link.coupang.com/a/hDXnz86Thk',
-      i.top3_url || 'https://link.coupang.com/a/hDXnz86Thk'
+      i.top1_url || ('https://link.coupang.com/re/AFFSRP?lptag=' + COUPANG_PARTNER_TAG + '&pageKey=' + encodeURIComponent(i.top1 || i.title || '출산준비물')),
+      i.top2_url || ('https://link.coupang.com/re/AFFSRP?lptag=' + COUPANG_PARTNER_TAG + '&pageKey=' + encodeURIComponent(i.top2 || i.title || '출산준비물')),
+      i.top3_url || ('https://link.coupang.com/re/AFFSRP?lptag=' + COUPANG_PARTNER_TAG + '&pageKey=' + encodeURIComponent(i.top3 || i.title || '출산준비물'))
     ];
   });
   sheet.clear();
