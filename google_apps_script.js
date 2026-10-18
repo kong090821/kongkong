@@ -119,7 +119,7 @@ function syncToApp() {
 
     clearPendingHighlights(ss);
 
-    let msg = '• 배포 버전: 꽁꽁 출산가방 v1.1.9 (빌드 코드: 19)\n' +
+    let msg = '• 배포 버전: 꽁꽁 출산가방 v1.3.0 (빌드 코드: 30)\n' +
               '• 갱신 일시: ' + now + '\n' +
               '• 출산가방 품목: ' + data.maternityBag.length + '개\n' +
               '• 육아용품 품목: ' + data.babySupplies.length + '개\n' +
@@ -362,7 +362,7 @@ function syncCoupangLinksToApp() {
       }
     });
 
-    const msg = '• 배포 버전: 꽁꽁 출산가방 v1.6.0\n' +
+    const msg = '• 배포 버전: 꽁꽁 출산가방 v1.3.0 (빌드 코드: 30)\n' +
                 '• 갱신 일시: ' + now + '\n' +
                 '• 출산가방 파트너스 링크 품목: ' + customMaternityLinks + '개\n' +
                 '• 육아용품 파트너스 링크 품목: ' + customBabyLinks + '개\n' +
