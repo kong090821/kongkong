@@ -750,7 +750,7 @@
     /* 대시보드 화면 */
     .sub-screen {
       padding: 14px 14px calc(36px + env(safe-area-inset-bottom, 0px)) 14px;
-      display: flex;
+      /* display handled by goToScreen */
       flex-direction: column;
     }
 
@@ -4546,6 +4546,15 @@
       return 'https://link.coupang.com/re/AFFSRP?lptag=' + COUPANG_PARTNER_TAG + '&pageKey=' + encodeURIComponent(clean || '출산준비물');
     }
 
+    let currentTopSheetList = [];
+
+    function openTopSheetProductLink(event, index) {
+      if (event) event.stopPropagation();
+      const item = currentTopSheetList && currentTopSheetList[index];
+      if (item) {
+        openProductLink(event, item.url, item.brandAndName);
+      }
+    }
     function openProductLink(event, url, productName) {
       if (event) event.stopPropagation();
       let targetUrl = (url && url.trim()) ? url.trim() : '';
@@ -4657,7 +4666,8 @@
       }
       const bodyEl = document.getElementById('topSheetBody');
       if (bodyEl) {
-        bodyEl.innerHTML = list.map(item => {
+        currentTopSheetList = list;
+        bodyEl.innerHTML = list.map((item, idx) => {
           const isRank1Overlap = (item.rank === 1) && isMomcafeOverlap(momcafeTopProduct, item.brandAndName);
           return `
           <div class="top-sheet-rank-card">
@@ -4688,7 +4698,7 @@
                   </div>
                 `}
               </div>
-              <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="btn-buy-link" onclick="openProductLink(event, '${item.url}', '${item.brandAndName ? item.brandAndName.replace(/'/g, \"\\\'\") : \'\'}')">
+              <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="btn-buy-link" onclick="openTopSheetProductLink(event, ${idx})">
                 최저가 확인 &gt;
               </a>
             </div>
