@@ -41,6 +41,8 @@
   - 앱 초기 로딩 시 또는 전환 과정에서 서브 화면들이 아래로 이어져 스크롤되던 문제 완벽 방지.
 - **[빌드/배포] 최신 버전 1.3.1 (versionCode: 31) 서명 바이너리 생성**:
   - dist/kongkong-release-signed.apk 및 Google Play Console 프로덕션 출시용 dist/kongkong-release.aab 정식 빌드 완료.
+- **[프리뷰/테스트] 스마트폰 목업 시뮬레이터 및 웹 프리뷰 환경 동기화**:
+  - preview.html, preview_device.html, preview/index.html 전체를 최신 1.3.1 버전 코드로 100% 동기화 반영 완료.
 
 ---
 
